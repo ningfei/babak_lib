@@ -21,4 +21,5 @@ template<class TYPE> void minmax(TYPE *a, int n, TYPE &min, TYPE &max)
 }
 
 #define _minmax_h
+
 #endif
