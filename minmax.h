@@ -1,19 +1,23 @@
 #ifndef _minmax_h
 
-template<class TYPE> void minmax(TYPE *a, int n, TYPE &min, TYPE &max)
+//Input: 'array' of size 'n'
+//Ouputs: The minimum and maximum values of 'array' are returned 
+//in 'min' and 'max' variables.
+template<class TYPE> void minmax(TYPE *array, int n, TYPE &min, TYPE &max)
 {
+   if(array==NULL) return;
 
-   min=max=a[0];
+   min=max=array[0];
 
    for(int i=0; i<n; i++)
    {
-      if(a[i]<min) 
+      if(array[i]<min) 
       {
-         min=a[i];
+         min=array[i];
       }
-      else if(a[i]>max) 
+      else if(array[i]>max) 
       {
-         max=a[i];
+         max=array[i];
       }
    }
 
@@ -21,5 +25,4 @@ template<class TYPE> void minmax(TYPE *a, int n, TYPE &min, TYPE &max)
 }
 
 #define _minmax_h
-
 #endif
