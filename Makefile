@@ -79,9 +79,6 @@ getoption.o: getoption.c
 swap.o: swap.cxx 
 	$(CC) -O2 -c $(INC) swap.cxx 
 
-minmax.o: minmax.cxx
-	$(CC) -O2 -c $(INC) minmax.cxx
-
 fileinfo.o: fileinfo.c
 	$(CC) -O2 -c $(INC) fileinfo.c
 
@@ -148,8 +145,8 @@ standardize.o: standardize.cxx
 sph.o: sph.cxx
 	$(CC) -O2 -c $(INC) sph.cxx
 
-libbabak_lib: singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o matrixops.o subsets.o analyzeio.o getoption.o swap.o minmax.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o
-	ar -ru libbabak_lib_linux.a singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o matrixops.o subsets.o analyzeio.o getoption.o swap.o minmax.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o
+libbabak_lib: singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o matrixops.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o
+	ar -ru libbabak_lib_linux.a singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o matrixops.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o
 
 clean: 
 	rm -f *.o

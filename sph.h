@@ -8,7 +8,7 @@ class SPH
    int *k; // k voxel coordinates
    int n; // size in voxels
    int r; // radius in voxels
-   float *v; // values at (i,j,k) - can be set by setSphere function
+   float *v; // values at (i,j,k) - can be set by set function
    SPH(int radius);
    void reset();
    void set(SHORTIM im, int ic, int jc, int kc);

@@ -696,10 +696,6 @@ extern void swap_int_array( int *x, int n);
 extern void medianFilter(float *image1, int nx, int ny, int nz, int Wx, int Wy, int Wz);
 #endif
 
-#ifndef _minmax
-extern int minmax(short *a, short *msk, int n, short &min, short &max);
-#endif
-
 #ifndef _fileinfo
 extern int isregular(const char *file);
 extern int getFileSize(const char *file);
