@@ -11,6 +11,7 @@
 #include <string.h>
 #include "spm_analyze.h"
 #include "niftiimage.h"
+#include "smooth.h"
 
 int ccsize(short *im, int nv);
 void checkDimension(int N, char **imagefile, int nx, int ny, int nz);

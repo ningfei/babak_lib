@@ -835,18 +835,7 @@ extern void read_transpose_save(char *inputfile, char *outputfile, int nr, int v
 extern void centerOfMass(short *im, int nx, int ny, int nz, float dx, float dy, float dz, float *CM);
 #endif
 
-#ifndef _smooth
-extern float *smoothX(short *image, int nx, int ny, float sd);
-extern float *smoothX(float *image, int nx, int ny, float sd);
-extern float *smoothX(float *image, int nx, int ny, int nz, float sd);
-extern float *smoothX(short *image, int nx, int ny, int nz, float sd);
-extern float *smoothY(float *image, int nx, int ny, float sd);
 extern float *smoothY(float *image, int nx, int ny, int nz, float sd);
-extern float *smoothZ(float *image1, int nx, int ny, int nz, float sd);
-extern float *smoothXYZ(float *image1, int nx, int ny, int nz, float sdx, float sdy, float sdz);
-extern float *smoothXYZ(short *image1, int nx, int ny, int nz, float sdx, float sdy, float sdz);
-extern float *smoothXY(float *image1, int nx, int ny, float sd);
-extern float *smoothXY(short *image1, int nx, int ny, float sd);
-#endif
+extern float *smoothZ(float *image, int nx, int ny, int nz, float sd);
 
 #endif

@@ -26,6 +26,7 @@ template<class TYPE> void minmax(TYPE *array, int n, TYPE &min, TYPE &max)
 }
 
 // This version returns the minimum and maximum values within the masked region specified by 'msk'
+// Returns the number of voxels in 'msk'
 template<class TYPE1, class TYPE2> int minmax(TYPE1 *array, TYPE2 *msk, int n, TYPE1 &min, TYPE1 &max)
 {
    int nbv=0;
