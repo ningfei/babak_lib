@@ -2322,7 +2322,7 @@ void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp)
    PILtransform(orientation, TPIL);
 
    // reorient the original volume to PIL orientation
-   volumePIL=reorientVolume(volOrig,dim.nx,dim.ny,dim.nz,dim.dx,dim.dy,dim.dz,TPIL,&nxPIL,&nyPIL,&nzPIL,&dxPIL,&dyPIL,&dzPIL);
+   volumePIL=reorientVolume(volOrig,dim.nx,dim.ny,dim.nz,dim.dx,dim.dy,dim.dz,TPIL,nxPIL,nyPIL,nzPIL,dxPIL,dyPIL,dzPIL);
 
    // determine the MSP from the PIL orineted volume
    cc=msp(volumePIL, nxPIL, nyPIL, nzPIL, dxPIL, dyPIL, dzPIL, &A, &B, &C);

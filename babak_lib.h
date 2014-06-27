@@ -205,7 +205,7 @@ void swap_model_file_tail(model_file_tail *tail);
 void PILtransform(const char *orientCode, float *orientMat);
 void inversePILtransform(const char *orientCode, float *orientMat);
 short *reorientVolume(short *v1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, float *orientMat,
-int *nx2, int *ny2, int *nz2, float *dx2, float *dy2, float *dz2);
+int &nx2, int &ny2, int &nz2, float &dx2, float &dy2, float &dz2);
 void rotate(float *T, float alpha, float x, float y, float z);
 float *rotate(float alpha, float x, float y, float z);
 void rotate(float *T, float CosAlpha, float SinAlpha, float x, float y, float z);
