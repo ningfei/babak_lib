@@ -1,5 +1,7 @@
 #include <babak_lib.h>
 #include <sph.h>
+#include <math.h>
+#include <stdlib.h>
 
 float SPH::dot(float *u)
 {

@@ -24,6 +24,7 @@ int varRow(float *X, int N, int P, float *avg, float *var);
 int varRow(double *X, int N, int P, double *avg, double *var);
 
 void transpose_matrix(float *A, int N,  int M);
+void transpose_matrix(float *A, int N,  int M, float *AT);
 
 /*****************************************************************************/
 /* computes the determinant of the 3x3 matrix A */
@@ -500,6 +501,20 @@ double normalize(double *s, int n)
 // V should be considered as a vector form of the symmetric matrix M.
 ////////////////////////////////////////////////////////////////////////////////
 void s3mat_to_vec(float *M, float *V)
+{
+   V[0] = M[0];
+   V[1] = M[4];
+   V[2] = M[8];
+
+   V[3] = M[3];
+   V[4] = M[7];
+
+   V[5] = M[6];
+   
+   return;
+}
+
+void s3mat_to_vec(float *M, double *V)
 {
    V[0] = M[0];
    V[1] = M[4];
@@ -1094,6 +1109,19 @@ void transpose_matrix(float *A, int N,  int M)
    for(int i=0;i<N*M;i++) A[i]=transA[i];
 
    delete transA;
+}
+
+void transpose_matrix(float *A, int N,  int M, float *AT)
+{
+   for(int i=0;i<N;i++)
+   {
+      for(int j=0;j<M;j++)
+      {
+         AT[j*N+i]=A[i*M+j];
+      }
+   }
+
+   return;
 }
 
 static float *trans(float *A, int N,  int M)

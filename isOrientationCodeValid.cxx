@@ -1,4 +1,5 @@
-#include <babak_lib.h>
+#include <string.h>
+#include <ctype.h>
 
 int isOrientationCodeValid(const char *orientCode)
 {

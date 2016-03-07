@@ -1,4 +1,12 @@
-#include <babak_lib.h>
+#include <stdio.h>
+#include <nifti1.h>
+#include <nifti1_io.h>
+
+extern char directionCode(float x, float y, float z);
+extern void swapByteOrder(char *in, int N);
+extern void errorMessage(const char *s);
+extern int checkNiftiFileExtension(const char *filename);
+extern void file_open_error(const char *s);
 
 void getNiftiImageOrientation(const char *filename, char *orientation)
 {
@@ -65,6 +73,40 @@ void getNiftiImageOrientation(const char *filename, char *orientation)
    {
       printf("\nWarning: Could not determine %s image orientation ...\n",filename);
       printf("\nWarning: The header of this \"NIFTI\" file does not contain orientation information.\n");
+      return;
+   }
+
+   if(hdr.qform_code > 0 )
+   {
+      mat44 R;
+
+      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y, 
+      hdr.qoffset_z, hdr.pixdim[1], hdr.pixdim[2], hdr.pixdim[3], hdr.pixdim[0]);
+
+      orientation[0] = directionCode(R.m[0][0],R.m[1][0],R.m[2][0]);
+      orientation[1] = directionCode(R.m[0][1],R.m[1][1],R.m[2][1]);
+      orientation[2] = directionCode(R.m[0][2],R.m[1][2],R.m[2][2]);
+      orientation[3] = '\0';
+   }
+   else
+   {
+      orientation[0] = directionCode(hdr.srow_x[0],hdr.srow_y[0],hdr.srow_z[0]);
+      orientation[1] = directionCode(hdr.srow_x[1],hdr.srow_y[1],hdr.srow_z[1]);
+      orientation[2] = directionCode(hdr.srow_x[2],hdr.srow_y[2],hdr.srow_z[2]);
+      orientation[3] = '\0';
+   }
+
+   return;
+}
+
+void getNiftiImageOrientation(nifti_1_header hdr, char *orientation)
+{
+   orientation[0]='\0';
+
+   if(hdr.qform_code == 0 && hdr.sform_code == 0) 
+   {
+      printf("\nWarning: Could not determine image orientation ...\n");
+      printf("\nWarning: \"NIFTI\" header does not contain orientation information.\n");
       return;
    }
 

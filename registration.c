@@ -47,7 +47,7 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP);
 static float newCostFunction(short *KMI, float *P, struct im_params *IP);
 static float costFunction2(short *KMI, float *P, struct im_params *IP);
 void scale_short_minmax(short *imagein, unsigned char **imageout, int np, int min,int max);
-static void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP);
+void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP);
 static void resetCC(short *KMI,int i,int j,int k,unsigned char CC, struct im_params *IP);
 int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels);
 short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int thresh, int Low, int High, int nv);
@@ -72,94 +72,94 @@ float *findTransMatrix(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float T
 short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 {
    char transcode[5]="ZXYT";
-	int thresh;
-	short *ccImage;
-	short *im_out;
-	int size_thresh=100;
-	int OL,OH;
-	float *T;
+   int thresh;
+   short *ccImage;
+   short *im_out;
+   int size_thresh=100;
+   int OL,OH;
+   float *T;
 
-	int Tnp,Tnv,Onv;
+   int Tnp,Tnv,Onv;
 	
-	for(int i=0; i<6; i++) P[i]=0.0;
+   for(int i=0; i<6; i++) P[i]=0.0;
 
-	IP.FROM = 1;
-	IP.TO = Tnz;
+   IP.FROM = 1;
+   IP.TO = Tnz;
 
-	IP.nx2=Tnx;
-	IP.ny2=Tny;
-	IP.nz2=Tnz;
-	IP.dx2=Tdx;
-	IP.dy2=Tdy;
-	IP.dz2=Tdz;
+   IP.nx2=Tnx;
+   IP.ny2=Tny;
+   IP.nz2=Tnz;
+   IP.dx2=Tdx;
+   IP.dy2=Tdy;
+   IP.dz2=Tdz;
 
-	IP.nv2=IP.nx2*IP.ny2*IP.nz2;
-	IP.np2=IP.nx2*IP.ny2;
+   IP.nv2=IP.nx2*IP.ny2*IP.nz2;
+   IP.np2=IP.nx2*IP.ny2;
 
-	IP.xc2=IP.dx2*(IP.nx2-1)/2.0; /* +---+---+ */
-	IP.yc2=IP.dy2*(IP.ny2-1)/2.0;
-	IP.zc2=IP.dz2*(IP.nz2-1)/2.0;
+   IP.xc2=IP.dx2*(IP.nx2-1)/2.0; /* +---+---+ */
+   IP.yc2=IP.dy2*(IP.ny2-1)/2.0;
+   IP.zc2=IP.dz2*(IP.nz2-1)/2.0;
 	
-	IP.sf = 1;
+   IP.sf = 1;
 
-	IP.nx1=Onx;
-	IP.ny1=Ony;
-	IP.nz1=Onz;
-	IP.dx1=Odx;
-	IP.dy1=Ody;
-	IP.dz1=Odz;
+   IP.nx1=Onx;
+   IP.ny1=Ony;
+   IP.nz1=Onz;
+   IP.dx1=Odx;
+   IP.dy1=Ody;
+   IP.dz1=Odz;
 
-	IP.nv1=IP.nx1*IP.ny1*IP.nz1;
-	IP.np1=IP.nx1*IP.ny1;
+   IP.nv1=IP.nx1*IP.ny1*IP.nz1;
+   IP.np1=IP.nx1*IP.ny1;
 
-	IP.xc1=IP.dx1*(IP.nx1-1)/2.0; /* +---+---+ */
-	IP.yc1=IP.dy1*(IP.ny1-1)/2.0;
-	IP.zc1=IP.dz1*(IP.nz1-1)/2.0;
+   IP.xc1=IP.dx1*(IP.nx1-1)/2.0; /* +---+---+ */
+   IP.yc1=IP.dy1*(IP.ny1-1)/2.0;
+   IP.zc1=IP.dz1*(IP.nz1-1)/2.0;
 
-	Tnv = Tnx*Tny*Tnz;
-	Tnp = Tnx*Tny;
-	Onv = Onx*Ony*Onz;
+   Tnv = Tnx*Tny*Tnz;
+   Tnp = Tnx*Tny;
+   Onv = Onx*Ony*Onz;
 
-	thresh=findThresholdLevel(trg, Tnv);
-	printf("Threshold level = %d\n",thresh);
+   thresh=findThresholdLevel(trg, Tnv);
+   printf("Threshold level = %d\n",thresh);
 
-	ccImage=(short *)calloc(Tnv,sizeof(short));
+   ccImage=(short *)calloc(Tnv,sizeof(short));
 
-	/* thresholding */
-	for(int i=0;i<Tnv;i++)
-	if( trg[i] <= thresh)
-		ccImage[i]=0;
-	else
-		ccImage[i]=1;
+   /* thresholding */
+   for(int i=0;i<Tnv;i++)
+   if( trg[i] <= thresh)
+      ccImage[i]=0;
+   else
+      ccImage[i]=1;
 
-	cca(ccImage, Tnx, Tny, Tnz);
+   cca(ccImage, Tnx, Tny, Tnz);
 
-	printf("Number of classes = %d\n",nclass);
-	printf("Maximum number of iterations allowed = %d\n",maxiter);
+   printf("Number of classes = %d\n",nclass);
+   printf("Maximum number of iterations allowed = %d\n",maxiter);
 
-	printf("\nK-means clustering ...\n");
-	im_out=KMcluster(ccImage, trg, nclass, maxiter, thresh, low, high , Tnv);
+   printf("\nK-means clustering ...\n");
+   im_out=KMcluster(ccImage, trg, nclass, maxiter, thresh, low, high , Tnv);
 
-	free(ccImage);
-	ccImage=im_out;
+   free(ccImage);
+   ccImage=im_out;
 
-	// make sure edges are zero
-	for(int k=0; k<Tnz; k++)
-	{
-		for(int i=0; i<Tnx; i++) im_out[k*Tnp+0*Tnx+i]=0;
-		for(int i=0; i<Tnx; i++) im_out[k*Tnp+(Tny-1)*Tnx+i]=0;
-		for(int j=0; j<Tny; j++) im_out[k*Tnp+j*Tnx+0]=0;
-		for(int j=0; j<Tny; j++) im_out[k*Tnp+j*Tnx+(Tnx-1)]=0;
-	}
+   // make sure edges are zero
+   for(int k=0; k<Tnz; k++)
+   {
+      for(int i=0; i<Tnx; i++) im_out[k*Tnp+0*Tnx+i]=0;
+      for(int i=0; i<Tnx; i++) im_out[k*Tnp+(Tny-1)*Tnx+i]=0;
+      for(int j=0; j<Tny; j++) im_out[k*Tnp+j*Tnx+0]=0;
+      for(int j=0; j<Tny; j++) im_out[k*Tnp+j*Tnx+(Tnx-1)]=0;
+   }
 
-	fprintf(stdout,"\nCluster CC analysis ...\n");
-	IP.CCI=(unsigned *)calloc(Tnv,sizeof(unsigned int));
-	IP.NCC=label_CCI(ccImage,size_thresh,&IP,Tnv);
+   fprintf(stdout,"\nCluster CC analysis ...\n");
+   IP.CCI=(unsigned *)calloc(Tnv,sizeof(unsigned int));
+   IP.NCC=label_CCI(ccImage,size_thresh,&IP,Tnv);
 
-	fprintf(stdout,"\nCost function minimization ...\n");
-	IP.Size=(int *)calloc(IP.NCC,sizeof(int));
-	IP.S=(float *)calloc(IP.NCC,sizeof(float));
-	IP.SS=(float *)calloc(IP.NCC,sizeof(float));
+   fprintf(stdout,"\nCost function minimization ...\n");
+   IP.Size=(int *)calloc(IP.NCC,sizeof(int));
+   IP.S=(float *)calloc(IP.NCC,sizeof(float));
+   IP.SS=(float *)calloc(IP.NCC,sizeof(float));
 
 	IP.data1=(unsigned char *)malloc(IP.nv1);
 	setLowHigh(obj, Onv, &OL, &OH);
@@ -564,55 +564,53 @@ static short PB2d(short *im, int nc, int np, int i)
 
 short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , int Low, int High, int nv)
 {
-	int i,n;
-	int h; /* h=hist[n] as n varies */
+   int i,n;
+   int h; // h=hist[n] as n varies 
 
-	int converge; /* converge is set to 1 when the algorithm has
-          			  converged.*/
+   int converge; // converge is set to 1 when the algorithm has converged.
 
-	int delta;		/* histogram bin width */
-	int k;
-	int v;
-	int   iter; /* iter=current Kmeans iteration.*/
-	short *im_out;
+   int delta;		// histogram bin width
+   int k;
+   int v;
+   int   iter; // iter=current Kmeans iteration.
+   short *im_out;
 	
-	char    db[NBIN];
-	double *mean;
-	double *oldmean;
-	double *PR;
+   char    db[NBIN];
+   double *mean;
+   double *oldmean;
+   double *PR;
 
-	int clss;   /* the class with minimum distance from a given pixel value */
+   int clss;   // the class with minimum distance from a given pixel value 
 
-	float d;    /* square distance between a given pixel value and a class mean */
+   float d;    // square distance between a given pixel value and a class mean 
 
-	float dmin; /* minimum square distance between a given pixel value and a class mean */
+   float dmin; // minimum square distance between a given pixel value and a class mean 
 
-	float dmax; /* dmax=maximum possible square distance between a given pixel value and class mean */
+   float dmax; // dmax=maximum possible square distance between a given pixel value and class mean 
 
-	mean = (double *)calloc(nclass,sizeof(double));
-	oldmean = (double *)calloc(nclass,sizeof(double));
-	PR = (double *)calloc(nclass,sizeof(double));
+   mean = (double *)calloc(nclass,sizeof(double));
+   oldmean = (double *)calloc(nclass,sizeof(double));
+   PR = (double *)calloc(nclass,sizeof(double));
+   im_out = (short *)calloc(nv,sizeof(short));
 
-	im_out = (short *)calloc(nv,sizeof(short));
+   // from the image header, find the lower and upper limits of the image grey levels 
+   low  = Low;
+   high = High;
 
-	// from the image header, find the lower and upper limits of the image grey levels 
-	low  = Low;
-	high = High;
+   findHistogram(im_in,nv);
 
-	findHistogram(im_in,nv);
+   delta = (int)( (high-low)/(1.0*NBIN) ) + 1;
 
-	delta = (int)( (high-low)/(1.0*NBIN) ) + 1;
+   for(i=0;i<NBIN;i++)
+      db[i]=0;
 
-	for(i=0;i<NBIN;i++)
-   	db[i]=0;
+   // initialize class means 
+   for(i=0;i<nclass;i++)
+      mean[i]=(i+1)*NBIN*1.0/(nclass+1.0);
 
-	/* initialize class means */
-	for(i=0;i<nclass;i++)
-		mean[i]=(i+1)*NBIN*1.0/(nclass+1.0);
+   dmax=256*256;
 
-	dmax=256*256;
-
-	iter=1;
+   iter=1;
 
 	do {
       if(!(iter%50)) printf("\n\titeration %d ...",iter);
@@ -646,8 +644,8 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
             mean[clss] += h*n;
 		}
 
-      /* Check for convergence. Set converge=1 if the means
-         didn't chage from the previous iteration. */
+      // Check for convergence. Set converge=1 if the means
+      // didn't chage from the previous iteration. 
 		converge = 1;
 		for (i = 0 ; i < nclass; i++)
 		if(PR[i]!=0.0) 
@@ -661,74 +659,69 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
    } while(!converge && iter<=maxiter);
 
    for(i=0;i<nv;i++)
-	if( ccImage[i] )
+   if( ccImage[i] )
    {
-		v=im_in[i];
-   	if(v<low)
-      	v=low;
-      if(v>high)
-         v=high;
+      v=im_in[i];
+      if(v<low) v=low;
+      if(v>high) v=high;
 
-		k = (int)( (v-low)/(1.0*delta) );
-
+      k = (int)( (v-low)/(1.0*delta) );
       im_out[i]=db[k]+1;
    }
 
-	free(mean);
-	free(oldmean);
-	free(PR);
-	return(im_out);
+   free(mean);
+   free(oldmean);
+   free(PR);
+   return(im_out);
 }
 
 int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels)
 {
-	int i,j,k;
-	unsigned short label;
-	int size, maxsize; 
-	int NCC; 	 /* number of connected components in CCI */
-	short CC; 
-  
-	label=0;
-	NCC=0;
-	IP->NP=0;
-	maxsize=0;
+   int i,j,k;
+   unsigned short label;
+   int size, maxsize; 
+   int NCC; 	 // number of connected components in CCI 
+   short CC; 
 
-    // make sure edges are zero
-    for(int kk=0; kk<IP->nz2; kk++)
-    {
-        for(int ii=0; ii<IP->nx2; ii++) KMI[kk*IP->np2+0*IP->nx2+ii]=0;
-        for(int ii=0; ii<IP->nx2; ii++) KMI[kk*IP->np2+(IP->ny2-1)*IP->nx2+ii]=0;
-        for(int jj=0; jj<IP->ny2; jj++) KMI[kk*IP->np2+jj*IP->nx2+0]=0;
-        for(int jj=0; jj<IP->ny2; jj++) KMI[kk*IP->np2+jj*IP->nx2+(IP->nx2-1)]=0;
-    }
+   label=0;
+   NCC=0;
+   IP->NP=0;
+   maxsize=0;
 
-	for(k=0;k<(IP->TO-IP->FROM+1);k++) 
-	for(j=0;j<IP->ny2;j++)
-	for(i=0;i<IP->nx2;i++) 
-	if( (CC=KMI[k*IP->np2+j*IP->nx2+i]) && !IP->CCI[k*IP->np2+j*IP->nx2+i] ) 
-	{  
-		label++;
-		size=0;
-		label_3d_cc(KMI,label,i,j,k,&size,CC,IP);
-		if(size<=size_thresh) 
-		{
-			resetCC(KMI,i,j,k,CC,IP);
-			label--;
-		} 
-		else 
-		{
-			NCC++;
-			IP->NP += size;
-			if(size>maxsize) 
-			{
-				maxsize=size;
-			}
-		}
-	}
+   // make sure edges are zero
+   for(int kk=0; kk<IP->nz2; kk++)
+   {
+      for(int ii=0; ii<IP->nx2; ii++) KMI[kk*IP->np2+0*IP->nx2+ii]=0;
+      for(int ii=0; ii<IP->nx2; ii++) KMI[kk*IP->np2+(IP->ny2-1)*IP->nx2+ii]=0;
+      for(int jj=0; jj<IP->ny2; jj++) KMI[kk*IP->np2+jj*IP->nx2+0]=0;
+      for(int jj=0; jj<IP->ny2; jj++) KMI[kk*IP->np2+jj*IP->nx2+(IP->nx2-1)]=0;
+   }
 
-/*
-	printf("NCC=%d NP=%d\n",NCC,IP->NP);
-*/
+   for(k=0;k<(IP->TO-IP->FROM+1);k++) 
+   for(j=0;j<IP->ny2;j++)
+   for(i=0;i<IP->nx2;i++) 
+   if( (CC=KMI[k*IP->np2+j*IP->nx2+i]) && !IP->CCI[k*IP->np2+j*IP->nx2+i] ) 
+   {  
+      label++;
+      size=0;
+      label_3d_cc(KMI,label,i,j,k,&size,CC,IP);
+      if(size<=size_thresh) 
+      {
+         resetCC(KMI,i,j,k,CC,IP);
+         label--;
+      } 
+      else 
+      {
+         NCC++;
+         IP->NP += size;
+         if(size>maxsize) 
+         {
+            maxsize=size;
+         }
+      }
+   }
+
+// printf("NCC=%d NP=%d\n",NCC,IP->NP);
 
    j=0;
 	for(i=0;i<nvoxels;i++)
@@ -760,30 +753,23 @@ static void resetCC(short *KMI,int i,int j,int k,unsigned char CC, struct im_par
       resetCC(KMI,i,j,k+1,CC,IP);
 }
 
-static void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP)
+void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP)
 {
-	(*size)++;
+   (*size)++;
 
-	IP->CCI[k*IP->np2+j*IP->nx2+i]=label;
+   IP->CCI[k*IP->np2+j*IP->nx2+i]=label;
 
-	if(KMI[k*IP->np2+j*IP->nx2+i-1]==CC && 
-	!IP->CCI[k*IP->np2+j*IP->nx2+i-1])
-		label_3d_cc(KMI,label,i-1,j,k,size,CC,IP);
-	if(KMI[k*IP->np2+j*IP->nx2+i+1]==CC && 
-	!IP->CCI[k*IP->np2+j*IP->nx2+i+1])
+   if(KMI[k*IP->np2+j*IP->nx2+i-1]==CC && !IP->CCI[k*IP->np2+j*IP->nx2+i-1])
+      label_3d_cc(KMI,label,i-1,j,k,size,CC,IP);
+   if(KMI[k*IP->np2+j*IP->nx2+i+1]==CC && !IP->CCI[k*IP->np2+j*IP->nx2+i+1])
 		label_3d_cc(KMI,label,i+1,j,k,size,CC,IP);
-	if(KMI[k*IP->np2+(j+1)*IP->nx2+i]==CC && 
-	!IP->CCI[k*IP->np2+(j+1)*IP->nx2+i])
+   if(KMI[k*IP->np2+(j+1)*IP->nx2+i]==CC && !IP->CCI[k*IP->np2+(j+1)*IP->nx2+i])
 		label_3d_cc(KMI,label,i,j+1,k,size,CC,IP);
-	if(KMI[k*IP->np2+(j-1)*IP->nx2+i]==CC && 
-	!IP->CCI[k*IP->np2+(j-1)*IP->nx2+i])
+   if(KMI[k*IP->np2+(j-1)*IP->nx2+i]==CC && !IP->CCI[k*IP->np2+(j-1)*IP->nx2+i])
 		label_3d_cc(KMI,label,i,j-1,k,size,CC,IP);
-	if(k>0 && KMI[(k-1)*IP->np2+j*IP->nx2+i]==CC && 
-	!IP->CCI[(k-1)*IP->np2+j*IP->nx2+i])
+   if(k>0 && KMI[(k-1)*IP->np2+j*IP->nx2+i]==CC && !IP->CCI[(k-1)*IP->np2+j*IP->nx2+i])
 		label_3d_cc(KMI,label,i,j,k-1,size,CC,IP);
-	if(k<IP->TO-IP->FROM 
-	&& KMI[(k+1)*IP->np2+j*IP->nx2+i]==CC && 
-	!IP->CCI[(k+1)*IP->np2+j*IP->nx2+i])
+   if(k<IP->TO-IP->FROM && KMI[(k+1)*IP->np2+j*IP->nx2+i]==CC && !IP->CCI[(k+1)*IP->np2+j*IP->nx2+i])
 		label_3d_cc(KMI,label,i,j,k+1,size,CC,IP);
 }
 
@@ -1457,7 +1443,7 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 		for(j=0;j<ndim;j++)
 			PT[j]=P[j];
 
-		printf("\n\nIteration %d:",iter);
+		printf("\nIteration %d: ",iter);
 
 		PT[0]=P[0]+0.25 ;
 		XIT[0]=fp-(*obj_fnc)(KMI,PT,IP);
@@ -1523,12 +1509,12 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 			sum+= (XIT[i]*XIT[i]);
 
 		sum=(float)sqrt( (double)sum);				
-		/* printf("Search Direction: "); */
+		//printf("Search Direction: "); 
 		for(i=0;i<ndim;i++) {
 			XIT[i]/=sum;
-			/* printf("   %5.2f",XIT[i]); */
+			//printf("   %5.2f",XIT[i]);
 		}
-		/* printf("\n"); */
+		//printf("\n");
 
 		fret=minimize1D(KMI,XIT,ndim,IP);
 
@@ -1553,9 +1539,8 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 		printf("   %5.2f deg",P[5]);
 */
 
-/*
-		printf("\nMinimum = %f\n",fret);
-*/
+		printf("Minimum = %f\n",fret);
+
 		// write(registerer.fd[1],Pmin,sizeof(float)*6);
 		// kill(getppid(),SIGUSR1);
 

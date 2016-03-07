@@ -6,11 +6,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <babak_lib.h>
 #include <math.h>
 #include <string.h>
 #include "spm_analyze.h"
 #include "niftiimage.h"
+#include <babak_lib.h>
 #include "smooth.h"
 
 int ccsize(short *im, int nv);

@@ -1,4 +1,4 @@
-#include <babak_lib.h>
+#include <math.h>
 
 /* 
  This function determines the general direction of a vector (x,y,z) defined in RAS system.

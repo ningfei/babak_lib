@@ -372,7 +372,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 		}
 	}
 
-	return( im2 );
+   return(im2);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -462,6 +462,82 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	}
 
 	return( im2 );
+}
+
+// warning: T will be altered.
+void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
+{
+	float xc1,yc1,zc1; 
+	float xc2,yc2,zc2; 
+	float Ax,Bx;
+	float Ay,By;
+	float Az,Bz;
+  	float xx,yy,zz; /* translation parameters */
+  	float x,y,z;   
+
+	int i,j,k;     /* loop index */
+
+	int q;
+
+	im2.v=(short *)calloc(im2.nv,sizeof(short));
+
+	xc2=im2.dx*(im2.nx-1)/2.0;     /* +---+---+ */
+	yc2=im2.dy*(im2.ny-1)/2.0;
+	zc2=im2.dz*(im2.nz-1)/2.0;
+
+	xc1=im1.dx*(im1.nx-1)/2.0;      /* +---+---+ */
+	yc1=im1.dy*(im1.ny-1)/2.0;
+	zc1=im1.dz*(im1.nz-1)/2.0;
+
+	T[0] /= im1.dx;
+	T[1] /= im1.dx;
+	T[2] /= im1.dx;
+	T[3] /= im1.dx;
+	T[3] += xc1/im1.dx;
+
+	T[4] /= im1.dy;
+	T[5] /= im1.dy;
+	T[6] /= im1.dy;
+	T[7] /= im1.dy;
+	T[7] += yc1/im1.dy;
+
+	T[8]  /= im1.dz;
+	T[9]  /= im1.dz;
+	T[10] /= im1.dz;
+	T[11] /= im1.dz;
+	T[11] += zc1/im1.dz;
+
+    if(interpolation_method == LIN)
+        interpolator=linearInterpolator;
+    else if(interpolation_method == NEARN)
+        interpolator=nearestNeighbor;
+
+	q=0;
+	for(k=0;k<im2.nz;k++) 
+	{
+  		zz=k*im2.dz-zc2;
+	  	Bx=T[2]*zz+T[3];
+	  	By=T[6]*zz+T[7];
+		Bz=T[10]*zz+T[11];
+		for(j=0;j<im2.ny;j++) 
+		{
+     		yy=j*im2.dy-yc2;
+			Ax=T[1]*yy+Bx;
+			Ay=T[5]*yy+By;
+			Az=T[9]*yy+Bz;
+
+  			for(i=0;i<im2.nx;i++) 
+			{
+        		xx=i*im2.dx-xc2;
+
+           		x=T[0]*xx+Ax;
+	    	   	y=T[4]*xx+Ay;
+	    	   	z=T[8]*xx+Az;
+
+				im2.v[q++]=interpolator(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np);
+			}
+		}
+	}
 }
 
 // warning: T will be altered.

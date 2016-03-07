@@ -19,18 +19,20 @@ typedef int int4;
 typedef float float4;
 typedef double float8;
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define YES 1
-#define NO 0
-#define ESMALL 1e-10
+#ifndef _getARTHOME
+extern char *ARTHOME;
+extern void getARTHOME();
+#endif
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef _SHORTIM
+#define _SHORTIM
 typedef struct shortim
 {
    int nx;
    int ny;
    int nz;
+   int nt;
    int np;
    int nv;
    float dx;
@@ -38,7 +40,31 @@ typedef struct shortim
    float dz;
    short *v; // image values
 } SHORTIM;
+#endif
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef _DIM
+#define _DIM
+typedef struct dim {
+   int nx; // number of columns 
+   int ny; // number of rows
+   int nz; // number of slices
+   int nt; // number of frames (epochs)
+   int np; // nx*ny
+   int nv; // nx*ny*nz
+   float dx; // x voxel dimension (mm)
+   float dy; // y voxel dimension (mm)
+   float dz; // z voxel dimension (mm)
+   float dt; // t between frames (sec)
+} DIM;
+#endif
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define YES 1
+#define NO 0
+#define ESMALL 1e-10
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 struct DICOM_file_meta_info
 {
    // maximum bytes for VR=UI is 64,  1 byte is added for the string terminator '\0'
@@ -178,23 +204,19 @@ struct dicominfo
 typedef struct dicominfo dicominfo;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct dim {
-   int nx; // number of columns 
-   int ny; // number of rows
-   int nz; // number of slices
-   int nt; // number of frames (epochs)
-   float dx; // x voxel dimension (mm)
-   float dy; // y voxel dimension (mm)
-   float dz; // z voxel dimension (mm)
-   float dt; // t between frames (sec)
-} DIM;
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
+void set_dim(DIM &dim, int nx, int ny, int nz, float dx, float dy, float dz);
+void set_dim(DIM &dim, nifti_1_header hdr);
+void set_dim(DIM &dim, nifti_1_header *hdr);
+void set_dim(SHORTIM &im, nifti_1_header hdr);
+void set_dim(SHORTIM &im, DIM dim);
+void set_dim(DIM &dim, SHORTIM im);
+void set_dim(SHORTIM &im, SHORTIM sourceim);
+void findMSP(const char *filename, char *orient, const char *lmfile, float *Tmsp, int verbose, DIM &dim);
 // Input: (x,y,z) a vector defined in RAS system
 // Output: One of six charaters {R,L,A,P,S,I}
 char directionCode(float x, float y, float z);
 void getNiftiImageOrientation(const char *filename, char *orientation);
+void getNiftiImageOrientation(nifti_1_header hdr, char *orientation);
 int checkNiftiFileExtension(const char *filename);
 void memory_allocation_error(const char *s);
 void file_open_error(const char *s);
@@ -202,10 +224,14 @@ void errorMessage(const char *s);
 int isOrientationCodeValid(const char *orientCode);
 void swap_model_file_hdr(model_file_hdr *hdr);
 void swap_model_file_tail(model_file_tail *tail);
+void new_PIL_transform(const char *subfile, const char *lmfile, float *T);
+void standard_PIL_transformation(const char *imfile, const char *lmfile, int verbose, float *TPIL);
 void PILtransform(const char *orientCode, float *orientMat);
 void inversePILtransform(const char *orientCode, float *orientMat);
 short *reorientVolume(short *v1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, float *orientMat,
 int &nx2, int &ny2, int &nz2, float &dx2, float &dy2, float &dz2);
+short *reorientVolume(short *input_image, nifti_1_header oldhdr, const char *neworient, nifti_1_header &newhdr, 
+float *T_oldorient_to_neworient);
 void rotate(float *T, float alpha, float x, float y, float z);
 float *rotate(float alpha, float x, float y, float z);
 void rotate(float *T, float CosAlpha, float SinAlpha, float x, float y, float z);
@@ -213,6 +239,11 @@ void setLowHigh(short *image, int nv, int *low, int *high);
 void setLowHigh(short *image, int nv, int *low, int *high, float percent);
 void compute_cm(short *image, int nx, int ny, int nz, float dx, float dy, float dz, float *x, float *y, float *z);
 void standardize(float *x, int n);
+void irodrigues_formula(float *R, float *w, float &theta);
+void rodrigues_formula(float *R, float *w, float theta);
+void rodrigues_formula4x4(float *R, float *w, float theta);
+void se3_to_SE3(float *M, float *w, float *v, float theta);
+void SE3_to_se3(float *M, float *w, float *v, float &theta);
 
 #ifndef _singular_value_decomposition
 extern int Singular_Value_Decomposition(double* A, int nrows, int ncols, double* U, 
@@ -246,11 +277,15 @@ extern void positive_definite_tensor_model(float *v1, float *v2, float *y);
 #endif
 
 #ifndef _artlib
+extern void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, float *PC, float *VSPS);
+extern void find_pil_transformation(char *imfile, DIM dim, float *pilT);
+extern void update_qsform(nifti_1_header &hdr, const char *orientationcode);
 extern char opt_ppm;
 extern char opt_txt;
-extern char opt_AC;
-extern char opt_PC;
-extern char opt_RP;
+extern char opt_AC; // if YES AC will be detected automatically
+extern char opt_PC; // if YES PC will be detected automatically
+extern char opt_RP; // if YES RP will be detected automatically
+extern char opt_MSP; // if YES MSP will be detected automatically
 extern void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, const char *trgfile);
 extern void getDirectoryName(const char *pathname, char *dirname);
 extern void forwardTCSAP(float *xvec, float *yvec, float *zvec, float *TLHC, float *angle, float *translation, DIM dim);
@@ -309,6 +344,7 @@ extern double one_sample_t(double *x, int n);
 
 extern float median(float *x, char *mask, int n);
 extern void scaleAbsToOne(double *y, int n, int p);
+extern void scaleAbsToOne(float *y, int n, int p);
 extern double scaleAbsToOne(double *y, int n);
 extern void decomposeVector(double *x, double *xpar, double *xper, double *u, int n);
 
@@ -321,6 +357,7 @@ extern double removeVectorMean(float *x, float *y, int n);
 extern double removeVectorMean(double *x, double *y, int n);
 extern double removeVectorMean(short *x, double *y, int n);
 extern void removeVectorMean(double *y, int n, int p);
+extern void removeVectorMean(float *y, int n, int p);
 
 extern void partialCorrelation(double *Y, double *X1, double *X2, int n, double *pr1, double *pr2);
 extern void partialCorrelation(float *Y, float *X1, float *X2, int n, double *pr1, double *pr2);
@@ -424,6 +461,7 @@ extern void cubicSplineAnalysis(float *s, float *c, int N);
 #endif
 
 #ifndef _registration
+extern void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP);
 extern void set_transformation(float x, float y, float z, float ax, float ay, float az, const char *code, float *T);
 extern int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels);
 extern short (*interpolator)(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
@@ -515,6 +553,7 @@ extern double xtAx(float *A, double *x, int p);
 extern double vectorNorm(float *x, int n);
 extern void normalizeVector(float *x, int n);
 extern void transpose_matrix(float *A, int N,  int M);
+extern void transpose_matrix(float *A, int N,  int M, float *AT);
 
 extern float normalize(float *s, int n);
 extern double normalize(double *s, int n);
@@ -526,6 +565,7 @@ extern float s3tr(float *A, float *B);
 extern void s3vec_to_mat(float *M, float *V);
 extern void s3vec_to_mat(double *M, double *V);
 extern void s3mat_to_vec(float *M, float *V);
+extern void s3mat_to_vec(float *M, double *V);
 extern void s3mat_to_vec(double *M, double *V);
 extern void s3adjoint(double *A, double *ADJ);
 extern void s3adjoint(float *A, float *ADJ);
@@ -556,6 +596,8 @@ extern void multi(double *A,int iA,int jA, float *B,int iB,int jB,float *C);
 #define NEARN 2
 #define SINC 3
 #define CUBICSPLINE 4	
+
+extern short *resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method);
 
 extern short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_method);
 
@@ -752,7 +794,7 @@ extern void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr
 // returns the orientations vectors xvec, yvec, and zvec in NIFTI's RAS system
 extern void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yvec, float *zvec);
 
-extern void niftiFilename(char *filename, const char *path);
+extern int  niftiFilename(char *filename, const char *path);
 extern void swapniftiheader(nifti_1_header *hdr);
 extern short *readNiftiImage(const char *filename, DIM *dim, int flg);
 #endif
@@ -833,9 +875,11 @@ extern void mask_and_save(const char *inputfile, const char *outputfile, short *
 extern void mask_and_save_nii(const char *inputfile, const char *outputfile, short *mask, short *masked_image, int nbv, float FWHM);
 extern void read_transpose_save(char *inputfile, char *outputfile, int nr, int v);
 extern void centerOfMass(short *im, int nx, int ny, int nz, float dx, float dy, float dz, float *CM);
+
 #endif
 
 extern float *smoothY(float *image, int nx, int ny, int nz, float sd);
 extern float *smoothZ(float *image, int nx, int ny, int nz, float sd);
+
 
 #endif

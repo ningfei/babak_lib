@@ -1,8 +1,6 @@
 #define _statistics
 
-// defines calloc() amongst other things
 #include <stdlib.h> 
-
 #include <math.h>
 #include <stdio.h>
 #include "babak_lib.h"
@@ -175,6 +173,25 @@ void scaleAbsToOne(double *y, int n, int p)
 	}
 }
 
+void scaleAbsToOne(float *y, int n, int p)
+{
+	float val;
+
+	if(n<=0 || p<=0) return;
+
+	for(int j=0; j<p; j++)
+	{
+		val = 0.0;
+
+		for(int i=0; i<n; i++)
+		if( fabsf(y[i*p +j]) > val ) val = fabsf(y[i*p + j]);
+
+		if(val != 0.0)
+		for(int i=0; i<n; i++)
+			y[i*p +j] = y[i*p +j ]/val;
+	}
+}
+
 // y is an n-vector.  This function operates on y.
 // Upon completion, y will be scaled such that
 // the maximum absolute value is 1.
@@ -202,6 +219,28 @@ double scaleAbsToOne(double *y, int n)
 void removeVectorMean(double *y, int n, int p)
 {
 	double mean;
+
+	if(n<=0 || p<=0) return;
+
+	for(int j=0; j<p; j++)
+	{
+		mean = 0.0;
+
+		for(int i=0; i<n; i++)
+			mean += y[i*p + j];
+
+		mean /= n;
+
+		for(int i=0; i<n; i++)
+			y[i*p +j] = y[i*p +j ] - mean;
+	}
+}
+
+// y is a (nxp) matrix.  This function operates on the columns of y.
+// Upon completion, each of the p columns of y will have zero mean.
+void removeVectorMean(float *y, int n, int p)
+{
+	float mean;
 
 	if(n<=0 || p<=0) return;
 

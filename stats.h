@@ -2,6 +2,23 @@
 
 #include <math.h>
 
+// Computes SSD
+template <class TYPE> double SSD(TYPE *x, int n)
+{
+   double sum=0.0;
+   double sum2=0.0;
+
+   if(n<=0) return(0.0);
+
+   for(int i=0; i<n; i++) 
+   {
+      sum += x[i];
+      sum2 += (x[i]*x[i]);
+   }
+
+   return(sum2 - sum*sum/n);
+}
+
 // Computes the sample mean of a set of n observations {x_1,x_2,...,x_n} from a given distribution. 
 template <class TYPE> double sample_mean(TYPE *x, int n)
 {

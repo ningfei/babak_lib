@@ -1,4 +1,4 @@
-#include <babak_lib.h>
+#include <string.h>
 
 // returns 1 if filename has a .hdr or .nii extnension, 0 otherwise
 int checkNiftiFileExtension(const char *filename)

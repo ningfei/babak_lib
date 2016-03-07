@@ -1,5 +1,3 @@
-#include <babak_lib.h>
-
 void compute_cm(short *image, int nx, int ny, int nz, float dx, float dy, float dz, float *x, float *y, float *z)
 {
    double dum;

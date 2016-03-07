@@ -20,13 +20,13 @@ int not_magical_nifti(const char *imagefilename)
    
    if(fp == NULL)
    {
-      printf("check_magic(): I could not open file: %s\n", imagefilename);
+      printf("not_magical_nifti(): could not open file %s\n", imagefilename);
       return(1);
    }
 
    if( fread(&hdr, sizeof(hdr), 1, fp)!=1 )
    {
-      printf("check_magic(): I could not read the NIFTI header from file: %s\n", imagefilename);
+      printf("not_magical_nifti(): could not read the NIFTI header from %s\n", imagefilename);
       fclose(fp);
       return(1);
    }
@@ -36,7 +36,7 @@ int not_magical_nifti(const char *imagefilename)
    if( hdr.magic[0]!='n' || (hdr.magic[1]!='+' && hdr.magic[1]!='i') || hdr.magic[2]!='1' )
    {
       printf("hdr.magic = %s\n", hdr.magic);
-      printf("check_magic(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n"); 
+      printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n"); 
       return(1);
    }
 
@@ -803,14 +803,37 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
 // extracts the "filename" from the full "path" string
 // Example: If path="/home/babak/images/test.nii", then filename="test".
 // Note that the extension is not included in the output filename
-void niftiFilename(char *filename, const char *path)
+// Returns 0 on failture and 1 on success
+int niftiFilename(char *filename, const char *path)
 {
    int i;
    int len;	// length of the path string
    int pos;	// position of the filename
-	
+
+   if( !checkNiftiFileExtension(path) )
+   {
+      printf("%s does not have a `.hdr' or `.nii' extension\n",path);
+      return(0);
+   }
+
+   if( not_magical_nifti(path) )
+   {
+      return(0);
+   }
+
    len=(int)strlen(path);
 
+   if(len<=0)
+   {
+      printf("Error: unexpected string length for the NIFTI image path, aborting ...\n");
+      return(0);
+   }
+
+   // finds the position of the first '/' character from right if any
+   // returns 0 of no '/' charater is there
+   // Examples: path=/sss/yyy would give pos=5
+   // path=sss would give pos=0
+   // path=/x/ would give pos=3
    i=len-1;
    while( i>=0 && path[i] != '/' )
    {
@@ -818,16 +841,49 @@ void niftiFilename(char *filename, const char *path)
    }
    pos=i+1;
 
+   // copy everything to the right of the first '/' character from right
+   // into filename
+   // Examples: path=/sss/yyy would give filename=yyy  len=3
+   // path=sss would give filename=sss  len=3
+   // path=/x/ would give filename=""  len=0
    strcpy(filename,path+pos);
+   len=(int)strlen(filename);
+
+   if(len<=0)
+   {
+      printf("Error: unexpected string length for the NIFTI image filename, aborting ...\n");
+      return(0);
+   }
+
+   if( len>=2 && filename[len-2]=='g' && filename[len-1]=='z' )
+   {
+      printf("Sorry but this program currently does not handle gzipped images, aborting ...\n");
+      return(0);
+   }
+
+   // finds the position of the first '.' character from right if any
+   // returns 0 of no '.' charater is there
+   // Examples: path=/sss.yyy would give pos=5
+   // path=sss would give pos=0
+   // path=/x. would give pos=3
+   i=len-1;
+   while( i>=0 && filename[i] != '.' )
+   {
+      i--;
+   }
+   pos=i+1;
+
+   if(pos>0) filename[pos-1]='\0';
 
    len=(int)strlen(filename);
 
-   if(len>=4 && filename[len-4]=='.')
+   if(len<=0)
    {
-      filename[len-4]='\0';
+      printf("Error: unexpected string length for the NIFTI image prefix, aborting ...\n");
+      return(0);
    }
 
-   return;
+   return(1);
 }
 
 short *readNiftiImage(const char *filename, DIM *dim, int flg)

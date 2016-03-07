@@ -1,4 +1,4 @@
-#include <babak_lib.h>
+#include <math.h>
 
 void standardize(float *x, int n)
 {

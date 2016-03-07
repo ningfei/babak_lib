@@ -46,7 +46,7 @@ float *gaussian_kernel(float sd, int *n)
    float nf;  /* normalization factor */
 
    // sd cannot be negative
-   if(sd<0.0)
+   if(sd<=0.0)
    {
       sd = 0.0;
       *n=1;

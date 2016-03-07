@@ -1,4 +1,5 @@
-#include <babak_lib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void memory_allocation_error(const char *s)
 {

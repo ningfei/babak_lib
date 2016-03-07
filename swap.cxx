@@ -1,11 +1,43 @@
 #define _swap
 
-#include <babak_lib.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 int bigEndian();
 void swapN(char *in, int N);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+struct model_file_hdr
+{
+   int nxHR;
+   int nzHR;
+   float dxHR;
+   int nxLR;
+   int nvol; // number of image volumes in the training set 
+   int RPtemplateradius;
+   int RPtemplateheight;
+   int RPtemplatesize;
+   int ACtemplateradius;
+   int ACtemplateheight;
+   int ACtemplatesize;
+   int PCtemplateradius;
+   int PCtemplateheight;
+   int PCtemplatesize;
+   int nangles; // number of angles, each template is rotated by this many angles and saved
+};
+
+typedef struct model_file_hdr model_file_hdr;
+
+struct model_file_tail
+{
+   float RPPCmean[2]; // RPPC is a vector on the MSP that points from the RP point to the PC.   RP------->PC
+   float parcomMean;
+   float percomMean; 
+   float RPmean[2];
+};
+
+typedef struct model_file_tail model_file_tail;
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 // Author: Babak A. Ardekani, Ph.D.

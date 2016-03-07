@@ -16,6 +16,7 @@ char opt_txt = YES;
 char opt_AC = YES;
 char opt_PC = YES;
 char opt_RP = YES;
+char opt_MSP = YES;
 
 static float Sff,Sf;
 static short *gimage;
@@ -1304,9 +1305,11 @@ short *thresholdImageOtsu(short *im, int nv, int *nbv)
 	return(msk);
 }
 
-int detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
+int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
 float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
 {
+   char modelfilepath[1024];
+
    // (x, y, z) image orientation vectors (row, column, and slice orientation)
    float xvec[3], yvec[3], zvec[3];
    float msp_normal_xyz[3]; // unit normal to the MSP in xyz coordinates
@@ -1362,20 +1365,14 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
 
    // If a specific model is not specified, 
    // then use the standard model (T1acpc.mdl) in ARTHOME directory. 
+
    if(modelfile[0]=='\0')
    {
-      char *ARTHOME;  // full path of the directory of the ART software
-
-      // get the value of the ARTHOME environment variable
-      // The getenv() function searches the environment list for a string that matches "ARTHOME".
-      // It returns a pointer to the value in the environment, or NULL if there is no match.
-      ARTHOME=getenv("ARTHOME");
-
-      if(ARTHOME == NULL)
-      {
-         errorMessage("Error in detect_AC_PC_MSP(): The ARTHOME environment variable is not defined.");
-      }
-      sprintf(modelfile,"%s/T1acpc.mdl",ARTHOME);
+      sprintf(modelfilepath,"%s/T1acpc.mdl",ARTHOME);
+   }
+   else
+   {
+      sprintf(modelfilepath,"%s/%s",ARTHOME,modelfile);
    }
 
    {
@@ -1384,10 +1381,10 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       // file pointer for opening the model file
       FILE *fp; 
 
-      fp = fopen(modelfile,"r"); // open setup file for reading
+      fp = fopen(modelfilepath,"r"); // open setup file for reading
       if( fp == NULL )
       {
-         printf("\nI cannot open the model file: %s.\n\n",modelfile);
+         printf("\nI cannot open the model file: %s.\n\n",modelfilepath);
          exit(1);
       }
 
@@ -1444,9 +1441,10 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       errorMessage("I could not read the input image in detect_AC_PC_MSP().");
    }
 
-   computeTmsp(orientation, volOrig, Orig, Tmsp);
-
-//printMatrix(Tmsp,4,4,"Tmsp:",NULL);
+   if(opt_MSP)
+   {
+      computeTmsp(orientation, volOrig, Orig, Tmsp);
+   }
 
    if(!opt_AC)
    {
@@ -1526,7 +1524,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       mask_LR = resizeXYZ(mask_HR, HR, LR);
       if(opt_RP)
       {
-         detectRP(RP1, RP2, modelfile, volumeMSP_LR, mask_LR, xRP, yRP, zRP, opt_T2);
+         detectRP(RP1, RP2, modelfilepath, volumeMSP_LR, mask_LR, xRP, yRP, zRP, opt_T2);
       }
       else
       {
@@ -1536,7 +1534,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       PCregion1=definePCregion(HR, RP1, mtail.RPPCmean, searchradius[2]); 
       if(opt_PC)
       {
-         PCccmax[0] = detectPC(PC1, modelfile, volumeMSP_HR, PCregion1, xPC, yPC, zPC, opt_T2);
+         PCccmax[0] = detectPC(PC1, modelfilepath, volumeMSP_HR, PCregion1, xPC, yPC, zPC, opt_T2);
       }
       else
       {
@@ -1547,7 +1545,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       ACregion1=defineACregion(HR, RP1, PC1, mtail.parcomMean, mtail.percomMean, searchradius[1]);
       if(opt_AC)
       {
-         ACccmax[0] = detectAC(AC1, modelfile, volumeMSP_HR, ACregion1, xAC, yAC, zAC, opt_T2);
+         ACccmax[0] = detectAC(AC1, modelfilepath, volumeMSP_HR, ACregion1, xAC, yAC, zAC, opt_T2);
       }
       else
       {
@@ -1558,7 +1556,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       PCregion2=definePCregion(HR, RP2, mtail.RPPCmean, searchradius[2]); 
       if(opt_PC)
       {
-         PCccmax[1] = detectPC(PC2, modelfile, volumeMSP_HR, PCregion2, xPC, yPC, zPC, opt_T2);
+         PCccmax[1] = detectPC(PC2, modelfilepath, volumeMSP_HR, PCregion2, xPC, yPC, zPC, opt_T2);
       }
       else
       {
@@ -1569,7 +1567,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       ACregion2=defineACregion(HR, RP2, PC2, mtail.parcomMean, mtail.percomMean, searchradius[1]);
       if(opt_AC)
       {
-         ACccmax[1] = detectAC(AC2, modelfile, volumeMSP_HR, ACregion2, xAC, yAC, zAC, opt_T2);
+         ACccmax[1] = detectAC(AC2, modelfilepath, volumeMSP_HR, ACregion2, xAC, yAC, zAC, opt_T2);
       }
       else
       {
@@ -2489,3 +2487,108 @@ void  backwardTCSAP(float *xvec, float *yvec, float *angle)
 
    return;
 }
+
+void update_qsform(nifti_1_header &hdr, const char *neworient)
+{
+   char oldorient[4];
+   float T[16];
+   mat44 R;
+
+   getNiftiImageOrientation(hdr, oldorient);
+
+   float T_neworient_to_PIL[16];
+   float T_PIL_to_oldorient[16];
+   float T_neworient_to_oldorient[16];
+   PILtransform(neworient, T_neworient_to_PIL);
+   inversePILtransform(oldorient, T_PIL_to_oldorient);
+   multi(T_PIL_to_oldorient, 4, 4, T_neworient_to_PIL, 4, 4, T_neworient_to_oldorient);
+
+   hdr.sform_code = NIFTI_XFORM_ALIGNED_ANAT;
+   T[0]=hdr.srow_x[0]; T[1]=hdr.srow_x[1]; T[2]=hdr.srow_x[2]; T[3]=hdr.srow_x[3];
+   T[4]=hdr.srow_y[0]; T[5]=hdr.srow_y[1]; T[6]=hdr.srow_y[2]; T[7]=hdr.srow_y[3];
+   T[8]=hdr.srow_z[0]; T[9]=hdr.srow_z[1]; T[10]=hdr.srow_z[2]; T[11]=hdr.srow_z[3];
+   T[12]=T[13]=T[14]=0.0; T[15]=1.0;
+
+   multi( T, 4, 4, T_neworient_to_oldorient, 4, 4, T);
+   hdr.srow_x[0]=T[0]; hdr.srow_x[1]=T[1]; hdr.srow_x[2]=T[2]; hdr.srow_x[3]=T[3];
+   hdr.srow_y[0]=T[4]; hdr.srow_y[1]=T[5]; hdr.srow_y[2]=T[6]; hdr.srow_y[3]=T[7];
+   hdr.srow_z[0]=T[8]; hdr.srow_z[1]=T[9]; hdr.srow_z[2]=T[10]; hdr.srow_z[3]=T[11];
+
+   hdr.qform_code = NIFTI_XFORM_ALIGNED_ANAT;
+   R.m[0][0]=T[0];  R.m[0][1]=T[1];  R.m[0][2]=T[2];  R.m[0][3]=T[3];
+   R.m[1][0]=T[4];  R.m[1][1]=T[5];  R.m[1][2]=T[6];  R.m[1][3]=T[7];
+   R.m[2][0]=T[8];  R.m[2][1]=T[9];  R.m[2][2]=T[10]; R.m[2][3]=T[11];
+   R.m[3][0]=T[12]; R.m[3][1]=T[13]; R.m[3][2]=T[14]; R.m[3][3]=T[15];
+
+   nifti_mat44_to_quatern(R,  &(hdr.quatern_b), &(hdr.quatern_c), &(hdr.quatern_d),
+   &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z), 
+   &(hdr.pixdim[1]), &(hdr.pixdim[2]), &(hdr.pixdim[3]), &(hdr.pixdim[0]));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Find the transformation (pilT) that takes the image to standard PIL orientation
+///////////////////////////////////////////////////////////////////////////////////////////////
+void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, float *PC, float *VSPS)
+{
+   float ac[4], pc[4];  
+   char orientation[4]="";
+   char modelfile[1024]="";
+
+   // searchradius[0] is for VSPS
+   // searchradius[1] is for AC
+   // searchradius[2] is for PC
+   double searchradius[3]; // in units of mm
+
+   // It is very important to have these initializations
+   searchradius[0] = 50.0;
+   searchradius[1] = 15.0;
+   searchradius[2] = 15.0;
+
+   float Tmsp[16]; // transforms image to MSP aligned PIL orientation
+
+   detect_AC_PC_MSP(imfile, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, 0, 0, 0);
+
+   // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
+   for(int i=0; i<4; i++) ac[i] = AC[i];
+   for(int i=0; i<4; i++) pc[i] = PC[i];
+   orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);
+
+   ACPCtransform(pilT, Tmsp, ac, pc, 0);  // 0 is equivalent to opt_M=YES
+}
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Find the transformation (pilT) that takes the image to standard PIL orientation
+///////////////////////////////////////////////////////////////////////////////////////////////
+void find_pil_transformation(char *imfile, DIM dim, float *pilT)
+{
+   float ac[4], pc[4];  
+   char orientation[4]="";
+   char modelfile[1024]="";
+
+   // searchradius[0] is for VSPS
+   // searchradius[1] is for AC
+   // searchradius[2] is for PC
+   double searchradius[3]; // in units of mm
+
+   // It is very important to have these initializations
+   searchradius[0] = 50.0;
+   searchradius[1] = 15.0;
+   searchradius[2] = 15.0;
+
+   float AC[4]={0.0, 0.0, 0.0, 1.0};
+   float PC[4]={0.0, 0.0, 0.0, 1.0};
+   float VSPS[4]={0.0, 0.0, 0.0, 1.0};
+
+   float Tmsp[16]; // transforms image to MSP aligned PIL orientation
+
+   detect_AC_PC_MSP(imfile, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, 0, 0, 0);
+
+   // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
+   for(int i=0; i<4; i++) ac[i] = AC[i];
+   for(int i=0; i<4; i++) pc[i] = PC[i];
+   orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);
+
+   ACPCtransform(pilT, Tmsp, ac, pc, 0);  // 0 is equivalent to opt_M=YES
+}
+///////////////////////////////////////////////////////////////////////////////////////////////
