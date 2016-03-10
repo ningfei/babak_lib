@@ -5,8 +5,8 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
-#include "spm_analyze.h"
-#include "babak_lib.h"
+#include "include/spm_analyze.h"
+#include "include/babak_lib.h"
 
 char *read_image(char *file,int n);
 void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);

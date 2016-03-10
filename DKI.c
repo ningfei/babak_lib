@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 #define _DKI
 

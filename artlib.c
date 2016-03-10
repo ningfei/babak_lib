@@ -3,7 +3,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
-#include <babak_lib.h>
+#include "include/babak_lib.h"
 #include <nifti1_io.h>
 
 #define _artlib

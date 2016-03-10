@@ -1,4 +1,4 @@
-#include "niftiimage.h"
+#include "include/niftiimage.h"
 #include <stdlib.h>
 #include <stdio.h>
 

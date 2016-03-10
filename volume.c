@@ -8,10 +8,10 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <math.h>
-#include "ge.h"
-#include "volume.h"
-#include "babak_lib.h"
-#include "analyze.h"
+#include "include/ge.h"
+#include "include/volume.h"
+#include "include/babak_lib.h"
+#include "include/analyze.h"
 
 static void get_directory(char *, char *);
 

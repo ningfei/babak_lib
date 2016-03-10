@@ -8,10 +8,10 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
-#include "spm_analyze.h"
-#include "niftiimage.h"
-#include <babak_lib.h>
-#include "smooth.h"
+#include "include/spm_analyze.h"
+#include "include/niftiimage.h"
+#include "include/babak_lib.h"
+#include "include/smooth.h"
 
 int ccsize(short *im, int nv);
 void checkDimension(int N, char **imagefile, int nx, int ny, int nz);

@@ -4,9 +4,9 @@
 #include <stdlib.h>
 
 #include <f2c.h>
-#include <clapack.h>
+#include "include/clapack.h"
 
-#include <babak_lib.h>
+#include "include/babak_lib.h"
 
 void solveATxEqB(float *A, int nr, int nc, float *B);
 

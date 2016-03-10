@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "babak_lib.h"
-#include "smooth.h"
+#include "include/babak_lib.h"
+#include "include/smooth.h"
 
 // NOTE: The standard deviation (SD) in all these functions is in units of pixels
 

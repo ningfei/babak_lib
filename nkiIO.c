@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "nki.h"
-#include "babak_lib.h"
+#include "include/nki.h"
+#include "include/babak_lib.h"
 
 #define _nkiIO
 

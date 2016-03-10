@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 extern float conv_pnt_sk(short *x,int sx,float *h,int sh,int i0);
 extern float conv_pnt_sk(float *x,int sx,float *h,int sh,int i0);

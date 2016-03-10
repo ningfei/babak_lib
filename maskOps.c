@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 char *find_foreground_mask(short *im, int nv, int nb, int nclass, int niter, short *thresh)

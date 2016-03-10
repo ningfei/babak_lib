@@ -3,7 +3,7 @@
 #include <stdlib.h> 
 #include <math.h>
 #include <stdio.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 //////////////////////////////////////////////////////////////////
 float imageMean(short *im, short *msk, int nv)

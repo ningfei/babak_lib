@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 
 // X is an Nxp matrix

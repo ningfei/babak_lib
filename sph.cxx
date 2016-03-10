@@ -1,5 +1,5 @@
-#include <babak_lib.h>
-#include "sph.h"
+#include "include/babak_lib.h"
+#include "include/sph.h"
 #include <math.h>
 #include <stdlib.h>
 

@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 // Note: Wx, Wy, and Wz can be 0
 // Replaces image_in with it's median filtered version

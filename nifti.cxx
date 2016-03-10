@@ -4,7 +4,7 @@
 #include <string.h>
 #include <nifti1_io.h>
 
-#include "babak_lib.h"
+#include "include/babak_lib.h"
 
 void swapniftiheader(nifti_1_header *hdr);
 
