@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#include "babak_lib.h"
+#include "../include/babak_lib.h"
 #include <f2c.h>
 
 

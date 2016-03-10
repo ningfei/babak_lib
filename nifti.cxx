@@ -1,14 +1,65 @@
-#define _nifti
-
 #include <stdio.h>
 #include <string.h>
 #include <nifti1_io.h>
-
 #include "include/babak_lib.h"
 
-void swapniftiheader(nifti_1_header *hdr);
+//////////////////////////////////////////////////////////////////
+nifti_1_header read_NIFTI_hdr(const char *filename)
+{
+   FILE *fp;
+   nifti_1_header hdr;
 
-nifti_1_header read_NIFTI_hdr(const char *filename);
+   fp = fopen(filename,"r");
+
+   if(fp==NULL)
+   {
+      printf("read_NIFTI_hdr(): I could not open file: %s\n", filename);
+      return(hdr);
+   }
+
+   if( fread(&hdr, sizeof(hdr), 1, fp)!=1 )
+   {
+      printf("read_NIFTI_hdr(): I could not read the NIFTI header from file: %s\n", filename);
+      fclose(fp);
+      return(hdr);
+   }
+
+   if(hdr.dim[0]<1 || hdr.dim[0]>7)
+   {
+      swapniftiheader(&hdr);
+   }
+
+   return(hdr);
+}
+
+// returns 0 on failure
+int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr)
+{
+   FILE *fp;
+
+   fp = fopen(filename,"r");
+
+   if(fp==NULL)
+   {
+      printf("read_NIFTI_hdr(): I could not open file: %s\n", filename);
+      return(0);
+   }
+
+   if( fread(hdr, sizeof(nifti_1_header), 1, fp)!=1 )
+   {
+      printf("read_NIFTI_hdr(): I could not read the NIFTI header from file: %s\n", filename);
+      fclose(fp);
+      return(0);
+   }
+
+   if(hdr->dim[0]<1 || hdr->dim[0]>7)
+   {
+      swapniftiheader(hdr);
+   }
+
+   return(1);
+}
+//////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////
 int not_magical_nifti(const char *imagefilename)
@@ -326,63 +377,6 @@ void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr)
    fclose(fp);
 }
 
-//////////////////////////////////////////////////////////////////
-nifti_1_header read_NIFTI_hdr(const char *filename)
-{
-   FILE *fp;
-   nifti_1_header hdr;
-
-   fp = fopen(filename,"r");
-
-   if(fp==NULL)
-   {
-      printf("read_NIFTI_hdr(): I could not open file: %s\n", filename);
-      return(hdr);
-   }
-
-   if( fread(&hdr, sizeof(hdr), 1, fp)!=1 )
-   {
-      printf("read_NIFTI_hdr(): I could not read the NIFTI header from file: %s\n", filename);
-      fclose(fp);
-      return(hdr);
-   }
-
-   if(hdr.dim[0]<1 || hdr.dim[0]>7)
-   {
-      swapniftiheader(&hdr);
-   }
-
-   return(hdr);
-}
-
-// returns 0 on failure
-int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr)
-{
-   FILE *fp;
-
-   fp = fopen(filename,"r");
-
-   if(fp==NULL)
-   {
-      printf("read_NIFTI_hdr(): I could not open file: %s\n", filename);
-      return(0);
-   }
-
-   if( fread(hdr, sizeof(nifti_1_header), 1, fp)!=1 )
-   {
-      printf("read_NIFTI_hdr(): I could not read the NIFTI header from file: %s\n", filename);
-      fclose(fp);
-      return(0);
-   }
-
-   if(hdr->dim[0]<1 || hdr->dim[0]>7)
-   {
-      swapniftiheader(hdr);
-   }
-
-   return(1);
-}
-//////////////////////////////////////////////////////////////////
 
 nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, char **extension)
 {

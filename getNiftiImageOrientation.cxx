@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <nifti1.h>
 #include <nifti1_io.h>
-
-extern char directionCode(float x, float y, float z);
-extern void swapByteOrder(char *in, int N);
-extern void errorMessage(const char *s);
-extern int checkNiftiFileExtension(const char *filename);
-extern void file_open_error(const char *s);
+#include "include/babak_lib.h"
 
 void getNiftiImageOrientation(const char *filename, char *orientation)
 {

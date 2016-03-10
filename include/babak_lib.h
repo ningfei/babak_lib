@@ -1,16 +1,7 @@
 #ifndef _babak_lib_h
 #define _babak_lib_h
 
-#include "minmax.h"
-#include "stats.h"
-#include "nki.h"
-#include "permutation.h"
-#include "volume.h"
-#include <nifti1.h>
 #include <nifti1_io.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
 
 typedef unsigned short uint2;
 typedef unsigned int uint4;
@@ -18,7 +9,6 @@ typedef short int2;
 typedef int int4;
 typedef float float4;
 typedef double float8;
-
 
 #ifndef _getARTHOME
 extern char *ARTHOME;
@@ -204,6 +194,11 @@ struct dicominfo
 typedef struct dicominfo dicominfo;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+// The following functions are defined in errorMessage.cxx
+void memory_allocation_error(const char *variablename);
+void file_open_error(const char *filename);
+void errorMessage(const char *message);
+
 void set_dim(DIM &dim, int nx, int ny, int nz, float dx, float dy, float dz);
 void set_dim(DIM &dim, nifti_1_header hdr);
 void set_dim(DIM &dim, nifti_1_header *hdr);
@@ -218,9 +213,6 @@ char directionCode(float x, float y, float z);
 void getNiftiImageOrientation(const char *filename, char *orientation);
 void getNiftiImageOrientation(nifti_1_header hdr, char *orientation);
 int checkNiftiFileExtension(const char *filename);
-void memory_allocation_error(const char *s);
-void file_open_error(const char *s);
-void errorMessage(const char *s);
 int isOrientationCodeValid(const char *orientCode);
 void swap_model_file_hdr(model_file_hdr *hdr);
 void swap_model_file_tail(model_file_tail *tail);
@@ -430,12 +422,6 @@ extern int readImageSliceThickness(const char *file, float *dz, int np);
 
 #endif
 
-#ifndef _nkiIO
-extern int isNKI(char *file);
-extern int saveNKI(char *filename, nki image);
-extern int readNKI(char *filename, nki *image);
-#endif
-
 #ifndef _subsets
 extern int *subsets(int N, int M);
 extern int binomialCoeff(int N,int M);
@@ -590,70 +576,66 @@ extern void multi(float *A,int iA,int jA, double *B,int iB,int jB,double *C);
 extern void multi(double *A,int iA,int jA, float *B,int iB,int jB,float *C);
 #endif
 
-#ifndef _reslice
-
+//////////////////////////////////////////////////////////////////////////////
+// The following are define in reslice.c
 #define LIN 1
 #define NEARN 2
 #define SINC 3
 #define CUBICSPLINE 4	
 
-extern short *resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method);
+void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method);
 
-extern short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_method);
+short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_method);
 
-extern float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
 
-extern float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *xjit, float *yjit);
 
-extern float partial_var(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float mu);
+float partial_var(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float mu);
 
 // you must initialize drand48 before using this function
-extern unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int ny, int nz);
+unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int ny, int nz);
 
-extern unsigned char nearestNeighbor(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-extern float nearestNeighbor(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
-extern short nearestNeighbor(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
+unsigned char nearestNeighbor(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
+float nearestNeighbor(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
+short nearestNeighbor(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
 
+char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
+short *resliceImage(short *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
+short *resliceImage(float *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
 
-extern char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
-extern short *resliceImage(short *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
-extern short *resliceImage(float *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
-
-extern short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interpolation_method);
 
-extern unsigned char *resliceImage(unsigned char *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+unsigned char *resliceImage(unsigned char *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
 
-extern float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *w);
 
-extern short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
-extern unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-extern short linearInterpolator(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
-extern float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
-extern float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np, float *w);
-extern unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float *w);
+unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
+short linearInterpolator(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
+float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
+float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np, float *w);
+unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float *w);
 
-
-extern short *computeReslicedImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+short *computeReslicedImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
-extern float *computeReslicedImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+float *computeReslicedImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
-extern short *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1,
+short *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp);
 
-extern short *computeReslicedImage(short *im1, int nx1, int ny1, float dx1, float dy1,
+short *computeReslicedImage(short *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp);
-
-
-#endif
+//////////////////////////////////////////////////////////////////////////////
 
 #ifndef _resize
 extern short *resizeXYZ(short *image1,  DIM dim1, DIM dim2);
@@ -693,38 +675,39 @@ struct option
 extern int getoption(int argc, char **argv, struct option *options);
 #endif
 
-#ifndef _analyzeio
-extern int extension_is_hdr(const char *filename);
-extern void read_analyze_image(const char *filename, short *im);
-extern char *read_analyze_image(const char *filename, DIM *dim, int *type, int v);
-extern float read_dx(const char *hdrfile);
-extern float read_dy(const char *hdrfile);
-extern float read_dz(const char *hdrfile);
-extern int read_nt(const char *hdrfile);
-extern int read_nx(const char *hdrfile);
-extern int read_ny(const char *hdrfile);
-extern int read_nz(const char *hdrfile);
-extern int read_datatype(char *hdrfile);
-extern char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
-extern char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, int *type, int v);
-extern char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type, int v);
-extern char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type);
-extern char *read_image(char *file,int n);
-extern void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);
-extern void read_analyze_hdr(struct dsr *hdr, char *filename);
-extern void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, short *dataType);
-extern void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType);
-extern void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType, int v);
-extern void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, short *dataType, int v);
-extern void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int dt, float dx, float dy, float dz);
-extern void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int nt, int datatype, float dx, float dy, float dz);
-extern void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz); 
-extern void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz); 
-extern void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz); 
-extern void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz, int v); 
-extern void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
-extern void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
-#endif
+////////////////////////////////////////////////////////////////////////////////////////
+// The following functions are defined in analyzeio.c
+int extension_is_hdr(const char *filename);
+void read_analyze_image(const char *filename, short *im);
+char *read_analyze_image(const char *filename, DIM *dim, int *type, int v);
+float read_dx(const char *hdrfile);
+float read_dy(const char *hdrfile);
+float read_dz(const char *hdrfile);
+int read_nt(const char *hdrfile);
+int read_nx(const char *hdrfile);
+int read_ny(const char *hdrfile);
+int read_nz(const char *hdrfile);
+int read_datatype(char *hdrfile);
+char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
+char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, int *type, int v);
+char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type, int v);
+char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type);
+char *read_image(char *file,int n);
+void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);
+void read_analyze_hdr(struct dsr *hdr, char *filename);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, short *dataType);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType, int v);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, short *dataType, int v);
+void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int dt, float dx, float dy, float dz);
+void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int nt, int datatype, float dx, float dy, float dz);
+void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz); 
+void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz); 
+void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz); 
+void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz, int v); 
+void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
+void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
+////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef _swap
 extern int bigEndian();
@@ -775,29 +758,30 @@ extern void mat_trans_mat(float *A, int Ar, int Ac, float *B, int Bc, float *C);
 extern void mat_trans_mat(double *A, int Ar, int Ac, double *B, int Bc, double *C);
 #endif
 
-#ifndef _nifti
-extern int not_magical_nifti(const char *imagefilename);
-extern char *read_nifti_image(const char *filename, nifti_1_header *hdr);
-extern int same_nifti_image_size(int N, char **imagefile, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
-extern void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *hdr);
-extern void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr);
-extern void print_NIFTI_hdr(const char *filename);
-extern void print_NIFTI_hdr(nifti_1_header hdr);
-extern nifti_1_header read_NIFTI_hdr(const char *filename);
-extern int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr);
-extern nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, char **extension);
-extern void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *hdr);
-extern void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr);
-extern void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr);
-extern void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr);
+///////////////////////////////////////////////////////////////
+// The following functions are defined in nifti.cxx
+int not_magical_nifti(const char *imagefilename);
+char *read_nifti_image(const char *filename, nifti_1_header *hdr);
+int same_nifti_image_size(int N, char **imagefile, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
+void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *hdr);
+void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr);
+void print_NIFTI_hdr(const char *filename);
+void print_NIFTI_hdr(nifti_1_header hdr);
+nifti_1_header read_NIFTI_hdr(const char *filename);
+int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr);
+nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, char **extension);
+void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *hdr);
+void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr);
+void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr);
+void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr);
 
 // returns the orientations vectors xvec, yvec, and zvec in NIFTI's RAS system
-extern void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yvec, float *zvec);
+void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yvec, float *zvec);
 
-extern int  niftiFilename(char *filename, const char *path);
-extern void swapniftiheader(nifti_1_header *hdr);
-extern short *readNiftiImage(const char *filename, DIM *dim, int flg);
-#endif
+int  niftiFilename(char *filename, const char *path);
+void swapniftiheader(nifti_1_header *hdr);
+short *readNiftiImage(const char *filename, DIM *dim, int flg);
+///////////////////////////////////////////////////////////////
 
 
 #ifndef _utils

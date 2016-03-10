@@ -1,35 +1,9 @@
-// Last edited 10/31/02 (LIJ)
-
-#define _analyzeio
-
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
 #include "include/spm_analyze.h"
 #include "include/babak_lib.h"
-
-char *read_image(char *file,int n);
-void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);
-void read_analyze_hdr(struct dsr *hdr, char *filename);
-
-char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
-char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type);
-char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int *type,int v);
-char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, int *type,int v);
-
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, short *dataType);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType, int v);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, short *dataType, int v);
-
-void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int datatype, float dx, float dy, float dz);
-void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int nt, int datatype, float dx, float dy, float dz);
-void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz);
-void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz);
-void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz);
-void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz, int v);
-void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz, int v);
-void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz, int v);
+#include "include/minmax.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 

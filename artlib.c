@@ -4,7 +4,8 @@
 #include <ctype.h>
 #include <string.h>
 #include "include/babak_lib.h"
-#include <nifti1_io.h>
+#include "include/minmax.h"
+#include "include/stats.h"
 
 #define _artlib
 

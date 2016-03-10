@@ -41,4 +41,15 @@ struct nki
 
 typedef struct nki nki;
 
+/*******************Function prototypes**************************************/
+// Returns 1 if file can be read and is NKI format, 0 otherwise
+int isNKI(char *file);
+
+// returns 0 on failure, 1 on success
+int saveNKI(char *filename, nki image);
+
+// returns 0 on failure, 1 on success
+int readNKI(char *filename, nki *image);
+/****************************************************************************/
+
 #endif

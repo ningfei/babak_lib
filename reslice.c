@@ -1,34 +1,9 @@
-#define _reslice
-
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/babak_lib.h"
 
-#define LIN 1
-#define NEARN 2
-#define SINC 3
-#define CUBICSPLINE 4
-
 static float v1,v2,v3,v4;
 static float w1,w2;
-
-unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-short linearInterpolator(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
-float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
-
-// warning: T will be altered.
-float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
-
-char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
-short *resliceImage(short *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
-short *resliceImage(float *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
-
-short nearestNeighbor	(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
-unsigned char nearestNeighbor	(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-
-float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np, float *w);
-unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float *w);
 
 short linearInterpolator(float x, float y, short *array, int nx, int ny);
 short linearInterpolator(float x, float y, float *array, int nx, int ny);

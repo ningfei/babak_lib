@@ -2,6 +2,7 @@
 #include "include/sph.h"
 #include <ctype.h>
 #include "include/landmarks.h"
+#include "include/stats.h"
 
 void transform_P(float *P, int nl, float *T)
 {

@@ -22,12 +22,12 @@ void compute_cm(short *image, int nx, int ny, int nz, float dx, float dy, float 
    *y = *y/dum;
    *z = *z/dum;
 
-/* transfer origin to the volume center */
+   // transfer origin to the volume center 
    *x -= (nx-1.0)/2.0;
    *y -= (ny-1.0)/2.0;
    *z -= (nz-1.0)/2.0;
 
-/* convert to mm */
+   // convert to mm 
    *x *= dx;
    *y *= dy;
    *z *= dz;
