@@ -2,9 +2,6 @@
 #include <stdio.h>
 #include "include/babak_lib.h"
 
-static float v1,v2,v3,v4;
-static float w1,w2;
-
 short linearInterpolator(float x, float y, short *array, int nx, int ny);
 short linearInterpolator(float x, float y, float *array, int nx, int ny);
 char linearInterpolator(float x, float y, char *array, int nx, int ny);
@@ -603,7 +600,9 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 {
 	int     i,j,k,n;
 	float   u,uu;
-	
+   float v1,v2,v3,v4;
+   float w1,w2;
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -655,6 +654,8 @@ short linearInterpolator(float x, float y, float z, short *array, int nx, int ny
 {
 	int     i,j,k,n;
 	float   u,uu;
+   float v1,v2,v3,v4;
+   float w1,w2;
 	
 	i=(int)(x);
 	j=(int)(y);
@@ -709,6 +710,8 @@ float linearInterpolator(float x, float y, float z, float *array, int nx, int ny
 	float   u,uu;
 	float   v,vv;
 	float   s,ss;
+   float v1,v2,v3,v4;
+   float w1,w2;
 	
 	i=(int)(x);
 	j=(int)(y);
@@ -770,6 +773,8 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 	float   u,uu;
 	float   v,vv;
 	float   s,ss;
+   float v1,v2,v3,v4;
+   float w1,w2;
 	
 	i=(int)(x);
 	j=(int)(y);
@@ -1013,6 +1018,7 @@ char linearInterpolator(float x, float y, char *array, int nx, int ny)
 {
 	int     i,j,n;
 	float   u,uu;
+   float v1,v2;
 	
 	i=(int)(x);
 	j=(int)(y);
