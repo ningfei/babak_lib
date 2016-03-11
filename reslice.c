@@ -1,10 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/babak_lib.h"
-
-short linearInterpolator(float x, float y, short *array, int nx, int ny);
-short linearInterpolator(float x, float y, float *array, int nx, int ny);
-char linearInterpolator(float x, float y, char *array, int nx, int ny);
+#include "include/linearInterpolator.h"
 
 char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {
@@ -45,7 +42,7 @@ char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, i
 			x = (x+Oxc)/Odx;
 			y = (y+Oyc)/Ody;
 
-	    	trg[q++]=linearInterpolator(x,y,obj,Onx,Ony);
+	    	trg[q++]=(char)(linearInterpolator(x,y,obj,Onx,Ony)+0.5);
 		}
 	}
 
@@ -92,7 +89,7 @@ short *resliceImage(short *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 			x = (x+Oxc)/Odx;
 			y = (y+Oyc)/Ody;
 
-	    	trg[q++]=linearInterpolator(x,y,obj,Onx,Ony);
+	    	trg[q++]=(short)(linearInterpolator(x,y,obj,Onx,Ony)+0.5);
 		}
 	}
 
@@ -138,7 +135,7 @@ short *resliceImage(float *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 			x = (x+Oxc)/Odx;
 			y = (y+Oyc)/Ody;
 
-	    	trg[q++]=linearInterpolator(x,y,obj,Onx,Ony);
+	    	trg[q++]=(short)(linearInterpolator(x,y,obj,Onx,Ony)+0.5);
 		}
 	}
 
@@ -830,62 +827,6 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 	return(0);
 }
 
-/*
- * old version before optimization
-float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np)
-{
-   int     i,j,k,n;
-   float   v1,v2,v3,v4,w1,w2;
-   float   u,uu;
-
-   i=(int)(x);
-   j=(int)(y);
-   k=(int)(z);
-
-   if(i<0 || i>(nx-2) || j<0 || j>(ny-2) )
-   {
-      return(0.0);
-   }
-
-   if( k>=0 && k<(nz-1) )
-   {
-      u = x - i; if(u<0.0) u=0.0;
-      uu = 1.0-u;
-
-      n= k*np + j*nx + i;
-
-      v1 = array[n]*uu + array[n+1]*u;
-      v2 = array[n+nx]*uu + array[n+nx+1]*u;
-      v3 = array[n+np]*uu + array[n+np+1]*u;
-      v4 = array[n+np+nx]*uu + array[n+np+nx+1]*u;
-
-      u = y - j; if(u<0.0) u=0.0;
-      uu = 1.0-u;
-      w1 = v1*uu + v2*u;
-      w2 = v3*uu + v4*u;
-
-      u = z - k; if(u<0.0) u=0.0;
-      return( w1*(1.0-u) + w2*u );
-   }
-   else if( k==(nz-1) )
-   {
-      u = x - i; if(u<0.0) u=0.0;
-      uu = 1.0-u;
-
-      n=k*np + j*nx +i;
-      v1 = array[n]*uu + array[n+1]*u;
-
-      n=k*np + (j+1)*nx +i;
-      v2 = array[n]*uu + array[n+1]*u;
-
-      u = y - j; if(u<0.0) u=0.0;
-      return( v1*(1.0-u) + v2*u );
-   }
-
-   return(0.0);
-}
-*/
-
 float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np)
 {
    int n_and_nx;  // n + nx
@@ -958,84 +899,6 @@ float linearInterpolator(float x, float y, float z, float *array, int nx, int ny
    }
 
    return(0.0);
-}
-
-short linearInterpolator(float x, float y, short *array, int nx, int ny)
-{
-   int i,j,n;
-   float u,uu;
-   float v1, v2;
-	
-   i=(int)(x);
-   j=(int)(y);
-
-   if(i<0 || i>(nx-2) || j<0 || j>(ny-2) ) 
-   {
-      return(0);
-   }
-
-   u = x - i; if(u<0.0) u=0.0;
-   uu = 1.0-u;
-
-   n= j*nx +i;
-   v1 = array[n]*uu + array[n+1]*u;
-   v2 = array[n+nx]*uu + array[n+nx+1]*u;
-
-   u = y - j; if(u<0.0) u=0.0;
-   uu = 1.0-u;
-
-   return( (short)( v1*uu + v2*u + 0.5 ) );
-}
-
-short linearInterpolator(float x, float y, float *array, int nx, int ny)
-{
-   int     i,j,n;
-   float   u,uu;
-   float v1, v2;
-	
-   i=(int)(x);
-   j=(int)(y);
-
-   if(i<0 || i>(nx-2) || j<0 || j>(ny-2) ) 
-   {
-      return(0);
-   }
-
-   u = x - i; if(u<0.0) u=0.0;
-   uu = 1.0-u;
-
-   n= j*nx +i;
-   v1 = array[n]*uu + array[n+1]*u;
-   v2 = array[n+nx]*uu + array[n+nx+1]*u;
-
-   u = y - j; if(u<0.0) u=0.0;
-   uu = 1.0-u;
-
-   return( (short)( v1*uu + v2*u + 0.5 ) );
-}
-
-char linearInterpolator(float x, float y, char *array, int nx, int ny)
-{
-	int     i,j,n;
-	float   u,uu;
-   float v1,v2;
-	
-	i=(int)(x);
-	j=(int)(y);
-
-	if(i<0 || i>(nx-2) || j<0 || j>(ny-2) ) return(0);
-
-	u = x - i; if(u<0.0) u=0.0;
-	uu = 1.0-u;
-
-	n= j*nx +i;
-	v1 = array[n]*uu + array[n+1]*u;
-	v2 = array[n+nx]*uu + array[n+nx+1]*u;
-
-	u = y - j; if(u<0.0) u=0.0;
-	uu = 1.0-u;
-
-	return( (char)( v1*uu + v2*u + 0.5 ) );
 }
 
 short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
@@ -1185,7 +1048,7 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 				y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
         		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
 
-		    	im2[q++]=linearInterpolator(x,y,im1,nx1,ny1);
+		    	im2[q++]=(short)(linearInterpolator(x,y,im1,nx1,ny1)+0.5);
 		}
 	}
 
@@ -1217,7 +1080,7 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 				y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
         		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
 
-		    	im2[q++]=linearInterpolator(x,y,im1,nx1,ny1);
+		    	im2[q++]=(short)(linearInterpolator(x,y,im1,nx1,ny1)+0.5);
 		}
 	}
 
