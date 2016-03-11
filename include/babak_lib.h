@@ -227,8 +227,6 @@ float4 *T_oldorient_to_neworient);
 void rotate(float4 *T, float4 alpha, float4 x, float4 y, float4 z);
 float4 *rotate(float4 alpha, float4 x, float4 y, float4 z);
 void rotate(float4 *T, float4 CosAlpha, float4 SinAlpha, float4 x, float4 y, float4 z);
-void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high);	
-void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high, float4 percent);
 void compute_cm(int2 *image, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *x, float4 *y, float4 *z);
 void standardize(float4 *x, int4 n);
 void irodrigues_formula(float4 *R, float4 *w, float4 &theta);
@@ -236,6 +234,12 @@ void rodrigues_formula(float4 *R, float4 *w, float4 theta);
 void rodrigues_formula4x4(float4 *R, float4 *w, float4 theta);
 void se3_to_SE3(float4 *M, float4 *w, float4 *v, float4 theta);
 void SE3_to_se3(float4 *M, float4 *w, float4 *v, float4 &theta);
+
+////////////////////////////////////////////////////////////////////////////////
+//defined in setLowHigh.cxx
+void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high);	
+void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high, float4 percent);
+////////////////////////////////////////////////////////////////////////////////
 
 #ifndef _singular_value_decomposition
 extern int4 Singular_Value_Decomposition(float8* A, int4 nrows, int4 ncols, float8* U, 
