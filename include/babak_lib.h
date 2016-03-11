@@ -187,7 +187,7 @@ struct dicominfo
    char flipAngle[17];
    char bandwidth[17];
    char freq[17];
-   unsigned short acquisitionMatrix[4];
+   uint2 acquisitionMatrix[4];
    char phaseFOV[17];
    char dum[3];
 };
@@ -220,16 +220,16 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *T);
 void standard_PIL_transformation(const char *imfile, const char *lmfile, int verbose, float *TPIL);
 void PILtransform(const char *orientCode, float *orientMat);
 void inversePILtransform(const char *orientCode, float *orientMat);
-short *reorientVolume(short *v1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, float *orientMat,
+int2 *reorientVolume(int2 *v1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, float *orientMat,
 int &nx2, int &ny2, int &nz2, float &dx2, float &dy2, float &dz2);
-short *reorientVolume(short *input_image, nifti_1_header oldhdr, const char *neworient, nifti_1_header &newhdr, 
+int2 *reorientVolume(int2 *input_image, nifti_1_header oldhdr, const char *neworient, nifti_1_header &newhdr, 
 float *T_oldorient_to_neworient);
 void rotate(float *T, float alpha, float x, float y, float z);
 float *rotate(float alpha, float x, float y, float z);
 void rotate(float *T, float CosAlpha, float SinAlpha, float x, float y, float z);
-void setLowHigh(short *image, int nv, int *low, int *high);	
-void setLowHigh(short *image, int nv, int *low, int *high, float percent);
-void compute_cm(short *image, int nx, int ny, int nz, float dx, float dy, float dz, float *x, float *y, float *z);
+void setLowHigh(int2 *image, int nv, int *low, int *high);	
+void setLowHigh(int2 *image, int nv, int *low, int *high, float percent);
+void compute_cm(int2 *image, int nx, int ny, int nz, float dx, float dy, float dz, float *x, float *y, float *z);
 void standardize(float *x, int n);
 void irodrigues_formula(float *R, float *w, float &theta);
 void rodrigues_formula(float *R, float *w, float theta);
@@ -284,21 +284,21 @@ extern void forwardTCSAP(float *xvec, float *yvec, float *zvec, float *TLHC, flo
 extern void backwardTCSAP(float *xvec, float *yvec, float *angle);
 extern void orig_ijk_to_pil_xyz(float *Tmsp, DIM orig_dim, float *AC, float *PC);
 extern void initialAC(float Ax, float Ay, float Bx, float By, float *Cx, float *Cy, float parcomMean, float percomMean);
-extern short *thresholdImageOtsu(short *im, int nv, int *nbv);
-extern void defineTemplate(int r, int h, short *x, short *y, short *z);
+extern int2 *thresholdImageOtsu(int2 *im, int nv, int *nbv);
+extern void defineTemplate(int r, int h, int2 *x, int2 *y, int2 *z);
 extern char *defineACregion(DIM dim, float *RP, float *PC, float parcomMean, float percomMean, double ACsr);
 extern char *definePCregion(DIM HR, float *RP, float *RPPCmean, double PCsr);
-extern char *expandMask(short *mask_HR, DIM HR, float *RPmean, double RPsr);
+extern char *expandMask(int2 *mask_HR, DIM HR, float *RPmean, double RPsr);
 extern void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg);
 extern void compute_MSP_parameters_from_Tmsp(float *Tmsp, float *n, float *d);
 extern int detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
 float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2);
-extern float optimizeNormalVector(short *image,DIM dim,float *A, float *B, float *C);
-extern float reflection_cross_correlation2(short *image, DIM dim, float A, float B, float C);
-extern float reflection_cross_correlation(short *image, DIM dim, float a, float b, float c, float d);
-extern void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C);
-extern float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, float *A, float *B, float *C);
-extern void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp);
+extern float optimizeNormalVector(int2 *image,DIM dim,float *A, float *B, float *C);
+extern float reflection_cross_correlation2(int2 *image, DIM dim, float A, float B, float C);
+extern float reflection_cross_correlation(int2 *image, DIM dim, float a, float b, float c, float d);
+extern void findInitialNormalVector(int2 *image, DIM dim, float *A, float *B,float *C);
+extern float msp(int2 *im_in, int nx, int ny, int nz, float dx, float dy, float dz, float *A, float *B, float *C);
+extern void computeTmsp(char *orientation, int2 *volOrig, DIM dim, float *Tmsp);
 extern int save_as_ppm(const char *filename, int nx, int ny, char *R, char *G, char *B);
 extern int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned char *G, unsigned char *B);
 extern void combine_warps_and_trans(int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T);
@@ -310,13 +310,13 @@ extern void k_subset ( int k, double rank, int a[] );
 #endif
 
 #ifndef _maskOps
-extern char *find_foreground_mask(short *im, int nv, int nb, int nclass, int niter, short *thresh);
-extern short *mask_image(short *im, char *mask, int nv, int *nbv_out);
+extern char *find_foreground_mask(int2 *im, int nv, int nb, int nclass, int niter, int2 *thresh);
+extern int2 *mask_image(int2 *im, char *mask, int nv, int *nbv_out);
 extern void cc_filter(char *mask, int nx, int ny, int nz);
 #endif
 
 #ifndef _EMFIT
-extern void EMFIT1d(double *hist, double *fit, short *label, int nb, double *mean, double *var, double *p, int nclass, int niter);
+extern void EMFIT1d(double *hist, double *fit, int2 *label, int nb, double *mean, double *var, double *p, int nclass, int niter);
 #endif
 
 #ifndef _max_cc
@@ -331,7 +331,7 @@ extern void Connected_Component_location(char *im, int nx, int ny, int nz, int *
 #endif
 
 #ifndef _statistics
-extern float imageMean(short *im, short *msk, int nv);
+extern float imageMean(int2 *im, int2 *msk, int nv);
 extern double one_sample_t(double *x, int n);
 
 extern float median(float *x, char *mask, int n);
@@ -347,13 +347,13 @@ extern double removeVectorMean(float *y, int n);
 extern double removeVectorMean(double *y, int n);
 extern double removeVectorMean(float *x, float *y, int n);
 extern double removeVectorMean(double *x, double *y, int n);
-extern double removeVectorMean(short *x, double *y, int n);
+extern double removeVectorMean(int2 *x, double *y, int n);
 extern void removeVectorMean(double *y, int n, int p);
 extern void removeVectorMean(float *y, int n, int p);
 
 extern void partialCorrelation(double *Y, double *X1, double *X2, int n, double *pr1, double *pr2);
 extern void partialCorrelation(float *Y, float *X1, float *X2, int n, double *pr1, double *pr2);
-extern void partialCorrelation(short *Y, float *X1, float *X2, int n, double *pr1, double *pr2);
+extern void partialCorrelation(int2 *Y, float *X1, float *X2, int n, double *pr1, double *pr2);
 
 #endif
 
@@ -364,9 +364,9 @@ extern int ginverse(double *X, int N, int p, float *G);
 
 #ifndef _convolution
 extern float conv_pnt_sk(unsigned char *x,int sx,float *h,int sh,int i0);
-extern float conv_pnt_sk(short *x,int sx,float *h,int sh,int i0);
+extern float conv_pnt_sk(int2 *x,int sx,float *h,int sh,int i0);
 extern float conv_pnt_sk(float *x,int sx,float *h,int sh,int i0);
-extern float *conv_sk(short *x,int sx,float *h,int sh);
+extern float *conv_sk(int2 *x,int sx,float *h,int sh);
 extern float *conv_sk(float *x,int sx,float *h,int sh);
 extern void conv_sk(float *x, float *y, int sx,float *h,int sh);
 extern void conv_sk_inplace(float *x, int sx, float *h, int sh);
@@ -409,13 +409,13 @@ extern int readImageNumber(const char *file, int *imageNumber, int np);
 extern int readTE(const char *file, int *TE, int np);
 extern int readTR(const char *file, int *TR);
 extern int readImageVoxelSize(const char *file, float *dx, float *dy, float *dz, int np);
-extern int readImageMatrixSize(const char *file, unsigned short *nx, unsigned short *ny);
+extern int readImageMatrixSize(const char *file, unsigned int2 *nx, unsigned int2 *ny);
 extern int readPatientID(const char *file, char *patientID, int np);
 extern int dicomFormat(const char *file);
 extern int readMetaFileInfo(const char *file, long *offset, int *syntax);
-extern int readTag(const char *file, unsigned short iGN, unsigned short iEN, long byteOffset, int transferSyntax,
+extern int readTag(const char *file, unsigned int2 iGN, unsigned int2 iEN, long byteOffset, int transferSyntax,
 unsigned long *oVL, char *oV, long *valueOffset);
-extern int read_element(char *filename, short S_GN, short S_EN, char *V, int *VL);
+extern int read_element(char *filename, int2 S_GN, int2 S_EN, char *V, int *VL);
 extern void readMatrixSize(char *filename, int *nx, int *ny);
 extern void readVoxelSize(char *filename, float *dx, float *dy, float *dz);
 extern int readImageSliceThickness(const char *file, float *dz, int np);
@@ -430,7 +430,7 @@ extern int binomialCoeff(int N,int M);
 #ifndef _cubicspline
 extern float cubicSplineSynthesis(float *c, int nx, int ny, int nz, float x, float y, float z, float *beta, float del);
 
-extern short *resliceImageCubicSpline(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+extern int2 *resliceImageCubicSpline(int2 *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
 
 extern float *resliceImageCubicSpline(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
@@ -439,7 +439,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
 extern float *computeBeta(float *del);
 
 extern void cubicSplineAnalysis(unsigned char *s, float *c, int nx, int ny, int nz);
-extern void cubicSplineAnalysis(short *s, float *c, int nx, int ny, int nz);
+extern void cubicSplineAnalysis(int2 *s, float *c, int nx, int ny, int nz);
 extern void cubicSplineAnalysis(float *s, float *c, int nx, int ny, int nz);
 
 extern void cubicSplineAnalysis(float *s, float *c, int N);
@@ -447,30 +447,30 @@ extern void cubicSplineAnalysis(float *s, float *c, int N);
 #endif
 
 #ifndef _registration
-extern void label_3d_cc(short *KMI,unsigned short label,int i,int j, int k,int *size,short CC, struct im_params *IP);
+extern void label_3d_cc(int2 *KMI,unsigned int2 label,int i,int j, int k,int *size,int2 CC, struct im_params *IP);
 extern void set_transformation(float x, float y, float z, float ax, float ay, float az, const char *code, float *T);
-extern int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels);
-extern short (*interpolator)(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
+extern int label_CCI(int2 *KMI, int size_thresh,struct im_params * IP, int nvoxels);
+extern int2 (*interpolator)(float x, float y, float z, int2 *array, int nx, int ny, int nz, int np);
 extern float P[12];
 extern struct im_params IP;
 
 extern unsigned char linearInterpolatorUC(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-extern void scale_short_minmax(short *imagein, unsigned char **imageout, int np, int min,int max);
+extern void scale_short_minmax(int2 *imagein, unsigned char **imageout, int np, int min,int max);
 
-extern void testCostFunc1(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
-short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz);
+extern void testCostFunc1(int2 *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
+int2 *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz);
 
 extern float *transformation(float x, float y, float z, float ax, float ay,
 float az, float sx, float sy, float sz, int rX, int rY, int rZ, char *code);
 
-extern void cca(short *im, int nx, int ny, int nz);
+extern void cca(int2 *im, int nx, int ny, int nz);
 
 extern int loadTransformation( char *filename, float *T);
-extern int findThresholdLevel(short *image_in, int nv);
-extern float *findTransMatrix(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
-short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz);
+extern int findThresholdLevel(int2 *image_in, int nv);
+extern float *findTransMatrix(int2 *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
+int2 *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz);
 
-extern short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int thresh, int Low, int High, int nv);
+extern int2 *KMcluster(int2 *ccImage, int2 *im_in, int nclass, int maxiter, int thresh, int Low, int High, int nv);
 #endif
 
 #ifndef _legendre
@@ -482,7 +482,7 @@ extern void LegendreSynthesis(double *c, int mx, int my, float *image, int nx, i
 extern float *LegendreSynthesis(double *c, int nx, int ny, int nz, int mx, int my, int mz);
 void LegendrePoly(double *p0, double *q0, double *p1, double *q1, double *x, int N, int n);
 void LegendrePoly(float *p0, float *q0, float *p1, float *q1, float *x, int N, int n);
-void integral_1d(double *a, short *b, int n, double *d);
+void integral_1d(double *a, int2 *b, int n, double *d);
 void integral_1d(double *a, float *b, int n, double *d);
 #endif
 
@@ -585,7 +585,7 @@ extern void multi(double *A,int iA,int jA, float *B,int iB,int jB,float *C);
 
 void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method);
 
-short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_method);
+int2 *resliceImage(int2 *im1, DIM dim1, DIM dim2, float *T, int interpolation_method);
 
 float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
@@ -600,13 +600,13 @@ unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int n
 
 unsigned char nearestNeighbor(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
 float nearestNeighbor(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
-short nearestNeighbor(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
+int2 nearestNeighbor(float x, float y, float z, int2 *array, int nx, int ny, int nz, int np);
 
 char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T);
-short *resliceImage(short *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
-short *resliceImage(float *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
+int2 *resliceImage(int2 *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
+int2 *resliceImage(float *im1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2, float *T);
 
-short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+int2 *resliceImage(int2 *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interpolation_method);
 
 unsigned char *resliceImage(unsigned char *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
@@ -615,32 +615,32 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T);
 float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *w);
 
-short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+int2 *resliceImage(int2 *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
 unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
-short linearInterpolator(float x, float y, float z, short *array, int nx, int ny, int nz, int np);
+int2 linearInterpolator(float x, float y, float z, int2 *array, int nx, int ny, int nz, int np);
 float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np);
 float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np, float *w);
 unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np, float *w);
 
-short *computeReslicedImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
+int2 *computeReslicedImage(int2 *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
 float *computeReslicedImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
 
-short *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1,
+int2 *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp);
 
-short *computeReslicedImage(short *im1, int nx1, int ny1, float dx1, float dy1,
+int2 *computeReslicedImage(int2 *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp);
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef _resize
-extern short *resizeXYZ(short *image1,  DIM dim1, DIM dim2);
+extern int2 *resizeXYZ(int2 *image1,  DIM dim1, DIM dim2);
 
-extern short *resizeXYZ(short *image1,
+extern int2 *resizeXYZ(int2 *image1,
 int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
 
@@ -648,7 +648,7 @@ extern unsigned char *resizeXYZ(unsigned char *image1,
 int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
 
-extern short *resizeXYZ(char *image1,
+extern int2 *resizeXYZ(char *image1,
 int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
 
@@ -657,7 +657,7 @@ int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
 
 extern float *resizeXY(float *image1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2);
-extern short *resizeXY(short *image1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2);
+extern int2 *resizeXY(int2 *image1, int nx1, int ny1, float dx1, float dy1, int nx2, int ny2, float dx2, float dy2);
 #endif
 
 #ifndef _getoption
@@ -678,7 +678,7 @@ extern int getoption(int argc, char **argv, struct option *options);
 ////////////////////////////////////////////////////////////////////////////////////////
 // The following functions are defined in analyzeio.c
 int extension_is_hdr(const char *filename);
-void read_analyze_image(const char *filename, short *im);
+void read_analyze_image(const char *filename, int2 *im);
 char *read_analyze_image(const char *filename, DIM *dim, int *type, int v);
 float read_dx(const char *hdrfile);
 float read_dy(const char *hdrfile);
@@ -695,17 +695,17 @@ char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float 
 char *read_image(char *file,int n);
 void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);
 void read_analyze_hdr(struct dsr *hdr, char *filename);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, short *dataType);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType, int v);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, short *dataType, int v);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, int2 *dataType);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int2 *dataType);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, int2 *dataType, int v);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float *dx, float *dy, float *dz, int2 *dataType, int v);
 void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int dt, float dx, float dy, float dz);
 void create_analyze_hdr(struct dsr *hdr, int nx, int ny, int nz, int nt, int datatype, float dx, float dy, float dz);
-void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz); 
+void write_analyze_image(const char *filename, int2 *im, int nx, int ny, int nz, float dx, float dy, float dz); 
 void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz); 
 void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz); 
 void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz, int v); 
-void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
+void write_analyze_image(const char *filename, int2 *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
 void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -735,10 +735,10 @@ extern int check_F_R_permission(char *file);
 
 #ifndef _histogram
 extern int otsu(double *histogram, int numberOfBins);
-extern double *findHistogram(short *im, int nv, int *nb, short &min, short &max);
-extern double *findHistogram(short *im, int nv, int nb, int low, int high, int *bw_return);
-extern double *findHistogram(short *im1, short *im2, int nv, int nb1, int nb2, int *bw1_r, int *bw2_r, int low1, int high1, int low2, int high2);
-extern void trimExtremes(short *image, short *msk, int nv, float percent);
+extern double *findHistogram(int2 *im, int nv, int *nb, int2 &min, int2 &max);
+extern double *findHistogram(int2 *im, int nv, int nb, int low, int high, int *bw_return);
+extern double *findHistogram(int2 *im1, int2 *im2, int nv, int nb1, int nb2, int *bw1_r, int *bw2_r, int low1, int high1, int low2, int high2);
+extern void trimExtremes(int2 *image, int2 *msk, int nv, float percent);
 #endif
 
 #ifndef _matrixops
@@ -765,14 +765,14 @@ int not_magical_nifti(const char *imagefilename);
 char *read_nifti_image(const char *filename, nifti_1_header *hdr);
 int same_nifti_image_size(int N, char **imagefile, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
 void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *hdr);
-void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr);
+void read_nifti_image(const char *filename, int2 **im, nifti_1_header *hdr);
 void print_NIFTI_hdr(const char *filename);
 void print_NIFTI_hdr(nifti_1_header hdr);
 nifti_1_header read_NIFTI_hdr(const char *filename);
 int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr);
 nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, char **extension);
 void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *hdr);
-void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr);
+void save_nifti_image(const char *filename, int2 *im, nifti_1_header *hdr);
 void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr);
 void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr);
 
@@ -781,7 +781,7 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
 
 int  niftiFilename(char *filename, const char *path);
 void swapniftiheader(nifti_1_header *hdr);
-short *readNiftiImage(const char *filename, DIM *dim, int flg);
+int2 *readNiftiImage(const char *filename, DIM *dim, int flg);
 ///////////////////////////////////////////////////////////////
 
 
@@ -790,19 +790,19 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg);
 // Set the nxn matrix A equal to the identity matrix
 extern void set_to_I( float *A, int n);
 
-extern void sobel_edge_x(short *in, float *out, int nx, int ny);
-extern void sobel_edge_y(short *in, float *out, int nx, int ny);
-extern void sobel_edge(short *in, float *out, int nx, int ny);
-extern void sobel_edge(short *in, short *out, int nx, int ny);
+extern void sobel_edge_x(int2 *in, float *out, int nx, int ny);
+extern void sobel_edge_y(int2 *in, float *out, int nx, int ny);
+extern void sobel_edge(int2 *in, float *out, int nx, int ny);
+extern void sobel_edge(int2 *in, int2 *out, int nx, int ny);
 
-extern int ccsize(short *im, int nv);
+extern int ccsize(int2 *im, int nv);
 
 extern void copyarray(float *source, float *destination, int size);
-extern void copyarray(short *source, char *destination, int size);
-extern void copyarray(char *source, short *destination, int size);
+extern void copyarray(int2 *source, char *destination, int size);
+extern void copyarray(char *source, int2 *destination, int size);
 
 extern void zeroarray(float *y, int size);
-extern float diceindex(short *setA, short *setB, int n);
+extern float diceindex(int2 *setA, int2 *setB, int n);
 extern void remove_space(char *inp);
 extern void orientationCodeConverter(int integerCode, char *stringCode);
 extern int orientationCodeOK(char *stringCode);
@@ -812,17 +812,17 @@ extern void ijk2xyz(float *T, int nx, int ny, int nz, float dx, float dy, float 
 extern void xyz2ijk(float *T, int nx, int ny, int nz, float dx, float dy, float dz);
 extern void xyz2ijk(float *T, DIM dim);
 extern void saveMatrix(float *A, int n, int m, char *filename);
-extern void saveMatrix(short *A, int n, int m, char *filename);
+extern void saveMatrix(int2 *A, int n, int m, char *filename);
 extern float *readMatrix(int *n, int *m, char *filename);
 
-extern float *readDataMatrix(char **imageList, int n, int p, short *mask);
-extern float *readDataMatrix_nifti(char **imageList, int n, int p, short *mask);
+extern float *readDataMatrix(char **imageList, int n, int p, int2 *mask);
+extern float *readDataMatrix_nifti(char **imageList, int n, int p, int2 *mask);
 
-extern short *readDataMatrixShort(char **imageList, int n, int p, short *mask);
-extern short *readDataMatrixShort_nifti(char **imageList, int n, int p, short *mask);
+extern int2 *readDataMatrixShort(char **imageList, int n, int p, int2 *mask);
+extern int2 *readDataMatrixShort_nifti(char **imageList, int n, int p, int2 *mask);
 
-extern short *readMask(const char *filename, int *nx, int *ny, int *nz);
-extern short *readMask_nifti(const char *filename, int *nx, int *ny, int *nz);
+extern int2 *readMask(const char *filename, int *nx, int *ny, int *nz);
+extern int2 *readMask_nifti(const char *filename, int *nx, int *ny, int *nz);
 
 
 extern void checkDimension(int N, char **imagefile, int nx, int ny, int nz);
@@ -830,23 +830,23 @@ extern void checkDimension_nifti(int N, char **imagefile, int nx, int ny, int nz
 extern void checkDimension(int N, char **imagefile, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz);
 
 
-extern void affineLSE(short *msk, int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T);
+extern void affineLSE(int2 *msk, int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T);
 extern void affineLSE(char *msk, int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T);
 extern float *affineLSE(char *msk, int nx, int ny, float dx, float dy, float *Xwarp, float *Ywarp);
 extern void affineLSE(char *msk, int nx, int ny, float dx, float dy, float *Xwarp, float *Ywarp, float *T);
 
-extern void affineLSE(short *msk, int nx, int ny, float dx, float dy, float *Xwarp, float *Ywarp, float *T);
+extern void affineLSE(int2 *msk, int nx, int ny, float dx, float dy, float *Xwarp, float *Ywarp, float *T);
 
-extern void extractArray(short *im, int nx, int ny, int nx0, int ny0, int Lx, int Ly, float *array);
-extern void extractArray(short *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
+extern void extractArray(int2 *im, int nx, int ny, int nx0, int ny0, int Lx, int Ly, float *array);
+extern void extractArray(int2 *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
 extern void extractArray(float *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
 extern void extractArray(unsigned char *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
-extern void extractArray(short *im, int nx, int i, int j, int L, float *array);
-extern void extractArray(short *im,int nx,int ny,int nz,int x0,int y0,int z0,short *x,short *y,short *z,int n,float *array);
-extern int extractArray(short *im, int nx, int ny, int nz, int np, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, short *array);
+extern void extractArray(int2 *im, int nx, int i, int j, int L, float *array);
+extern void extractArray(int2 *im,int nx,int ny,int nz,int x0,int y0,int z0,int2 *x,int2 *y,int2 *z,int n,float *array);
+extern int extractArray(int2 *im, int nx, int ny, int nz, int np, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, int2 *array);
 extern void extractArray(float *im, int nx, int ny, int nz, int np, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
-extern void extractArray(short *im, int nx, int ny, int nz, int np, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
-extern void extractArray(short *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, short *array);
+extern void extractArray(int2 *im, int nx, int ny, int nz, int np, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, float *array);
+extern void extractArray(int2 *im, int nx, int ny, int nz, int nx0, int ny0, int nz0, int Lx, int Ly, int Lz, int2 *array);
 
 // This function extracts the "filename" from the full "path" string.
 // For example, if path="/home/babak/testimages/test.img", then filname="test.img".
@@ -856,10 +856,10 @@ extern void printMatrix(int *mat, int n, int p, const char *s, FILE *fp);
 extern void printMatrix(float *mat, int n, int p, const char *s, FILE *fp);
 extern void printMatrix(double *mat, int n, int p, const char *s, FILE *fp);
 extern void get_temp_filename(char *filename);
-extern void mask_and_save(const char *inputfile, const char *outputfile, short *mask, short *masked_image, int nbv, float FWHM);
-extern void mask_and_save_nii(const char *inputfile, const char *outputfile, short *mask, short *masked_image, int nbv, float FWHM);
+extern void mask_and_save(const char *inputfile, const char *outputfile, int2 *mask, int2 *masked_image, int nbv, float FWHM);
+extern void mask_and_save_nii(const char *inputfile, const char *outputfile, int2 *mask, int2 *masked_image, int nbv, float FWHM);
 extern void read_transpose_save(char *inputfile, char *outputfile, int nr, int v);
-extern void centerOfMass(short *im, int nx, int ny, int nz, float dx, float dy, float dz, float *CM);
+extern void centerOfMass(int2 *im, int nx, int ny, int nz, float dx, float dy, float dz, float *CM);
 
 #endif
 
