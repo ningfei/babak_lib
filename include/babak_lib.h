@@ -238,10 +238,10 @@ void se3_to_SE3(float4 *M, float4 *w, float4 *v, float4 theta);
 void SE3_to_se3(float4 *M, float4 *w, float4 *v, float4 &theta);
 
 #ifndef _singular_value_decomposition
-extern int Singular_Value_Decomposition(double* A, int nrows, int ncols, double* U, 
-                      double* singular_values, double* V, double* dummy_array);
-extern void Singular_Value_Decomposition_Inverse(double* U, double* D, double* V,  
-                        double tolerance, int nrows, int ncols, double *Astar);
+extern int Singular_Value_Decomposition(float8* A, int nrows, int ncols, float8* U, 
+                      float8* singular_values, float8* V, float8* dummy_array);
+extern void Singular_Value_Decomposition_Inverse(float8* U, float8* D, float8* V,  
+                        float8 tolerance, int nrows, int ncols, float8 *Astar);
 #endif
 
 #ifndef _DKI
@@ -286,12 +286,12 @@ extern void orig_ijk_to_pil_xyz(float4 *Tmsp, DIM orig_dim, float4 *AC, float4 *
 extern void initialAC(float4 Ax, float4 Ay, float4 Bx, float4 By, float4 *Cx, float4 *Cy, float4 parcomMean, float4 percomMean);
 extern int2 *thresholdImageOtsu(int2 *im, int nv, int *nbv);
 extern void defineTemplate(int r, int h, int2 *x, int2 *y, int2 *z);
-extern char *defineACregion(DIM dim, float4 *RP, float4 *PC, float4 parcomMean, float4 percomMean, double ACsr);
-extern char *definePCregion(DIM HR, float4 *RP, float4 *RPPCmean, double PCsr);
-extern char *expandMask(int2 *mask_HR, DIM HR, float4 *RPmean, double RPsr);
+extern char *defineACregion(DIM dim, float4 *RP, float4 *PC, float4 parcomMean, float4 percomMean, float8 ACsr);
+extern char *definePCregion(DIM HR, float4 *RP, float4 *RPPCmean, float8 PCsr);
+extern char *expandMask(int2 *mask_HR, DIM HR, float4 *RPmean, float8 RPsr);
 extern void ACPCtransform(float4 *Tacpc, float4 *Tmsp, float4 *AC, float4 *PC, char flg);
 extern void compute_MSP_parameters_from_Tmsp(float4 *Tmsp, float4 *n, float4 *d);
-extern int detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
+extern int detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile, float8 *searchradius,
 float4 *AC, float4 *PC, float4 *RP, float4 *Tmsp, int opt_D, int opt_v, int opt_T2);
 extern float4 optimizeNormalVector(int2 *image,DIM dim,float4 *A, float4 *B, float4 *C);
 extern float4 reflection_cross_correlation2(int2 *image, DIM dim, float4 A, float4 B, float4 C);
@@ -305,8 +305,8 @@ extern void combine_warps_and_trans(int nx, int ny, int nz, float4 dx, float4 dy
 #endif
 
 #ifndef _binomial
-extern double BinomialCoeff( int n, int k );
-extern void k_subset ( int k, double rank, int a[] );
+extern float8 BinomialCoeff( int n, int k );
+extern void k_subset ( int k, float8 rank, int a[] );
 #endif
 
 #ifndef _maskOps
@@ -316,7 +316,7 @@ extern void cc_filter(char *mask, int nx, int ny, int nz);
 #endif
 
 #ifndef _EMFIT
-extern void EMFIT1d(double *hist, double *fit, int2 *label, int nb, double *mean, double *var, double *p, int nclass, int niter);
+extern void EMFIT1d(float8 *hist, float8 *fit, int2 *label, int nb, float8 *mean, float8 *var, float8 *p, int nclass, int niter);
 #endif
 
 #ifndef _max_cc
@@ -332,34 +332,34 @@ extern void Connected_Component_location(char *im, int nx, int ny, int nz, int *
 
 #ifndef _statistics
 extern float4 imageMean(int2 *im, int2 *msk, int nv);
-extern double one_sample_t(double *x, int n);
+extern float8 one_sample_t(float8 *x, int n);
 
 extern float4 median(float4 *x, char *mask, int n);
-extern void scaleAbsToOne(double *y, int n, int p);
+extern void scaleAbsToOne(float8 *y, int n, int p);
 extern void scaleAbsToOne(float4 *y, int n, int p);
-extern double scaleAbsToOne(double *y, int n);
-extern void decomposeVector(double *x, double *xpar, double *xper, double *u, int n);
+extern float8 scaleAbsToOne(float8 *y, int n);
+extern void decomposeVector(float8 *x, float8 *xpar, float8 *xper, float8 *u, int n);
 
-extern void removeComponent(double *x, double *y, int n);
+extern void removeComponent(float8 *x, float8 *y, int n);
 extern void removeComponent(float4 *x, float4 *y, int n);
 
-extern double removeVectorMean(float4 *y, int n);
-extern double removeVectorMean(double *y, int n);
-extern double removeVectorMean(float4 *x, float4 *y, int n);
-extern double removeVectorMean(double *x, double *y, int n);
-extern double removeVectorMean(int2 *x, double *y, int n);
-extern void removeVectorMean(double *y, int n, int p);
+extern float8 removeVectorMean(float4 *y, int n);
+extern float8 removeVectorMean(float8 *y, int n);
+extern float8 removeVectorMean(float4 *x, float4 *y, int n);
+extern float8 removeVectorMean(float8 *x, float8 *y, int n);
+extern float8 removeVectorMean(int2 *x, float8 *y, int n);
+extern void removeVectorMean(float8 *y, int n, int p);
 extern void removeVectorMean(float4 *y, int n, int p);
 
-extern void partialCorrelation(double *Y, double *X1, double *X2, int n, double *pr1, double *pr2);
-extern void partialCorrelation(float4 *Y, float4 *X1, float4 *X2, int n, double *pr1, double *pr2);
-extern void partialCorrelation(int2 *Y, float4 *X1, float4 *X2, int n, double *pr1, double *pr2);
+extern void partialCorrelation(float8 *Y, float8 *X1, float8 *X2, int n, float8 *pr1, float8 *pr2);
+extern void partialCorrelation(float4 *Y, float4 *X1, float4 *X2, int n, float8 *pr1, float8 *pr2);
+extern void partialCorrelation(int2 *Y, float4 *X1, float4 *X2, int n, float8 *pr1, float8 *pr2);
 
 #endif
 
 #ifndef _ginverse
 extern int ginverse(float4 *X, int N, int p, float4 *G);
-extern int ginverse(double *X, int N, int p, float4 *G);
+extern int ginverse(float8 *X, int N, int p, float4 *G);
 #endif
 
 #ifndef _convolution
@@ -474,106 +474,106 @@ extern int2 *KMcluster(int2 *ccImage, int2 *im_in, int nclass, int maxiter, int 
 #endif
 
 #ifndef _legendre
-//extern float4 *FourierLegendreSynthesis(double *c, int nx, int ny, int nz, int mx, int my, int mz);
-//extern double *FourierLegendreAnalysis(float4 *f, int nx, int ny, int nz, int mx, int my, int mz, int N);
-extern double *LegendreAnalysis(float4 *image, int nx, int ny, int nz, int mx, int my, int mz);
-extern	double *LegendreAnalysis(float4 *image, int nx, int ny, int mx, int my);
-extern void LegendreSynthesis(double *c, int mx, int my, float4 *image, int nx, int ny);
-extern float4 *LegendreSynthesis(double *c, int nx, int ny, int nz, int mx, int my, int mz);
-void LegendrePoly(double *p0, double *q0, double *p1, double *q1, double *x, int N, int n);
+//extern float4 *FourierLegendreSynthesis(float8 *c, int nx, int ny, int nz, int mx, int my, int mz);
+//extern float8 *FourierLegendreAnalysis(float4 *f, int nx, int ny, int nz, int mx, int my, int mz, int N);
+extern float8 *LegendreAnalysis(float4 *image, int nx, int ny, int nz, int mx, int my, int mz);
+extern	float8 *LegendreAnalysis(float4 *image, int nx, int ny, int mx, int my);
+extern void LegendreSynthesis(float8 *c, int mx, int my, float4 *image, int nx, int ny);
+extern float4 *LegendreSynthesis(float8 *c, int nx, int ny, int nz, int mx, int my, int mz);
+void LegendrePoly(float8 *p0, float8 *q0, float8 *p1, float8 *q1, float8 *x, int N, int n);
 void LegendrePoly(float4 *p0, float4 *q0, float4 *p1, float4 *q1, float4 *x, int N, int n);
-void integral_1d(double *a, int2 *b, int n, double *d);
-void integral_1d(double *a, float4 *b, int n, double *d);
+void integral_1d(float8 *a, int2 *b, int n, float8 *d);
+void integral_1d(float8 *a, float4 *b, int n, float8 *d);
 #endif
 
 #ifndef _matrixCom
 
-extern double Frobenius_s3(double *qqT, float4 *D);
-extern double Frobenius_s3(double *qqT, double *D);
-extern void p3update(double *D, double *W, double epsilon);
-extern void p3update(double *D, double *invsqrtD, double *sqrtD, double *W, double epsilon);
-extern void s3multi(double *A, double *B, double *AB);
-extern void p3invsqrt(double *A, double *invsqrtA, double *sqrtA);
-extern void p3invsqrt(double *A, double *invsqrtA);
+extern float8 Frobenius_s3(float8 *qqT, float4 *D);
+extern float8 Frobenius_s3(float8 *qqT, float8 *D);
+extern void p3update(float8 *D, float8 *W, float8 epsilon);
+extern void p3update(float8 *D, float8 *invsqrtD, float8 *sqrtD, float8 *W, float8 epsilon);
+extern void s3multi(float8 *A, float8 *B, float8 *AB);
+extern void p3invsqrt(float8 *A, float8 *invsqrtA, float8 *sqrtA);
+extern void p3invsqrt(float8 *A, float8 *invsqrtA);
 extern int p3invsqrt(float4 *A, float4 *invsqrtA);
-extern double p3RiemannianDistance(double *D, double *invsqrtF);
-extern double p3RiemannianDistance(double *L);
+extern float8 p3RiemannianDistance(float8 *D, float8 *invsqrtF);
+extern float8 p3RiemannianDistance(float8 *L);
 extern float4 p3RiemannianDistance(float4 *D, float4 *invsqrtF);
-extern void s3ABA(double *A, double *B, double *ABA);
-extern void s3ULUT(double *L, double *UT, double *ULUT);
-extern void s3eigenvec(double *A, double *evalue, double *evector);
-extern void getcomplement1(double *a, double *b, double *c);
-extern void getcomplement2 (double *U, double *V, double *W);
-extern void s3inv(double *A, double *invA);
+extern void s3ABA(float8 *A, float8 *B, float8 *ABA);
+extern void s3ULUT(float8 *L, float8 *UT, float8 *ULUT);
+extern void s3eigenvec(float8 *A, float8 *evalue, float8 *evector);
+extern void getcomplement1(float8 *a, float8 *b, float8 *c);
+extern void getcomplement2 (float8 *U, float8 *V, float8 *W);
+extern void s3inv(float8 *A, float8 *invA);
 extern int s3inv(float4 *A, float4 *invA);
-extern void s3multi(double *A, double *B, double *AB);
-extern void differentiate_distance(double *D, double *F, double *L, double *dLdD);
+extern void s3multi(float8 *A, float8 *B, float8 *AB);
+extern void differentiate_distance(float8 *D, float8 *F, float8 *L, float8 *dLdD);
 
 extern void subtractRowAvg(float4 *X, int N, int P, float4 *X0);
 
-extern void crossProduct(double *a, double *b, double *c);
+extern void crossProduct(float8 *a, float8 *b, float8 *c);
 extern void crossProduct(float4 *a, float4 *b, float4 *c);
 
 extern void copyVector(float4 *v1, float4 *v2, int n);
 extern void subtractVector(float4 *v1, float4 *v2, int n);
-void normalizeVector(float4 *x, int n, double *norm);
+void normalizeVector(float4 *x, int n, float8 *norm);
 
 extern int centerMatrixRow(float4 *X, int N, int P, float4 *avg);
 extern int centerMatrixRow(float4 *X, int N, int P);
 
 // Returns 1 if an error condition occurs, 0 otherwise
 extern int avgRow(float4 *X, int N, int P, float4 *avg, char *rowmask);
-extern int avgRow(double *X, int N, int P, double *avg, char *rowmask);
+extern int avgRow(float8 *X, int N, int P, float8 *avg, char *rowmask);
 extern int avgRow(float4 *X, int N, int P, float4 *avg);
-extern int avgRow(double *X, int N, int P, double *avg);
+extern int avgRow(float8 *X, int N, int P, float8 *avg);
 extern int varRow(float4 *X, int N, int P, float4 *avg, float4 *var);
-extern int varRow(double *X, int N, int P, double *avg, double *var);
-extern int varRow(double *X, int N, int P, double *avg, double *var, char *rowmask);
+extern int varRow(float8 *X, int N, int P, float8 *avg, float8 *var);
+extern int varRow(float8 *X, int N, int P, float8 *avg, float8 *var, char *rowmask);
 extern int varRow(float4 *X, int N, int P, float4 *avg, float4 *var, char *rowmask);
 extern int ssdRow(float4 *X, int N, int P, float4 *avg, float4 *ssd, char *rowmask);
 extern int ssdRow(float4 *X, int N, int P, float4 *avg, float4 *ssd);
 
 // compute the Euclidian distance between two vectors r0 and r1
-extern double euclideandistance(float4 *r0, float4 *r1, int n);
-extern double xtAx(float4 *A, double *x, int p);
-extern double vectorNorm(float4 *x, int n);
+extern float8 euclideandistance(float4 *r0, float4 *r1, int n);
+extern float8 xtAx(float4 *A, float8 *x, int p);
+extern float8 vectorNorm(float4 *x, int n);
 extern void normalizeVector(float4 *x, int n);
 extern void transpose_matrix(float4 *A, int N,  int M);
 extern void transpose_matrix(float4 *A, int N,  int M, float4 *AT);
 
 extern float4 normalize(float4 *s, int n);
-extern double normalize(double *s, int n);
+extern float8 normalize(float8 *s, int n);
 
-extern int ComputeRank(double *M);
-extern void s3eigenval(double *A, double *L);
-extern double s3tr(double *A, double *B);
+extern int ComputeRank(float8 *M);
+extern void s3eigenval(float8 *A, float8 *L);
+extern float8 s3tr(float8 *A, float8 *B);
 extern float4 s3tr(float4 *A, float4 *B);
 extern void s3vec_to_mat(float4 *M, float4 *V);
-extern void s3vec_to_mat(double *M, double *V);
+extern void s3vec_to_mat(float8 *M, float8 *V);
 extern void s3mat_to_vec(float4 *M, float4 *V);
-extern void s3mat_to_vec(float4 *M, double *V);
-extern void s3mat_to_vec(double *M, double *V);
-extern void s3adjoint(double *A, double *ADJ);
+extern void s3mat_to_vec(float4 *M, float8 *V);
+extern void s3mat_to_vec(float8 *M, float8 *V);
+extern void s3adjoint(float8 *A, float8 *ADJ);
 extern void s3adjoint(float4 *A, float4 *ADJ);
-extern double s3det(double *A);
+extern float8 s3det(float8 *A);
 extern float4 s3det(float4 *A);
-void ds3det(double *A, double *B);
+void ds3det(float8 *A, float8 *B);
 void ds3det(float4 *A, float4 *B);
-extern double det3(double *A);
+extern float8 det3(float8 *A);
 extern float4 det3(float4 *A);
 extern float4 det4(float4 *A);
-extern double det4(double *A);
-extern double *inv3(double *A);
+extern float8 det4(float8 *A);
+extern float8 *inv3(float8 *A);
 extern float4 *inv3(float4 *A);
 extern void inv3(float4 *A, float4 *invA);
 extern float4 *inv2(float4 *A);
-extern double *inv2(double *A);
+extern float8 *inv2(float8 *A);
 extern float4 *inv4(float4 *A);
-extern double *inv4(double *A);
+extern float8 *inv4(float8 *A);
 extern void multi(float4 *A,int iA,int jA,float4 *B,int iB,int jB,float4 *C);
-extern void multi(double *A,int iA,int jA,double *B,int iB,int jB,double *C);
-extern void multi(float4 *A,int iA,int jA, double *B,int iB,int jB,double *C);
-extern void multi(double *A,int iA,int jA, float4 *B,int iB,int jB,float4 *C);
+extern void multi(float8 *A,int iA,int jA,float8 *B,int iB,int jB,float8 *C);
+extern void multi(float4 *A,int iA,int jA, float8 *B,int iB,int jB,float8 *C);
+extern void multi(float8 *A,int iA,int jA, float4 *B,int iB,int jB,float4 *C);
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -695,7 +695,7 @@ char *read_analyze_image(const char *filename, int *nx, int *ny, int *nz, float4
 char *read_image(char *file,int n);
 void get_analyze_file_names(const char *filename, char *basename_hdr, char *basename_img);
 void read_analyze_hdr(struct dsr *hdr, char *filename);
-void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, double *dx, double *dy, double *dz, int2 *dataType);
+void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float8 *dx, float8 *dy, float8 *dz, int2 *dataType);
 void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float4 *dx, float4 *dy, float4 *dz, int2 *dataType);
 void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float4 *dx, float4 *dy, float4 *dz, int2 *dataType, int v);
 void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, int *nt, float4 *dx, float4 *dy, float4 *dz, int2 *dataType, int v);
@@ -734,10 +734,10 @@ extern int check_F_R_permission(char *file);
 #endif
 
 #ifndef _histogram
-extern int otsu(double *histogram, int numberOfBins);
-extern double *findHistogram(int2 *im, int nv, int *nb, int2 &min, int2 &max);
-extern double *findHistogram(int2 *im, int nv, int nb, int low, int high, int *bw_return);
-extern double *findHistogram(int2 *im1, int2 *im2, int nv, int nb1, int nb2, int *bw1_r, int *bw2_r, int low1, int high1, int low2, int high2);
+extern int otsu(float8 *histogram, int numberOfBins);
+extern float8 *findHistogram(int2 *im, int nv, int *nb, int2 &min, int2 &max);
+extern float8 *findHistogram(int2 *im, int nv, int nb, int low, int high, int *bw_return);
+extern float8 *findHistogram(int2 *im1, int2 *im2, int nv, int nb1, int nb2, int *bw1_r, int *bw2_r, int low1, int high1, int low2, int high2);
 extern void trimExtremes(int2 *image, int2 *msk, int nv, float4 percent);
 #endif
 
@@ -749,14 +749,14 @@ extern void oneVector(char *v, int n);
 extern void svd(float4 *At, int M, int N, float4 *Ut, float4 *V, float4 *S);
 extern int zeroRowCol(float4 *A, int N, int n);
 extern int setRowCol(float4 *A, int N, int n, float4 *a);
-extern void projectVector(double *x, double *xpar, double *xper, float4 *Pz, int n);
-extern float4 *projectionMatrix(double *X, int N, int p, int *rank);
+extern void projectVector(float8 *x, float8 *xpar, float8 *xper, float4 *Pz, int n);
+extern float4 *projectionMatrix(float8 *X, int N, int p, int *rank);
 extern float4 *projectionMatrix(float4 *X, int N, int p);
 extern void mat_mat_trans(float4 *A,int Ar,int Ac,float4 *B,int Br, float4 *C);
 extern float4 *diagATA_float(float4 *ATA, int n, char uplo);
 extern float4 *AAT_float(float4 *A,int nr,int nc, char uplo);
 extern void mat_trans_mat(float4 *A, int Ar, int Ac, float4 *B, int Bc, float4 *C);
-extern void mat_trans_mat(double *A, int Ar, int Ac, double *B, int Bc, double *C);
+extern void mat_trans_mat(float8 *A, int Ar, int Ac, float8 *B, int Bc, float8 *C);
 #endif
 
 ///////////////////////////////////////////////////////////////
@@ -854,7 +854,7 @@ extern void getfilename(char *filename, const char *path);
 
 extern void printMatrix(int *mat, int n, int p, const char *s, FILE *fp);
 extern void printMatrix(float4 *mat, int n, int p, const char *s, FILE *fp);
-extern void printMatrix(double *mat, int n, int p, const char *s, FILE *fp);
+extern void printMatrix(float8 *mat, int n, int p, const char *s, FILE *fp);
 extern void get_temp_filename(char *filename);
 extern void mask_and_save(const char *inputfile, const char *outputfile, int2 *mask, int2 *masked_image, int nbv, float4 FWHM);
 extern void mask_and_save_nii(const char *inputfile, const char *outputfile, int2 *mask, int2 *masked_image, int nbv, float4 FWHM);
