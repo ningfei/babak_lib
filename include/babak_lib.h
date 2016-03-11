@@ -709,13 +709,14 @@ void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz
 void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz,int v); 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef _swap
+////////////////////////////////////////////////////////////////////////////////////////
+// functions defined in swap.cxx
 extern int bigEndian();
-extern void swapByteOrder(char *in, int N);
-extern void swapN(char *in, int N);
-extern void swap_float_array( float *x, int n);
-extern void swap_int_array( int *x, int n);
-#endif
+extern void swapByteOrder(char *in, int4 N);
+extern void swapN(char *in, int4 N);
+extern void swap_float_array(float4 *x, int4 n);
+extern void swap_int_array(int4 *x, int4 n);
+////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef _medianfilter
 extern void medianFilter(float *image1, int nx, int ny, int nz, int Wx, int Wy, int Wz);
