@@ -3,6 +3,8 @@
 
 #include <nifti1_io.h>
 
+typedef unsigned char uchar;
+typedef unsigned short uint2;
 typedef unsigned short uint2;
 typedef unsigned int uint4;
 typedef short int2;
@@ -131,7 +133,7 @@ struct im_params {
    int4 PETimageId;
 
 	/* maximum values of the image 1 */	
-	unsigned char max1; 	
+	uchar max1; 	
 
 	int4 	*Size;   /* size of non-zero CC's in CCI */
 	float4 *S,*SS;  
@@ -168,8 +170,8 @@ struct im_params {
 
 	unsigned *CCI;  	/* labeled connected compontents' image */
 
-	unsigned char *data1;  /* image 1 */
-	unsigned char *data2;  /* image 2 */
+	uchar *data1;  /* image 1 */
+	uchar *data2;  /* image 2 */
 };
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -304,7 +306,7 @@ extern void findInitialNormalVector(int2 *image, DIM dim, float4 *A, float4 *B,f
 extern float4 msp(int2 *im_in, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *A, float4 *B, float4 *C);
 extern void computeTmsp(char *orientation, int2 *volOrig, DIM dim, float4 *Tmsp);
 extern int4 save_as_ppm(const char *filename, int4 nx, int4 ny, char *R, char *G, char *B);
-extern int4 save_as_ppm(const char *filename, int4 nx, int4 ny, unsigned char *R, unsigned char *G, unsigned char *B);
+extern int4 save_as_ppm(const char *filename, int4 nx, int4 ny, uchar *R, uchar *G, uchar *B);
 extern void combine_warps_and_trans(int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp, float4 *T);
 #endif
 
@@ -367,7 +369,7 @@ extern int4 ginverse(float8 *X, int4 N, int4 p, float4 *G);
 #endif
 
 #ifndef _convolution
-extern float4 conv_pnt_sk(unsigned char *x,int4 sx,float4 *h,int4 sh,int4 i0);
+extern float4 conv_pnt_sk(uchar *x,int4 sx,float4 *h,int4 sh,int4 i0);
 extern float4 conv_pnt_sk(int2 *x,int4 sx,float4 *h,int4 sh,int4 i0);
 extern float4 conv_pnt_sk(float4 *x,int4 sx,float4 *h,int4 sh,int4 i0);
 extern float4 *conv_sk(int2 *x,int4 sx,float4 *h,int4 sh);
@@ -442,7 +444,7 @@ int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T);
 
 extern float4 *computeBeta(float4 *del);
 
-extern void cubicSplineAnalysis(unsigned char *s, float4 *c, int4 nx, int4 ny, int4 nz);
+extern void cubicSplineAnalysis(uchar *s, float4 *c, int4 nx, int4 ny, int4 nz);
 extern void cubicSplineAnalysis(int2 *s, float4 *c, int4 nx, int4 ny, int4 nz);
 extern void cubicSplineAnalysis(float4 *s, float4 *c, int4 nx, int4 ny, int4 nz);
 
@@ -458,8 +460,8 @@ extern int2 (*interpolator)(float4 x, float4 y, float4 z, int2 *array, int4 nx, 
 extern float4 P[12];
 extern struct im_params IP;
 
-extern unsigned char linearInterpolatorUC(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz, int4 np);
-extern void scale_short_minmax(int2 *imagein, unsigned char **imageout, int4 np, int4 min,int4 max);
+extern uchar linearInterpolatorUC(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np);
+extern void scale_short_minmax(int2 *imagein, uchar **imageout, int4 np, int4 min,int4 max);
 
 extern void testCostFunc1(int2 *trg, int4 Tnx, int4 Tny, int4 Tnz, float4 Tdx, float4 Tdy, float4 Tdz,
 int2 *obj, int4 Onx, int4 Ony, int4 Onz, float4 Odx, float4 Ody, float4 Odz);
@@ -597,12 +599,12 @@ int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T);
 float4 *resliceImage(float4 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T, float4 *xjit, float4 *yjit);
 
-float4 partial_var(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz, int4 np, float4 mu);
+float4 partial_var(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np, float4 mu);
 
 // you must initialize drand48 before using this function
-unsigned char PNN(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz);
+uchar PNN(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz);
 
-unsigned char nearestNeighbor(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz, int4 np);
+uchar nearestNeighbor(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np);
 float4 nearestNeighbor(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np);
 int2 nearestNeighbor(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
 
@@ -613,7 +615,7 @@ int2 *resliceImage(float4 *im1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4
 int2 *resliceImage(int2 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T, int4 interpolation_method);
 
-unsigned char *resliceImage(unsigned char *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
+uchar *resliceImage(uchar *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T);
 
 float4 *resliceImage(float4 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
@@ -622,11 +624,11 @@ int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T, flo
 int2 *resliceImage(int2 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp);
 
-unsigned char linearInterpolator(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz, int4 np);
+uchar linearInterpolator(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np);
 int2 linearInterpolator(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
 float4 linearInterpolator(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np);
 float4 linearInterpolator(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
-unsigned char linearInterpolator(float4 x, float4 y, float4 z, unsigned char *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
+uchar linearInterpolator(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
 
 int2 *computeReslicedImage(int2 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp);
@@ -641,18 +643,19 @@ int2 *computeReslicedImage(int2 *im1, int4 nx1, int4 ny1, float4 dx1, float4 dy1
 int4 nx2, int4 ny2, float4 dx2, float4 dy2, float4 *Xwarp, float4 *Ywarp);
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef _resize
-extern int2 *resizeXYZ(int2 *image1,  DIM dim1, DIM dim2);
+//////////////////////////////////////////////////////////////////////////////
+// defined in resize.c
+int2 *resizeXYZ(int2 *image1,  DIM dim1, DIM dim2);
 
-extern int2 *resizeXYZ(int2 *image1,
+int2 *resizeXYZ(int2 *image1,
 int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2);
 
-extern unsigned char *resizeXYZ(unsigned char *image1,
+uchar *resizeXYZ(uchar *image1,
 int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2);
 
-extern int2 *resizeXYZ(char *image1,
+int2 *resizeXYZ(char *image1,
 int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2);
 
@@ -660,9 +663,9 @@ float4 *resizeXYZ(float4 *image1,
 int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2);
 
-extern float4 *resizeXY(float4 *image1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2);
-extern int2 *resizeXY(int2 *image1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2);
-#endif
+float4 *resizeXY(float4 *image1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2);
+int2 *resizeXY(int2 *image1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2);
+//////////////////////////////////////////////////////////////////////////////
 
 #ifndef _getoption
 
@@ -707,8 +710,8 @@ void create_analyze_hdr(struct dsr *hdr, int4 nx, int4 ny, int4 nz, int4 dt, flo
 void create_analyze_hdr(struct dsr *hdr, int4 nx, int4 ny, int4 nz, int4 nt, int4 datatype, float4 dx, float4 dy, float4 dz);
 void write_analyze_image(const char *filename, int2 *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz); 
 void write_analyze_image(const char *filename, float4 *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz); 
-void write_analyze_image(const char *filename, unsigned char *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz); 
-void write_analyze_image(const char *filename, unsigned char *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, int4 v); 
+void write_analyze_image(const char *filename, uchar *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz); 
+void write_analyze_image(const char *filename, uchar *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, int4 v); 
 void write_analyze_image(const char *filename, int2 *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz,int4 v); 
 void write_analyze_image(const char *filename, float4 *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz,int4 v); 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -768,14 +771,14 @@ extern void mat_trans_mat(float8 *A, int4 Ar, int4 Ac, float8 *B, int4 Bc, float
 int4 not_magical_nifti(const char *imagefilename);
 char *read_nifti_image(const char *filename, nifti_1_header *hdr);
 int4 same_nifti_image_size(int4 N, char **imagefile, int4 *nx, int4 *ny, int4 *nz, float4 *dx, float4 *dy, float4 *dz);
-void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *hdr);
+void read_nifti_image(const char *filename, uchar **im, nifti_1_header *hdr);
 void read_nifti_image(const char *filename, int2 **im, nifti_1_header *hdr);
 void print_NIFTI_hdr(const char *filename);
 void print_NIFTI_hdr(nifti_1_header hdr);
 nifti_1_header read_NIFTI_hdr(const char *filename);
 int4 read_NIFTI_hdr(const char *filename, nifti_1_header *hdr);
 nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, char **extension);
-void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *hdr);
+void save_nifti_image(const char *filename, uchar *im, nifti_1_header *hdr);
 void save_nifti_image(const char *filename, int2 *im, nifti_1_header *hdr);
 void save_nifti_image(const char *filename, float4 *im, nifti_1_header *hdr);
 void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr);
@@ -842,7 +845,7 @@ extern void affineLSE(char *msk, int4 nx, int4 ny, float4 dx, float4 dy, float4 
 extern void affineLSE(int2 *msk, int4 nx, int4 ny, float4 dx, float4 dy, float4 *Xwarp, float4 *Ywarp, float4 *T);
 
 extern void extractArray(float4 *im, int4 nx, int4 ny, int4 nz, int4 np, int4 nx0, int4 ny0, int4 nz0, int4 Lx, int4 Ly, int4 Lz, float4 *array);
-extern void extractArray(unsigned char *im, int4 nx, int4 ny, int4 nz, int4 nx0, int4 ny0, int4 nz0, int4 Lx, int4 Ly, int4 Lz, float4 *array);
+extern void extractArray(uchar *im, int4 nx, int4 ny, int4 nz, int4 nx0, int4 ny0, int4 nz0, int4 Lx, int4 Ly, int4 Lz, float4 *array);
 extern void extractArray(float4 *im, int4 nx, int4 ny, int4 nz, int4 nx0, int4 ny0, int4 nz0, int4 Lx, int4 Ly, int4 Lz, float4 *array);
 extern void extractArray(int2 *im, int4 nx, int4 i,  int4 j,  int4 L, float4 *array);
 extern void extractArray(int2 *im, int4 nx, int4 ny, int4 nz, int4 x0, int4 y0, int4 z0, int2 *x,int2 *y,int2 *z,int4 n,float4 *array);
