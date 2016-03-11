@@ -19,16 +19,16 @@ extern void getARTHOME();
 #define _SHORTIM
 typedef struct shortim
 {
-   int nx;
-   int ny;
-   int nz;
-   int nt;
-   int np;
-   int nv;
-   float dx;
-   float dy;
-   float dz;
-   short *v; // image values
+   int4 nx;
+   int4 ny;
+   int4 nz;
+   int4 nt;
+   int4 np;
+   int4 nv;
+   float4 dx;
+   float4 dy;
+   float4 dz;
+   int2 *v; // image values
 } SHORTIM;
 #endif
 
@@ -36,16 +36,16 @@ typedef struct shortim
 #ifndef _DIM
 #define _DIM
 typedef struct dim {
-   int nx; // number of columns 
-   int ny; // number of rows
-   int nz; // number of slices
-   int nt; // number of frames (epochs)
-   int np; // nx*ny
-   int nv; // nx*ny*nz
-   float dx; // x voxel dimension (mm)
-   float dy; // y voxel dimension (mm)
-   float dz; // z voxel dimension (mm)
-   float dt; // t between frames (sec)
+   int4 nx; // number of columns 
+   int4 ny; // number of rows
+   int4 nz; // number of slices
+   int4 nt; // number of frames (epochs)
+   int4 np; // nx*ny
+   int4 nv; // nx*ny*nz
+   float4 dx; // x voxel dimension (mm)
+   float4 dy; // y voxel dimension (mm)
+   float4 dz; // z voxel dimension (mm)
+   float4 dt; // t between frames (sec)
 } DIM;
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,31 +94,31 @@ typedef struct DICOM_hdr DICOM_hdr;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 struct model_file_hdr
 {
-   int nxHR;
-   int nzHR;
-   float dxHR;
-   int nxLR;
-   int nvol; // number of image volumes in the training set 
-   int RPtemplateradius;
-   int RPtemplateheight;
-   int RPtemplatesize;
-   int ACtemplateradius;
-   int ACtemplateheight;
-   int ACtemplatesize;
-   int PCtemplateradius;
-   int PCtemplateheight;
-   int PCtemplatesize;
-   int nangles; // number of angles, each template is rotated by this many angles and saved
+   int4 nxHR;
+   int4 nzHR;
+   float4 dxHR;
+   int4 nxLR;
+   int4 nvol; // number of image volumes in the training set 
+   int4 RPtemplateradius;
+   int4 RPtemplateheight;
+   int4 RPtemplatesize;
+   int4 ACtemplateradius;
+   int4 ACtemplateheight;
+   int4 ACtemplatesize;
+   int4 PCtemplateradius;
+   int4 PCtemplateheight;
+   int4 PCtemplatesize;
+   int4 nangles; // number of angles, each template is rotated by this many angles and saved
 };
 
 typedef struct model_file_hdr model_file_hdr;
 
 struct model_file_tail
 {
-   float RPPCmean[2]; // RPPC is a vector on the MSP that points from the RP point to the PC.   RP------->PC
-   float parcomMean;
-   float percomMean; 
-   float RPmean[2];
+   float4 RPPCmean[2]; // RPPC is a vector on the MSP that points from the RP point to the PC.   RP------->PC
+   float4 parcomMean;
+   float4 percomMean; 
+   float4 RPmean[2];
 };
 
 typedef struct model_file_tail model_file_tail;

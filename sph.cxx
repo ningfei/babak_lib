@@ -3,21 +3,21 @@
 #include <math.h>
 #include <stdlib.h>
 
-float SPH::dot(float *u)
+float4 SPH::dot(float4 *u)
 {
-   float dot = 0.0;
+   float4 dot = 0.0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       dot += (v[m]*u[m]);
 
    return(dot);
 }
 
-float SPH::norm()
+float4 SPH::norm()
 {
-   float norm=0.0;
+   float4 norm=0.0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       norm += (v[m]*v[m]);
 
    norm = sqrtf(norm);
@@ -25,11 +25,11 @@ float SPH::norm()
    return(norm);
 }
 
-float SPH::mean()
+float4 SPH::mean()
 {
-   float mean=0.0;
+   float4 mean=0.0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       mean += v[m];
 
    mean /= n;
@@ -39,43 +39,43 @@ float SPH::mean()
 
 void SPH::normalize()
 {
-   float norm=0.0;
+   float4 norm=0.0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       norm += (v[m]*v[m]);
 
    norm = sqrtf(norm);
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       v[m] /= norm;
 }
 
 void SPH::zeromean()
 {
-   float mean=0.0;
+   float4 mean=0.0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       mean += v[m];
 
    mean /= n;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
       v[m] -= mean;
 }
 
-void SPH::get(float *array)
+void SPH::get(float4 *array)
 {
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
    {
       array[m] = v[m];
    }
 }
 
-void SPH::set(SHORTIM im, int ic, int jc, int kc)
+void SPH::set(SHORTIM im, int4 ic, int4 jc, int4 kc)
 {
-   int i0, j0, k0;
+   int4 i0, j0, k0;
 
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
    {
       i0=ic+i[m];
       j0=jc+j[m];
@@ -93,7 +93,7 @@ void SPH::set(SHORTIM im, int ic, int jc, int kc)
 
 void SPH::reset()
 {
-   for(int m=0; m<n; m++)
+   for(int4 m=0; m<n; m++)
    {
       v[m]=0.0;
    }
@@ -107,32 +107,32 @@ SPH::~SPH()
    delete v;  
 }
 
-SPH::SPH(int radius)
+SPH::SPH(int4 radius)
 {
    r=radius;
 
-   int nmax;
-   float r2;
-   float x2, y2;
+   int4 nmax;
+   float4 r2;
+   float4 x2, y2;
 
    if(r<0) r=0;
 
    nmax = (2*r+1) * (2*r+1) * (2*r+1);
 
-   i = (int *)calloc(nmax, sizeof(int));
-   j = (int *)calloc(nmax, sizeof(int));
-   k = (int *)calloc(nmax, sizeof(int));
+   i = (int4 *)calloc(nmax, sizeof(int4));
+   j = (int4 *)calloc(nmax, sizeof(int4));
+   k = (int4 *)calloc(nmax, sizeof(int4));
 
    r2 = r*r;
 
    n=0;
-   for(int x=-r; x<=r; x++)   
+   for(int4 x=-r; x<=r; x++)   
    {
       x2=x*x;
-      for(int y=-r; y<=r; y++)   
+      for(int4 y=-r; y<=r; y++)   
       {
          y2=y*y;
-         for(int z=-r; z<=r; z++)   
+         for(int4 z=-r; z<=r; z++)   
          {
             if( (x2+y2+z*z) <= r2 )
             {
@@ -143,6 +143,6 @@ SPH::SPH(int radius)
       }
    }
 
-   v = (float *)calloc(n, sizeof(float));
+   v = (float4 *)calloc(n, sizeof(float4));
 }
 
