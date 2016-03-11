@@ -12,6 +12,9 @@
 #define MAXITER 5000
 #define DEL 3
 
+// Turns verbose mode on (opt_v=YES) or off (opt_v=NO)
+char opt_v= NO;
+
 char opt_ppm = YES;
 char opt_txt = YES;
 char opt_AC = YES;

@@ -3,13 +3,6 @@
 
 #include <nifti1_io.h>
 
-#define YES 1
-#define NO 0
-#define ESMALL 1e-10
-
-// Turns verbose mode on (opt_v=YES) or off (opt_v=NO)
-int opt_v=NO;
-
 typedef unsigned char uchar;
 typedef unsigned short uint2;
 typedef unsigned short uint2;
@@ -19,9 +12,19 @@ typedef int int4;
 typedef float float4;
 typedef double float8;
 
+#define YES 1
+#define NO 0
+#define ESMALL 1e-10
+
 #ifndef _getARTHOME
 extern char *ARTHOME;
 extern void getARTHOME();
+#endif
+
+#ifndef _artlib
+// Turns verbose mode on (opt_v=YES) or off (opt_v=NO)
+// Initialized to NO in artlib.c
+extern char opt_v;
 #endif
 
 #ifndef _SHORTIM
