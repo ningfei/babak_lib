@@ -863,8 +863,11 @@ extern void centerOfMass(int2 *im, int4 nx, int4 ny, int4 nz, float4 dx, float4 
 
 #endif
 
-extern float4 *smoothY(float4 *image, int4 nx, int4 ny, int4 nz, float4 sd);
-extern float4 *smoothZ(float4 *image, int4 nx, int4 ny, int4 nz, float4 sd);
+////////////////////////////////////////////////////////////////////////
+// defined in smooth.cxx
+float4 *smoothY(float4 *image, int4 nx, int4 ny, int4 nz, float4 sd);
+float4 *smoothZ(float4 *image, int4 nx, int4 ny, int4 nz, float4 sd);
+////////////////////////////////////////////////////////////////////////
 
 
 #endif
