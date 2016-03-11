@@ -3,6 +3,13 @@
 
 #include <nifti1_io.h>
 
+#define YES 1
+#define NO 0
+#define ESMALL 1e-10
+
+// Turns verbose mode on (opt_v=YES) or off (opt_v=NO)
+int opt_v=NO;
+
 typedef unsigned char uchar;
 typedef unsigned short uint2;
 typedef unsigned short uint2;
@@ -51,10 +58,6 @@ typedef struct dim {
 } DIM;
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define YES 1
-#define NO 0
-#define ESMALL 1e-10
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 struct DICOM_file_meta_info

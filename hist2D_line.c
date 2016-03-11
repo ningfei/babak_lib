@@ -1,35 +1,12 @@
+#include "include/babak_lib.h"
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 void intensity_norm(double *x0, double *x1, double *w, double *w_const, int n, double *u, double &d, double &x0a, double &x1a)
 {
-
    double *x0c;  // x0 centered wrt x0a
    double *x1c;  // x1 centered wrt x1a
    double a11, a22, a12;
    double L; // the smaller eigenvalue of A
-
-/*
-   //////////////////////////////////////////////////////
-   // Compute the weighted averages of x's and y's
-   //If this part is commented the line will pass from the given point (x0a,x1a).   
-   //////////////////////////////////////////////////////
-   {
-      double Sw;   // sum of weights
-
-      Sw=x0a=x1a=0.0;
-      for(int i=0; i<n; i++)
-      {
-         x0a += w[i]*w_const[i]*x0[i];
-         x1a += w[i]*w_const[i]*x1[i];
-         Sw += w[i]*w_const[i];
-      }
-
-      x0a /= Sw;
-      x1a /= Sw;
-   
-
-      if(opt_v)   printf("x0a=%lf x1a=%lf Sw=%lf\n",x0a,x1a,Sw);
-   }
-*/
 
    // allocate memory for x0c and x1c
    x0c = (double *)calloc(n, sizeof(double));
@@ -109,13 +86,11 @@ void intensity_norm(double *x0, double *x1, double *w, double *w_const, int n, d
 
          // amounts to M-esitmator with Geman-McClure residuals
          w[i] = 1.0/((1.0+r*r)*(1.0+r*r));
-
       }
    }
    free(x0c);
    free(x1c);
 }
-
 
 //*********************************************************************
 // "hist2D_line" plots the histogram of the baseline and follow-up image 
