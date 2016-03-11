@@ -6,6 +6,7 @@
 #include "include/babak_lib.h"
 #include "include/minmax.h"
 #include "include/stats.h"
+#include "include/interpolator.h"
 
 #define _artlib
 

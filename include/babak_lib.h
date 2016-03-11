@@ -462,7 +462,7 @@ extern void cubicSplineAnalysis(float4 *s, float4 *c, int4 N);
 extern void label_3d_cc(int2 *KMI,uint2 label,int4 i,int4 j, int4 k,int4 *size,int2 CC, struct im_params *IP);
 extern void set_transformation(float4 x, float4 y, float4 z, float4 ax, float4 ay, float4 az, const char *code, float4 *T);
 extern int4 label_CCI(int2 *KMI, int4 size_thresh,struct im_params * IP, int4 nvoxels);
-extern int2 (*interpolator)(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
+extern float (*interpolator)(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
 extern float4 P[12];
 extern struct im_params IP;
 
@@ -610,10 +610,6 @@ float4 partial_var(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny,
 // you must initialize drand48 before using this function
 uchar PNN(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz);
 
-uchar nearestNeighbor(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np);
-float4 nearestNeighbor(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np);
-int2 nearestNeighbor(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
-
 char *resliceImage(char *obj, int4 Onx, int4 Ony, float4 Odx, float4 Ody, int4 Tnx, int4 Tny, float4 Tdx, float4 Tdy, float4 *T);
 int2 *resliceImage(int2 *im1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2, float4 *T);
 int2 *resliceImage(float4 *im1, int4 nx1, int4 ny1, float4 dx1, float4 dy1, int4 nx2, int4 ny2, float4 dx2, float4 dy2, float4 *T);
@@ -630,11 +626,8 @@ int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T, flo
 int2 *resliceImage(int2 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp);
 
-uchar linearInterpolator(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np);
-int2 linearInterpolator(float4 x, float4 y, float4 z, int2 *array, int4 nx, int4 ny, int4 nz, int4 np);
-float4 linearInterpolator(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np);
 float4 linearInterpolator(float4 x, float4 y, float4 z, float4 *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
-uchar linearInterpolator(float4 x, float4 y, float4 z, uchar *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
+uchar  linearInterpolator(float4 x, float4 y, float4 z, uchar  *array, int4 nx, int4 ny, int4 nz, int4 np, float4 *w);
 
 int2 *computeReslicedImage(int2 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp);

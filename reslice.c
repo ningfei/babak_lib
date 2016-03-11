@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/babak_lib.h"
-#include "include/linearInterpolator.h"
+#include "include/interpolator.h"
 
 char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {
@@ -235,11 +235,11 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interp
 
                 if(interpolation_method == LIN )
                 {
-				   im2[q++]=linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1);
+				   im2[q++]=(short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
                 }
                 else if(interpolation_method == NEARN)
                 {
-				   im2[q++]=nearestNeighbor(x,y,z,im1,nx1,ny1,nz1,np1);
+				   im2[q++]=(short)(nearestNeighbor(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
                 }
                 else if(interpolation_method == CUBICSPLINE)
                 {
@@ -283,7 +283,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 	np2=nx2*ny2;
 	nv2=np2*nz2;
 
-	im2=(unsigned char *)calloc(nv2,1);
+	im2=(uchar *)calloc(nv2,1);
 
 	xc2=dx2*(nx2-1)/2.0;     /* +---+---+ */
 	yc2=dy2*(ny2-1)/2.0;
@@ -313,7 +313,6 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 	T[11] /= dz1;
 	T[11] += zc1/dz1;
 
-
 	q=0;
 	for(k=0;k<nz2;k++) 
 	{
@@ -336,7 +335,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 	    	   	y=T[4]*xx+Ay;
 	    	   	z=T[8]*xx+Az;
 
-				im2[q++]=linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1);
+				im2[q++]=(uchar)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
 			}
 		}
 	}
@@ -424,7 +423,7 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	    	   	y=T[4]*xx+Ay;
 	    	   	z=T[8]*xx+Az;
 
-				im2[q++]=interpolator(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1);
+				im2[q++]=(short)(interpolator(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1)+0.5);
 
 			}
 		}
@@ -503,7 +502,7 @@ void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 	    	   	y=T[4]*xx+Ay;
 	    	   	z=T[8]*xx+Az;
 
-				im2.v[q++]=interpolator(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np);
+				im2.v[q++]=(short)(interpolator(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np)+0.5);
 			}
 		}
 	}
@@ -591,114 +590,6 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *w)
 	}
 
 	return( im2 );
-}
-
-unsigned char linearInterpolator(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np)
-{
-	int     i,j,k,n;
-	float   u,uu;
-   float v1,v2,v3,v4;
-   float w1,w2;
-
-	i=(int)(x);
-	j=(int)(y);
-	k=(int)(z);
-
-	if(i<0 || i>(nx-2) || j<0 || j>(ny-2) )
-	{
-		return(0);
-	}
-
-	if( k>=0 && k<(nz-1) )
-	{
-		u = x - i; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-
-		n=k*np + j*nx +i;
-		v1 = array[n]*uu + array[n+1]*u;
-		v2 = array[n+nx]*uu + array[n+nx+1]*u;
-		v3 = array[n+np]*uu + array[n+np+1]*u;
-		v4 = array[n+np+nx]*uu + array[n+np+nx+1]*u;
-
-		u = y - j; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-		w1 = v1*uu + v2*u;
-		w2 = v3*uu + v4*u;
-
-		u = z - k; if(u<0.0) u=0.0;
-		return( (unsigned char)( w1*(1.0-u) + w2*u  + 0.5) );
-	}
-
-	if( k==(nz-1) )
-	{
-		u = x - i; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-
-		n=k*np + j*nx +i;
-		v1 = array[n]*uu + array[n+1]*u;
-
-		n=k*np + (j+1)*nx +i;
-		v2 = array[n]*uu + array[n+1]*u;
-
-		u = y - j; if(u<0.0) u=0.0;
-		return( (unsigned char)( v1*(1.0-u) + v2*u  + 0.5) );
-	}
-
-	return(0);
-}
-
-short linearInterpolator(float x, float y, float z, short *array, int nx, int ny, int nz, int np)
-{
-	int     i,j,k,n;
-	float   u,uu;
-   float v1,v2,v3,v4;
-   float w1,w2;
-	
-	i=(int)(x);
-	j=(int)(y);
-	k=(int)(z);
-
-	if(i<0 || i>(nx-2) || j<0 || j>(ny-2) )
-	{
-		return(0);
-	}
-
-	if( k>=0 && k<(nz-1) )
-	{
-		u = x - i; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-
-		n=k*np + j*nx +i;
-		v1 = array[n]*uu + array[n+1]*u;
-		v2 = array[n+nx]*uu + array[n+nx+1]*u;
-		v3 = array[n+np]*uu + array[n+np+1]*u;
-		v4 = array[n+np+nx]*uu + array[n+np+nx+1]*u;
-
-		u = y - j; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-		w1 = v1*uu + v2*u;
-		w2 = v3*uu + v4*u;
-
-		u = z - k; if(u<0.0) u=0.0;
-		return( (short)( w1*(1.0-u) + w2*u  + 0.5) );
-	}
-
-	if( k==(nz-1) )
-	{
-		u = x - i; if(u<0.0) u=0.0;
-		uu = 1.0-u;
-
-		n=k*np + j*nx +i;
-		v1 = array[n]*uu + array[n+1]*u;
-
-		n=k*np + (j+1)*nx +i;
-		v2 = array[n]*uu + array[n+1]*u;
-
-		u = y - j; if(u<0.0) u=0.0;
-		return( (short)( v1*(1.0-u) + v2*u  + 0.5) );
-	}
-
-	return(0);
 }
 
 float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np, float *w)
@@ -827,80 +718,6 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 	return(0);
 }
 
-float linearInterpolator(float x, float y, float z, float *array, int nx, int ny, int nz, int np)
-{
-   int n_and_nx;  // n + nx
-   int n_and_np;  // n + np;
-
-   int   i,j,k,n;
-   float u1,u2,u3,u4,u5,u6,u7,u8;
-   float v1,v2,v3,v4;
-   float w1,w2;
-   float xr;
-   float yr;
-   float zr;
-
-   i=(int)(x);
-   j=(int)(y);
-   k=(int)(z);
-
-   if(i<0 || i>(nx-2) || j<0 || j>(ny-2) )
-   {
-      return(0.0);
-   }
-
-   if( k>=0 && k<(nz-1) )
-   {
-      xr = x - i;
-
-      n= k*np + j*nx + i;
-
-      n_and_nx = n + nx;
-      n_and_np = n + np;
-
-      u1 = array[n]; 
-      u2 = array[n+1]; 
-      u3 = array[n_and_nx];
-      u4 = array[n_and_nx + 1];
-      u5 = array[n_and_np];
-      u6 = array[n_and_np + 1];
-      u7 = array[n_and_nx + np];
-      u8 = array[n_and_nx + np + 1];
-
-      v1 = u1 + (u2-u1)*xr;
-      v2 = u3 + (u4-u3)*xr;
-      v3 = u5 + (u6-u5)*xr;
-      v4 = u7 + (u8-u7)*xr;
-
-      yr = y - j;
-      w1 = v1 + (v2-v1)*yr;
-      w2 = v3 + (v4-v3)*yr;
-
-      return( w1 + (w2-w1)*(z-k) ); // saved a multiplication :)
-   }
-   else if( k==(nz-1) )
-   {
-      xr = x - i;
-
-      n=k*np + j*nx +i;
-
-      v1 = array[n];
-      v2 = array[n+1];
-      w1 = v1 + (v2-v1)*xr;
-
-      n += nx;
-
-      v1 = array[n];
-      v2 = array[n+1];
-
-      w2 = v1 + (v2-v1)*xr;
-
-      return( w1 + (w2-w1)*(y-j) );
-   }
-
-   return(0.0);
-}
-
 short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
 {
@@ -941,7 +758,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 				y = ( yy + yc1 )/dy1;
 				z = ( zz + zc1 )/dz1;
 
-	   			im2[q++]=linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1);
+	   			im2[q++]=(short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
 			}
 		}
 	}
@@ -980,7 +797,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 		y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
 		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
 
-		im2[q++]=linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1);
+		im2[q++]=(short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
 	}
 
 	return( im2 );
@@ -1085,60 +902,6 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 	}
 
 	return( im2 );
-}
-
-float nearestNeighbor(float x, float y, float z, float *array, int nx, int ny, int nz, int np)
-{
-   int     i,j,k;
-  
-   i=(int)(x+0.5);
-   j=(int)(y+0.5);
-   k=(int)(z+0.5);
-
-   if( i>=0 && i<nx && j>=0 && j<ny && k>=0 && k<nz)
-   {
-      return(array[ np*k + nx*j +i ]);
-   }
-   else
-   {
-      return(0);
-   }
-}
-
-short nearestNeighbor(float x, float y, float z, short *array, int nx, int ny, int nz, int np)
-{
-   int     i,j,k;
-  
-   i=(int)(x+0.5);
-   j=(int)(y+0.5);
-   k=(int)(z+0.5);
-
-   if( i>=0 && i<nx && j>=0 && j<ny && k>=0 && k<nz)
-   {
-      return(array[ np*k + nx*j +i ]);
-   }
-   else
-   {
-      return(0);
-   }
-}
-
-unsigned char nearestNeighbor(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np)
-{
-   int     i,j,k;
-  
-   i=(int)(x+0.5);
-   j=(int)(y+0.5);
-   k=(int)(z+0.5);
-
-   if( i>=0 && i<nx && j>=0 && j<ny && k>=0 && k<nz)
-   {
-      return(array[ np*k + nx*j +i ]);
-   }
-   else
-   {
-      return(0);
-   }
 }
 
 // you must initialize drand48 before using this function
