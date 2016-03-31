@@ -1340,6 +1340,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
    float *invT; 
    int nbv;
 
+   if(ARTHOME==NULL) getARTHOME();
+
    // ensure that the user has specified an image
    if(imagefilename[0]=='\0')
    {

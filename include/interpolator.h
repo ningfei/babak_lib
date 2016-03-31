@@ -28,20 +28,13 @@ template<class TYPE> float linearInterpolator(float x, float y, TYPE *array, int
    return( v1*uu + v2*u );
 }
 
-
 template<class TYPE> float linearInterpolator(float x, float y, float z, TYPE *array, int nx, int ny, int nz, int np)
 {
-   int n_and_nx;  // n + nx
-   int n_and_np;  // n + np;
-
-   int   i,j,k,n;
-   float u1,u2,u3,u4,u5,u6,u7,u8;
+   int i,j,k,n;
+   float u,uu;
    float v1,v2,v3,v4;
    float w1,w2;
-   float xr;
-   float yr;
-   float zr;
-
+	
    i=(int)(x);
    j=(int)(y);
    k=(int)(z);
@@ -51,56 +44,42 @@ template<class TYPE> float linearInterpolator(float x, float y, float z, TYPE *a
       return(0.0);
    }
 
-   if( k>=0 && k<(nz-1) )
-   {
-      xr = x - i;
+	if( k>=0 && k<(nz-1) )
+	{
+		u = x - i; if(u<0.0) u=0.0;
+		uu = 1.0-u;
 
-      n= k*np + j*nx + i;
+		n=k*np + j*nx +i;
+		v1 = array[n]*uu + array[n+1]*u;
+		v2 = array[n+nx]*uu + array[n+nx+1]*u;
+		v3 = array[n+np]*uu + array[n+np+1]*u;
+		v4 = array[n+np+nx]*uu + array[n+np+nx+1]*u;
 
-      n_and_nx = n + nx;
-      n_and_np = n + np;
+		u = y - j; if(u<0.0) u=0.0;
+		uu = 1.0-u;
+		w1 = v1*uu + v2*u;
+		w2 = v3*uu + v4*u;
 
-      u1 = array[n]; 
-      u2 = array[n+1]; 
-      u3 = array[n_and_nx];
-      u4 = array[n_and_nx + 1];
-      u5 = array[n_and_np];
-      u6 = array[n_and_np + 1];
-      u7 = array[n_and_nx + np];
-      u8 = array[n_and_nx + np + 1];
+		u = z - k; if(u<0.0) u=0.0;
+		return( w1*(1.0-u) + w2*u  );
+	}
 
-      v1 = u1 + (u2-u1)*xr;
-      v2 = u3 + (u4-u3)*xr;
-      v3 = u5 + (u6-u5)*xr;
-      v4 = u7 + (u8-u7)*xr;
+	if( k==(nz-1) )
+	{
+		u = x - i; if(u<0.0) u=0.0;
+		uu = 1.0-u;
 
-      yr = y - j;
-      w1 = v1 + (v2-v1)*yr;
-      w2 = v3 + (v4-v3)*yr;
+		n=k*np + j*nx +i;
+		v1 = array[n]*uu + array[n+1]*u;
 
-      return( w1 + (w2-w1)*(z-k) ); // saved a multiplication :)
-   }
-   else if( k==(nz-1) )
-   {
-      xr = x - i;
+		n=k*np + (j+1)*nx +i;
+		v2 = array[n]*uu + array[n+1]*u;
 
-      n=k*np + j*nx +i;
+		u = y - j; if(u<0.0) u=0.0;
+		return( v1*(1.0-u) + v2*u  );
+	}
 
-      v1 = array[n];
-      v2 = array[n+1];
-      w1 = v1 + (v2-v1)*xr;
-
-      n += nx;
-
-      v1 = array[n];
-      v2 = array[n+1];
-
-      w2 = v1 + (v2-v1)*xr;
-
-      return( w1 + (w2-w1)*(y-j) );
-   }
-
-   return(0.0);
+	return(0.0);
 }
 
 template<class TYPE> float nearestNeighbor(float x, float y, float z, TYPE *array, int nx, int ny, int nz, int np)
