@@ -7,11 +7,11 @@ all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleI
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
-set_dim.o: set_dim.cxx
-	$(CC) -O2 -c $(INC) set_dim.cxx
+set_dim.o: set_dim.c
+	$(CC) -O2 -c $(INC) set_dim.c
 
-findMSP.o: findMSP.cxx
-	$(CC) -O2 -c $(INC) findMSP.cxx
+findMSP.o: findMSP.c
+	$(CC) -O2 -c $(INC) findMSP.c
 
 singular_value_decomposition.o: singular_value_decomposition.c
 	$(CC) -O2 -c $(INC) singular_value_decomposition.c
@@ -28,20 +28,20 @@ volume.o: volume.c
 binomial.o: binomial.c
 	$(CC) -O2 -c $(INC) binomial.c
 
-smooth.o: smooth.cxx
-	$(CC) -O2 -c $(INC) smooth.cxx
+smooth.o: smooth.c
+	$(CC) -O2 -c $(INC) smooth.c
 
-niftiimage.o: niftiimage.cxx
-	$(CC) -O2 -c $(INC) niftiimage.cxx
+niftiimage.o: niftiimage.c
+	$(CC) -O2 -c $(INC) niftiimage.c
 
 utils.o: utils.c
 	$(CC) -O2 -c $(INC) utils.c
 
-nifti.o: nifti.cxx
-	$(CC) -O2 -c $(INC) nifti.cxx
+nifti.o: nifti.c
+	$(CC) -O2 -c $(INC) nifti.c
 
-errorMessage.o: errorMessage.cxx
-	$(CC) -O2 -c $(INC) errorMessage.cxx
+errorMessage.o: errorMessage.c
+	$(CC) -O2 -c $(INC) errorMessage.c
 
 maskOps.o: maskOps.c
 	$(CC) -O2 -c $(INC) maskOps.c
@@ -85,8 +85,8 @@ analyzeio.o: analyzeio.c
 getoption.o: getoption.c 
 	$(CC) -O2 -c $(INC) getoption.c 
 
-swap.o: swap.cxx 
-	$(CC) -O2 -c $(INC) swap.cxx 
+swap.o: swap.c 
+	$(CC) -O2 -c $(INC) swap.c 
 
 fileinfo.o: fileinfo.c
 	$(CC) -O2 -c $(INC) fileinfo.c
@@ -97,8 +97,8 @@ histogram.o: histogram.c
 resize.o: resize.c
 	$(CC) -O2 -c $(INC) resize.c
 
-gaussian_kernel.o: gaussian_kernel.cxx
-	$(CC) -O2 -c $(INC) gaussian_kernel.cxx
+gaussian_kernel.o: gaussian_kernel.c
+	$(CC) -O2 -c $(INC) gaussian_kernel.c
 
 convolution.o: convolution.c
 	$(CC) -O2 -c $(INC) convolution.c
@@ -118,47 +118,47 @@ legendre.o: legendre.c
 cubicspline.o: cubicspline.c
 	$(CC) -O2 -c $(INC) cubicspline.c
 
-medianfilter.o: medianfilter.cxx
-	$(CC) -O2 -c $(INC) medianfilter.cxx
+medianfilter.o: medianfilter.c
+	$(CC) -O2 -c $(INC) medianfilter.c
 
-directionCode.o: directionCode.cxx
-	$(CC) -O2 -c $(INC) directionCode.cxx
+directionCode.o: directionCode.c
+	$(CC) -O2 -c $(INC) directionCode.c
 
-checkNiftiFileExtension.o: checkNiftiFileExtension.cxx
-	$(CC) -O2 -c $(INC) checkNiftiFileExtension.cxx
+checkNiftiFileExtension.o: checkNiftiFileExtension.c
+	$(CC) -O2 -c $(INC) checkNiftiFileExtension.c
 
-getNiftiImageOrientation.o: getNiftiImageOrientation.cxx
-	$(CC) -O2 -c $(INC) getNiftiImageOrientation.cxx
+getNiftiImageOrientation.o: getNiftiImageOrientation.c
+	$(CC) -O2 -c $(INC) getNiftiImageOrientation.c
 
-isOrientationCodeValid.o: isOrientationCodeValid.cxx
-	$(CC) -O2 -c $(INC) isOrientationCodeValid.cxx
+isOrientationCodeValid.o: isOrientationCodeValid.c
+	$(CC) -O2 -c $(INC) isOrientationCodeValid.c
 
-PILtransform.o: PILtransform.cxx
-	$(CC) -O2 -c $(INC) PILtransform.cxx
+PILtransform.o: PILtransform.c
+	$(CC) -O2 -c $(INC) PILtransform.c
 
-reorientVolume.o: reorientVolume.cxx
-	$(CC) -O2 -c $(INC) reorientVolume.cxx
+reorientVolume.o: reorientVolume.c
+	$(CC) -O2 -c $(INC) reorientVolume.c
 
-rotate.o: rotate.cxx
-	$(CC) -O2 -c $(INC) rotate.cxx
+rotate.o: rotate.c
+	$(CC) -O2 -c $(INC) rotate.c
 
-setLowHigh.o: setLowHigh.cxx
-	$(CC) -O2 -c $(INC) setLowHigh.cxx
+setLowHigh.o: setLowHigh.c
+	$(CC) -O2 -c $(INC) setLowHigh.c
 
-compute_cm.o: compute_cm.cxx
-	$(CC) -O2 -c $(INC) compute_cm.cxx
+compute_cm.o: compute_cm.c
+	$(CC) -O2 -c $(INC) compute_cm.c
 
-standardize.o: standardize.cxx
-	$(CC) -O2 -c $(INC) standardize.cxx
+standardize.o: standardize.c
+	$(CC) -O2 -c $(INC) standardize.c
 
-sph.o: sph.cxx
-	$(CC) -O2 -c $(INC) sph.cxx
+sph.o: sph.c
+	$(CC) -O2 -c $(INC) sph.c
 
-landmarks.o: landmarks.cxx
-	$(CC) -O2 -c $(INC) landmarks.cxx
+landmarks.o: landmarks.c
+	$(CC) -O2 -c $(INC) landmarks.c
 
-getARTHOME.o: getARTHOME.cxx
-	$(CC) -O2 -c $(INC) getARTHOME.cxx
+getARTHOME.o: getARTHOME.c
+	$(CC) -O2 -c $(INC) getARTHOME.c
 
 libbabak_lib_linux.a: set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
 	ar -ru libbabak_lib_linux.a set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
@@ -167,32 +167,32 @@ clean:
 	rm -f *.o
 
 # compilation of executables
-bin/3dwarper: libbabak_lib_linux.a 3dwarper.c
-	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.c $(LIBS) $(INC)
+bin/3dwarper: libbabak_lib_linux.a 3dwarper.cxx
+	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.cxx $(LIBS) $(INC)
 	mv 3dwarper bin
 
-bin/acpcdetect: libbabak_lib_linux.a acpcdetect.c
-	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.c $(LIBS) $(INC)
+bin/acpcdetect: libbabak_lib_linux.a acpcdetect.cxx
+	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.cxx $(LIBS) $(INC)
 	mv acpcdetect bin
 
-bin/applywarp3d: libbabak_lib_linux.a applywarp3d.c
-	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.c $(INC) $(LIBS)
+bin/applywarp3d: libbabak_lib_linux.a applywarp3d.cxx
+	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LIBS)
 	mv applywarp3d bin
 
-bin/scaleImage: libbabak_lib_linux.a scaleImage.c
-	$(CC) $(CFLAGS) -o scaleImage scaleImage.c $(INC) $(LIBS)
+bin/scaleImage: libbabak_lib_linux.a scaleImage.cxx
+	$(CC) $(CFLAGS) -o scaleImage scaleImage.cxx $(INC) $(LIBS)
 	mv scaleImage bin
 
-bin/avgImage: libbabak_lib_linux.a avgImage.c
-	$(CC) $(CFLAGS) -o avgImage avgImage.c $(INC) $(LIBS)
+bin/avgImage: libbabak_lib_linux.a avgImage.cxx
+	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
 	mv avgImage bin
 
-bin/ivf: libbabak_lib_linux.a ivf.c
-	$(CC) $(CFLAGS) -o ivf ivf.c $(INC) $(LIBS)
+bin/ivf: libbabak_lib_linux.a ivf.cxx
+	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)
 	mv ivf bin
 
-bin/unwarp2d: libbabak_lib_linux.a unwarp2d.c
-	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.c $(INC) $(LIBS)
+bin/unwarp2d: libbabak_lib_linux.a unwarp2d.cxx
+	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.cxx $(INC) $(LIBS)
 	mv unwarp2d bin
 
 bin/cphdr: libbabak_lib_linux.a cphdr.cxx
