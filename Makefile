@@ -3,7 +3,7 @@ CC = g++
 INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 
-all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d
+all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d bin/cphdr
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -103,8 +103,8 @@ gaussian_kernel.o: gaussian_kernel.cxx
 convolution.o: convolution.c
 	$(CC) -O2 -c $(INC) convolution.c
 
-reslice.o: reslice.c
-	$(CC) -O2 -c $(INC) reslice.c
+resliceImage.o: resliceImage.c
+	$(CC) -O2 -c $(INC) resliceImage.c
 
 matrixCom.o: matrixCom.c
 	$(CC) -O2 -c $(INC) matrixCom.c
@@ -160,8 +160,8 @@ landmarks.o: landmarks.cxx
 getARTHOME.o: getARTHOME.cxx
 	$(CC) -O2 -c $(INC) getARTHOME.cxx
 
-libbabak_lib_linux.a: set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
-	ar -ru libbabak_lib_linux.a set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
+libbabak_lib_linux.a: set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
+	ar -ru libbabak_lib_linux.a set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
 
 clean: 
 	rm -f *.o
@@ -194,3 +194,7 @@ bin/ivf: libbabak_lib_linux.a ivf.c
 bin/unwarp2d: libbabak_lib_linux.a unwarp2d.c
 	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.c $(INC) $(LIBS)
 	mv unwarp2d bin
+
+bin/cphdr: libbabak_lib_linux.a cphdr.cxx
+	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
+	mv cphdr bin
