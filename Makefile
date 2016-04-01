@@ -3,7 +3,7 @@ CC = g++
 INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 
-all: libbabak_lib 3dwarper
+all: libbabak_lib 3dwarper mvtobin
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -169,3 +169,6 @@ clean:
 # compilation of executables
 3dwarper: 3dwarper.c
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.c $(LIBS) $(INC)
+
+mvtobin:
+	mv 3dwarper bin
