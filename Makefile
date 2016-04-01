@@ -3,7 +3,7 @@ CC = g++
 INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 
-all: libbabak_lib 3dwarper acpcdetect applywarp3d scaleImage avgImage mvtobin
+all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -160,31 +160,37 @@ landmarks.o: landmarks.cxx
 getARTHOME.o: getARTHOME.cxx
 	$(CC) -O2 -c $(INC) getARTHOME.cxx
 
-libbabak_lib: set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
+libbabak_lib_linux.a: set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
 	ar -ru libbabak_lib_linux.a set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o reslice.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o
 
 clean: 
 	rm -f *.o
 
 # compilation of executables
-3dwarper: 3dwarper.c
+bin/3dwarper: libbabak_lib_linux.a 3dwarper.c
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.c $(LIBS) $(INC)
-
-acpcdetect: acpcdetect.c
-	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.c $(LIBS) $(INC)
-
-applywarp3d: applywarp3d.c
-	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.c $(INC) $(LIBS)
-
-scaleImage: scaleImage.c
-	$(CC) $(CFLAGS) -o scaleImage scaleImage.c $(INC) $(LIBS)
-
-avgImage: avgImage.c
-	$(CC) $(CFLAGS) -o avgImage avgImage.c $(INC) $(LIBS)
-
-mvtobin:
 	mv 3dwarper bin
+
+bin/acpcdetect: libbabak_lib_linux.a acpcdetect.c
+	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.c $(LIBS) $(INC)
 	mv acpcdetect bin
+
+bin/applywarp3d: libbabak_lib_linux.a applywarp3d.c
+	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.c $(INC) $(LIBS)
 	mv applywarp3d bin
+
+bin/scaleImage: libbabak_lib_linux.a scaleImage.c
+	$(CC) $(CFLAGS) -o scaleImage scaleImage.c $(INC) $(LIBS)
 	mv scaleImage bin
+
+bin/avgImage: libbabak_lib_linux.a avgImage.c
+	$(CC) $(CFLAGS) -o avgImage avgImage.c $(INC) $(LIBS)
 	mv avgImage bin
+
+bin/ivf: libbabak_lib_linux.a ivf.c
+	$(CC) $(CFLAGS) -o ivf ivf.c $(INC) $(LIBS)
+	mv ivf bin
+
+bin/unwarp2d: libbabak_lib_linux.a unwarp2d.c
+	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.c $(INC) $(LIBS)
+	mv unwarp2d bin
