@@ -1,9 +1,11 @@
 CFLAGS = -funroll-all-loops -O3
 CC = g++
-INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
-LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
+#INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
+INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
+#LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
+LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
-all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d bin/cphdr bin/reslice
+all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d bin/cphdr bin/reslice bin/kaiba
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -202,3 +204,7 @@ bin/cphdr: libbabak_lib_linux.a cphdr.cxx
 bin/reslice: libbabak_lib_linux.a reslice.cxx
 	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
 	mv reslice bin
+
+bin/kaiba: libbabak_lib_linux.a kaiba.cxx
+	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
+	mv kaiba bin
