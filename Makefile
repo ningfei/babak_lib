@@ -3,7 +3,7 @@ CC = g++
 INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 
-all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d bin/cphdr
+all: libbabak_lib_linux.a bin/3dwarper bin/acpcdetect bin/applywarp3d bin/scaleImage bin/avgImage bin/ivf bin/unwarp2d bin/cphdr bin/reslice
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -198,3 +198,7 @@ bin/unwarp2d: libbabak_lib_linux.a unwarp2d.c
 bin/cphdr: libbabak_lib_linux.a cphdr.cxx
 	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
 	mv cphdr bin
+
+bin/reslice: libbabak_lib_linux.a reslice.cxx
+	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
+	mv reslice bin
