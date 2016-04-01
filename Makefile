@@ -3,7 +3,7 @@ CC = g++
 INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 
-all: libbabak_lib 3dwarper acpcdetect mvtobin
+all: libbabak_lib 3dwarper acpcdetect applywarp3d scaleImage avgImage mvtobin
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -173,6 +173,18 @@ clean:
 acpcdetect: acpcdetect.c
 	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.c $(LIBS) $(INC)
 
+applywarp3d: applywarp3d.c
+	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.c $(INC) $(LIBS)
+
+scaleImage: scaleImage.c
+	$(CC) $(CFLAGS) -o scaleImage scaleImage.c $(INC) $(LIBS)
+
+avgImage: avgImage.c
+	$(CC) $(CFLAGS) -o avgImage avgImage.c $(INC) $(LIBS)
+
 mvtobin:
 	mv 3dwarper bin
 	mv acpcdetect bin
+	mv applywarp3d bin
+	mv scaleImage bin
+	mv avgImage bin
