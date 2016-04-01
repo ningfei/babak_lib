@@ -13,13 +13,13 @@
 #include <ctype.h>
 
 #include <nifti1_io.h>
-#include <niftiimage.h>
-#include "babak_lib.h"
-#include "sph.h"
-#include "smooth.h"
-#include "landmarks.h"
-#include "interpolator.h"
-#include "minmax.h"
+#include "../include/niftiimage.h"
+#include "../include/babak_lib.h"
+#include "../include/sph.h"
+#include "../include/smooth.h"
+#include "../include/landmarks.h"
+#include "../include/interpolator.h"
+#include "../include/minmax.h"
 
 #define YES 1
 #define NO 0

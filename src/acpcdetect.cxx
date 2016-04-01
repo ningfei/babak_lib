@@ -13,8 +13,8 @@
 #include <ctype.h>
 
 #include <nifti1_io.h>
-#include <niftiimage.h>
-#include "babak_lib.h"
+#include "../include/niftiimage.h"
+#include "../include/babak_lib.h"
 
 #define YES 1
 #define NO 0

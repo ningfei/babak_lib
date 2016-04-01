@@ -20,9 +20,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "volume.h"
-#include "spm_analyze.h"
+#include "../include/spm_analyze.h"
 #include "babak_lib.h"
-#include "smooth.h"
+#include "../include/smooth.h"
 #include "minmax.h"
 #include "interpolator.h"
 
