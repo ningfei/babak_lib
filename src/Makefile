@@ -5,7 +5,7 @@ INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
 #LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
-all: libbabak_lib_linux.a 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba
+all: libbabak_lib_linux.a 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -208,3 +208,7 @@ reslice: libbabak_lib_linux.a reslice.cxx
 kaiba: libbabak_lib_linux.a kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
 	mv kaiba ../bin
+
+oi: libbabak_lib_linux.a oi.cxx
+	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)
+	mv oi ../bin

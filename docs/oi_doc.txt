@@ -1,0 +1,9 @@
+The program oi.cxx implements an "Overlap Index" given by:
+
+oi = 1 + \sum_i ( a_i * ln a_i) / ( (\sum_i (a_i))  * ln(n) 
+
+0 <= oi <=1
+
+\sum_i a_i is the average size of the structure between n label images
+n number of label images
+a_i is the average label at voxel i
