@@ -122,6 +122,19 @@ float *avg(int N, char **imagefile)
             }
 			for(int i=0; i<nv; i++) avg_image[i] = ((float *)image)[i];
 			break;
+		case 64:
+            if(opt_b)
+            {
+			   for(int i=0; i<nv; i++) 
+               {
+                  if( ((double *)image)[i] > 0 )
+                     ((double *)image)[i] = 1;
+                  else
+                     ((double *)image)[i] = 0;
+               }
+            }
+			for(int i=0; i<nv; i++) avg_image[i] = ((double *)image)[i];
+			break;
 		case 512:
             if(opt_b)
             {
@@ -210,6 +223,19 @@ float *avg(int N, char **imagefile)
                   }
             }
             for(int j=0; j<nv; j++) avg_image[j] += ((float *)image)[j];
+            break;
+          case 64:
+            if(opt_b)
+            {
+			      for(int j=0; j<nv; j++) 
+                  {
+                     if( ((double *)image)[j] > 0 )
+                        ((double *)image)[j] = 1;
+                     else
+                        ((double *)image)[j] = 0;
+                  }
+            }
+            for(int j=0; j<nv; j++) avg_image[j] += ((double *)image)[j];
             break;
          case 512:
             if(opt_b)
@@ -301,6 +327,9 @@ float *avg4d(char *imagefile, int n)
             break;
          case 16:
             for(int v=0; v<nv; v++) avg_image[v] += ((float *)image)[i*nv + v];
+            break;
+         case 64:
+            for(int v=0; v<nv; v++) avg_image[v] += ((double *)image)[i*nv + v];
             break;
          case 512:
             for(int v=0; v<nv; v++) avg_image[v] += ((unsigned short *)image)[i*nv + v];

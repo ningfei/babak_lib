@@ -69,6 +69,14 @@ void swapN(char *in, int4 N)
 	}
 }       
 
+void swap_double_array( float8 *x, int4 n)
+{
+   for(int4 i=0; i<n; i++)
+   {    
+      swapByteOrder( (char *)(x+i), sizeof(float8) );
+   }
+}       
+
 void swap_float_array( float4 *x, int4 n)
 {
    for(int4 i=0; i<n; i++)

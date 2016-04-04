@@ -1295,6 +1295,11 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
          swap_float_array( (float *)im, datasize/sizeof(float));
       }
 
+      if( hdr->datatype == DT_DOUBLE) 
+      { 
+         swap_double_array( (float8 *)im, datasize/sizeof(float8));
+      }
+
       if( hdr->datatype == DT_SIGNED_INT ) 
       { 
          swap_int_array( (int *)im, datasize/sizeof(int));
