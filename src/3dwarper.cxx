@@ -19,12 +19,12 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "volume.h"
+#include "../include/volume.h"
 #include "../include/spm_analyze.h"
-#include "babak_lib.h"
+#include "../include/babak_lib.h"
 #include "../include/smooth.h"
-#include "minmax.h"
-#include "interpolator.h"
+#include "../include/minmax.h"
+#include "../include/interpolator.h"
 
 #define YES 1
 #define NO 0

@@ -9,9 +9,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
-#include <volume.h>
+#include "../include/volume.h"
 #include <ctype.h>
-
 #include <nifti1_io.h>
 #include "../include/niftiimage.h"
 #include "../include/babak_lib.h"
