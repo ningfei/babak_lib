@@ -1263,51 +1263,6 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void setMX(int2 *image, int2 *msk, int nv, int *high, float4 percent)
-{
-   int2 min, max;
-   int *histogram;
-   int hsize;			/* histogram size */
-   int b;
-   int i;
-
-   int nmax;
-   int n;
-
-   for(int i=0; i<nv; i++) 
-   {
-      if(msk[i]==0) image[i]=0;
-      if(image[i]<0) image[i]=0;
-   }
-
-   minmax(image,nv,min,max);
-
-   hsize = max+1;
-
-   histogram=(int *)calloc(hsize,sizeof(int));
-
-   for(int i=0; i<nv; i++)
-   {
-      b = image[i];
-
-      if(b>=0 && b<hsize) histogram[ b ]++;
-   }
-
-   nmax = (int)( percent * (nv-histogram[0])/100.0);
-
-   n=0;
-   for(i=0;i<hsize;i++)
-   {
-      n += histogram[hsize-1-i];
-      if(n>nmax) break;
-   }
-   *high=hsize-1-i; 
-
-   free(histogram);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-
 float8 compute_hi(char *imfile, char *roifile)
 {
    float4 fuzzy_parenchymasize=0.0;
@@ -1365,10 +1320,10 @@ float8 compute_hi(char *imfile, char *roifile)
    //}
 
    im = (int2 *)read_nifti_image(imfile, &hdr);
-   setMX(im, roi, nv, &mx, HISTCUTOFF);
+   setMX(im, roi, nv, mx, HISTCUTOFF);
 
    //if(opt_v)
-   //   printf("MX = %d\n",mx);
+      // printf("MX = %d\n",mx);
 
    /////////////////////////////////////////////////////////////
    int hist_thresh;

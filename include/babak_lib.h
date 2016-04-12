@@ -247,6 +247,7 @@ void SE3_to_se3(float4 *M, float4 *w, float4 *v, float4 &theta);
 //defined in setLowHigh.cxx
 void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high);	
 void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high, float4 percent);
+void setMX(int2 *image, int2 *msk, int4 nv, int4 &high, float4 percent);
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef _singular_value_decomposition
