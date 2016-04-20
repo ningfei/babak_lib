@@ -1,7 +1,3 @@
-// BUG FIX (2011-07-29): The default interpolation method was nearest neighbor. The -nn option would use
-// trilinear interpolatin.  This was corrected.  Now the default interpolation method is trilinear and 
-// the -nn option forces the program to use nearest neighbor.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -47,7 +43,6 @@ int opt;
 // Global variables
 
 int opt_png=NO; // flag for outputing PNG images
-int opt_newPIL=YES;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -758,33 +753,23 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    float4 *ifTPIL; // inverse of fTPIL
 
    if(verbose) printf("Computing baseline image PIL transformation ...\n");
-   if(!opt_newPIL)
-      standard_PIL_transformation(bfile, blmfile, verbose, bTPIL);
-   else
+   new_PIL_transform(bfile, blmfile, bTPIL);
+   if(opt_png)
    {
-      new_PIL_transform(bfile, blmfile, bTPIL);
-      if(opt_png)
-      {
-         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
-      }
+      sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
    }
 
    ibTPIL= inv4(bTPIL);
 
    if(verbose) printf("Computing follow-up image PIL transformation ...\n");
-   if(!opt_newPIL)
-      standard_PIL_transformation(ffile, flmfile, verbose, fTPIL);
-   else
+   new_PIL_transform(ffile, flmfile, fTPIL);
+   if(opt_png)
    {
-      new_PIL_transform(ffile, flmfile, fTPIL);
-      if(opt_png)
-      {
-         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",fprefix,fprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",fprefix,fprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",fprefix,fprefix); system(cmnd);
-      }
+      sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",fprefix,fprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",fprefix,fprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",fprefix,fprefix); system(cmnd);
    }
 
    ifTPIL= inv4(fTPIL);
@@ -1490,9 +1475,6 @@ int main(int argc, char **argv)
          case 'g':
             opt_png=YES;
             break;
-         case 'n':
-            opt_newPIL=NO;
-            break;
          case 'p':
             sprintf(opprefix,"%s",optarg);
             break;
@@ -1639,10 +1621,14 @@ int main(int argc, char **argv)
    else // for cross-sectional case
    {
       SHORTIM bimpil; // baseline image after transformation to standard PIL space
+      float LHI, LHI1, LHI2;
+      float RHI, RHI1, RHI2;
+
+      // find baseline image prefix bprefix
       // Note: niftiFilename does a few extra checks to ensure that the file has either
       // .hdr or .nii extension, the magic field in the header is set correctly, 
       // the file can be opened and a header can be read.
-      if( niftiFilename(bprefix, bfile)==0 ) exit(0);
+      if( niftiFilename(bprefix, bfile)==0 ) exit(1);
 
       if(opt_v) printf("Baseline image prefix: %s\n",bprefix);
 
@@ -1661,48 +1647,73 @@ int main(int argc, char **argv)
          exit(1);
       }
 
-      set_dim(dimb, bhdr);
-      set_dim(bim, dimb);
+      // because some functions used dimb and some use bim
+      set_dim(dimb, bhdr); // copies dimensions from bhder to dimb
+      set_dim(bim, dimb); // copies dimensions from dimb to bim 
       ///////////////////////////////////////////////////////////////////////////////////////////////
       
-   
-      float4 bTPIL[16]; // takes the baseline image to standard PIL orientation 
+      float4 bTPIL[16]; // rigid-body transformation takes the baseline image to standard PIL orientation 
       float4 *invT;
+
       if(opt_v) printf("Computing baseline image PIL transformation ...\n");
-      if(!opt_newPIL)
-         standard_PIL_transformation(bfile, blmfile, opt_v, bTPIL);
-      else
+
+      new_PIL_transform(bfile,blmfile,bTPIL);
+      if(opt_png)
       {
-         new_PIL_transform(bfile,blmfile,bTPIL);
-         if(opt_png)
-         {
-            sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
-            sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
-            sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
-         }
+         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
       }
 
+      // create bimpil image (baseline image in PIL orientation)
       invT = inv4(bTPIL);
       bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
       set_dim(bimpil, PILbraincloud_dim);
       free(invT);
 
+      // save bimpil image
       sprintf(PILbraincloud_hdr.descrip,"Created by ART's KAIBA module");
       sprintf(filename,"%s_PIL.nii",bprefix);
       save_nifti_image(filename, bimpil.v, &PILbraincloud_hdr);
+      delete bimpil.v;
+
+      // process left-right flipped PIL image
+      bTPIL[8]*=-1.0; bTPIL[9]*=-1.0; bTPIL[10]*=-1.0; bTPIL[11]*=-1.0;
+      invT = inv4(bTPIL);
+      bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
+      free(invT);
+
+      find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
+      sprintf(roifile,"%s_RHROI.nii",bprefix);
+      LHI1=compute_hi(bfile, roifile);
 
       find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-      find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
+      sprintf(roifile,"%s_LHROI.nii",bprefix);
+      RHI1=compute_hi(bfile, roifile);
 
       delete bimpil.v;
 
-      sprintf(roifile,"%s_RHROI.nii",bprefix);
-      hi=compute_hi(bfile, roifile);
-      fprintf(fp,"%s, %s, %lf\n",bfile,roifile,hi);
+      // process correct PIL image
+      bTPIL[8]*=-1.0; bTPIL[9]*=-1.0; bTPIL[10]*=-1.0; bTPIL[11]*=-1.0;
+      invT = inv4(bTPIL);
+      bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
+      free(invT);
 
+      find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
+      sprintf(roifile,"%s_RHROI.nii",bprefix);
+      RHI2=compute_hi(bfile, roifile);
+
+      find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
       sprintf(roifile,"%s_LHROI.nii",bprefix);
-      hi=compute_hi(bfile, roifile);
-      fprintf(fp,"%s, %s, %lf\n",bfile,roifile,hi);
+      LHI2=compute_hi(bfile, roifile);
+
+      delete bimpil.v;
+
+      RHI=(RHI1+RHI2)/2.0;
+      LHI=(LHI1+LHI2)/2.0;
+
+      fprintf(fp,"%s, %s, %lf\n",bfile, roifile, RHI);
+      fprintf(fp,"%s, %s, %lf\n",bfile, roifile, LHI);
    }
    fclose(fp);
 }
