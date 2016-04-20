@@ -202,6 +202,8 @@ struct dicominfo
 typedef struct dicominfo dicominfo;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2);
+
 // The following functions are defined in errorMessage.cxx
 void memory_allocation_error(const char *variablename);
 void file_open_error(const char *filename);

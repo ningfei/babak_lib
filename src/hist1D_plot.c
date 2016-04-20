@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 //*********************************************************************
 // "hist1D_plot" plots the histogram of the data1 and data2 arrays based 
 // on the bins. The program generates 3 files in the running directory 
