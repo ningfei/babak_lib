@@ -44,6 +44,7 @@ int opt;
 
 int opt_png=NO; // flag for outputing PNG images
 char opt_flip=NO;
+FILE *logfp=NULL;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -1014,6 +1015,7 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
       save_nifti_image(filename, bimpil.v, &PILbraincloud_hdr);
       free(invT);
 
+      // if flip flag is on, make aimpil PIR 
       if(opt_flip) 
       { 
          delete bimpil.v;
@@ -1081,6 +1083,9 @@ void compute_lm_transformation(char *lmfile, SHORTIM im, float4 *A)
       printf("Landmarks file: %s\n", lmfile);
       printf("Number of landmarks sought = %d\n", NLM);
    }
+   fprintf(logfp,"\nLandmark detection ...\n");
+   fprintf(logfp,"Landmarks file: %s\n", lmfile);
+   fprintf(logfp,"Number of landmarks sought = %d\n", NLM);
 
    for(int n=0; n<NLM; n++)
    {
@@ -1187,6 +1192,8 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
       int2 *ntv_spc_roi;
       float4 T[16];
 
+      // if image was flipped (PIR), then 'lhc3' finds the RHROI
+      // and 'rhc3' finds the LHROI
       if( side[0]=='r')
       {
          if(!opt_flip)
@@ -1228,7 +1235,6 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
 
 float8 compute_hi(char *imfile, char *roifile)
 {
-   float4 fuzzy_parenchymasize=0.0;
    int gm_pk_srch_strt;
    int roisize; // number of non-zero voxels in roi
    float4 fuzzy_roisize=0.0;
@@ -1241,12 +1247,15 @@ float8 compute_hi(char *imfile, char *roifile)
    int mx;
    int nbin;
 
-   //if(opt_v)
-   //{
-   //   printf("Computing HI ...\n");
-   //   printf("Image file: %s\n", imfile);
-   //   printf("ROI file: %s\n", roifile);
-   //}
+   if(opt_v)
+   {
+      printf("Computing HI ...\n");
+      printf("Image file: %s\n", imfile);
+      printf("ROI file: %s\n", roifile);
+   }
+   fprintf(logfp,"Computing HI ...\n");
+   fprintf(logfp,"Image file: %s\n", imfile);
+   fprintf(logfp,"ROI file: %s\n", roifile);
 
    roi = (int2 *)read_nifti_image(roifile, &hdr);
    nx = hdr.dim[1];
@@ -1276,21 +1285,22 @@ float8 compute_hi(char *imfile, char *roifile)
       fuzzy_roisize += (1.0*roi[i])/roimax;
    }
 
-   //if(opt_v)
-   //{
-      //printf("ROI size = %d\n", roisize);
+   if(opt_v)
+   {
+      printf("ROI size = %d voxels\n", roisize);
       //printf("Fuzzy ROI size = %f\n", fuzzy_roisize);
-   //}
+   }
+   fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    im = (int2 *)read_nifti_image(imfile, &hdr);
    setMX(im, roi, nv, mx, HISTCUTOFF);
 
-   //if(opt_v)
-      // printf("MX = %d\n",mx);
+   if(opt_v)
+      printf("MX = %d\n",mx);
+   fprintf(logfp,"MX = %d\n",mx);
 
    /////////////////////////////////////////////////////////////
    int hist_thresh;
-   int im_thresh;
    int im_min, im_max;
    float8 *hist;
    float8 *fit;
@@ -1298,10 +1308,7 @@ float8 compute_hi(char *imfile, char *roifile)
    float8 var[MAXNCLASS+1];
    float8 p[MAXNCLASS+1];
    int2 *label;
-   float8 hmax=0.0;
    int gmpk=0;
-   int gmclass;
-   float8 mindiff;
    
    // initialize min and max variables
    for(int i=0; i<nv; i++)
@@ -1323,8 +1330,8 @@ float8 compute_hi(char *imfile, char *roifile)
       }
    }
 
-   //if(opt_v)
-   //   printf("im_min=%d im_max=%d\n",im_min,im_max);
+   if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
+   fprintf(logfp,"Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
 
    nbin = im_max-im_min+1;
    hist = (float8 *)calloc(nbin, sizeof(float8));
@@ -1355,30 +1362,27 @@ float8 compute_hi(char *imfile, char *roifile)
 
    EMFIT1d(hist, fit, label, nbin, mean, var, p, nclass, 1000);
 
+   // find gmpk
+   float8 hmax=0.0;
    for(int i=gm_pk_srch_strt; i<nbin; i++)
    {
-         if( fit[i] > hmax ) 
-         { 
-            hmax=fit[i]; 
-            gmpk=i; 
-         }
+      if( fit[i] > hmax ) 
+      { 
+         hmax=fit[i]; 
+         gmpk=i; 
+      }
    }
 
-   gmclass=0;
-   mindiff = abs( mean[0] - gmpk );
+   // Al's method for find the hist_threshold
+   hist_thresh = (int)(gmpk - mx*MXFRAC2 + 0.5);
 
-   for(int i=0; i<nclass; i++)
+   if(opt_v)
    {
-         //if(opt_v) printf("class=%d mean=%lf p=%lf\n", i, mean[i], p[i] );
-         if( abs( mean[i] - gmpk ) < mindiff )
-         {
-            mindiff = abs( mean[i] - gmpk );
-            gmclass=i;
-         }
+      printf("A histogram peak detected at: %d\n",gmpk+im_min);
+      printf("Image intensity threshold: %d\n",hist_thresh+im_min);
    }
-
-   //if(!opt_v)
-//      for(int i=0; i<nbin; i++) printf("%d %lf %lf %d\n",i, hist[i], fit[i], label[i]);
+   fprintf(logfp,"A histogram peak detected at: %d\n",gmpk+im_min);
+   fprintf(logfp,"Image intensity threshold: %d\n",hist_thresh+im_min);
 
    {
       int n=nbin;
@@ -1406,27 +1410,10 @@ float8 compute_hi(char *imfile, char *roifile)
 
    float8 csfvol=0.0;
 
-   // Al's method for find the hist_threshold
-   hist_thresh = (int)(gmpk - mx*MXFRAC2 + 0.5);
-
-//printf("\nhist_thresh=%d\n",hist_thresh);
-//printf("\ngmpk=%d\n",gmpk);
-
    for(int i=0; i<hist_thresh; i++)
    {
       csfvol += hist[i];
    }
-
-   im_thresh = hist_thresh + im_min;
-   fuzzy_parenchymasize= 0.0;
-   for(int v=0; v<nv; v++)
-   {
-      if( im[v] >= im_thresh && roi[v]>0 ) fuzzy_parenchymasize += (1.0*roi[v])/roimax;
-   }
-
-   //if(opt_v)
-      //printf("\n** HI=%lf gmpk=%d Thresh=%d **\n\n", 1.0-csfvol, gmpk, hist_thresh);
-   //printf("%s %s %lf %f\n", imfile,roifile, 1.0-csfvol, fuzzy_parenchymasize/fuzzy_roisize);
 
    free(hist); free(fit); free(label);
    /////////////////////////////////////////////////////////////
@@ -1509,6 +1496,9 @@ int main(int argc, char **argv)
       exit(0);
    }
 
+   sprintf(filename,"%s.log",opprefix);
+   logfp = fopen(filename,"w");
+
    //////////////////////////////////////////////////////////////////////////////////
    // Receive input image filenames and deteremine their prefix
    //////////////////////////////////////////////////////////////////////////////////
@@ -1575,6 +1565,9 @@ int main(int argc, char **argv)
 
       sprintf(filename,"%s_PIL.mrx",bprefix);
       loadTransformation(filename, pilT);
+
+      // if aimpil is PIR, then use 'lhc3' to find the RHROI
+      // and 'rhc3' to find the LHROI
       if(opt_flip) 
       { 
          pilT[8]*=-1.0; pilT[9]*=-1.0; pilT[10]*=-1.0; pilT[11]*=-1.0; 
@@ -1619,6 +1612,8 @@ int main(int argc, char **argv)
       sprintf(filename,"%s_PIL.mrx",fprefix);
       loadTransformation(filename, pilT);
 
+      // if aimpil is PIR, then use 'lhc3' to find the RHROI
+      // and 'rhc3' to find the LHROI
       if(opt_flip) 
       {
          pilT[8]*=-1.0; pilT[9]*=-1.0; pilT[10]*=-1.0; pilT[11]*=-1.0; 
@@ -1659,6 +1654,7 @@ int main(int argc, char **argv)
       if( niftiFilename(bprefix, bfile)==0 ) exit(1);
 
       if(opt_v) printf("Baseline image prefix: %s\n",bprefix);
+      fprintf(logfp,"Baseline image prefix: %s\n",bprefix);
 
       ///////////////////////////////////////////////////////////////////////////////////////////////
       // Read baseline image
@@ -1684,6 +1680,7 @@ int main(int argc, char **argv)
       float4 *invT;
 
       if(opt_v) printf("Computing baseline image PIL transformation ...\n");
+      fprintf(logfp,"Computing baseline image PIL transformation ...\n");
 
       new_PIL_transform(bfile,blmfile,bTPIL);
       if(opt_png)
@@ -1712,6 +1709,8 @@ int main(int argc, char **argv)
          bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
          free(invT);
 
+         // since bimpil is PIR, use 'lhc3' to find the RHROI
+         // and 'rhc3' to find the LHROI
          find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
          sprintf(roifile,"%s_RHROI%d.nii",bprefix,opt_flip);
          RHI=compute_hi(bfile, roifile);
@@ -1736,5 +1735,8 @@ int main(int argc, char **argv)
       fprintf(fp,"%s,Right,%lf\n",bfile,RHI);
       fprintf(fp,"%s,Left,%lf\n",bfile,LHI);
    }
+
    fclose(fp);
+
+   if(logfp != NULL) fclose(logfp);
 }
