@@ -203,6 +203,8 @@ typedef struct dicominfo dicominfo;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2);
+void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, int max_x);
+void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, int max_x, int thr);
 
 // The following functions are defined in errorMessage.cxx
 void memory_allocation_error(const char *variablename);
