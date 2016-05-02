@@ -65,27 +65,22 @@ static struct option options[] =
    {"-h",0,'h'},
    {"-help",0,'h'},
    {"-iter", 1, 'i'},
-   {"-I", 0, 'I'},
    {"-T", 1, 'T'},
    {"-A", 0, 'A'},
    {"-u", 1, 'u'},
    {"-o", 1, 'o'},
 
-   {"-rmpj",1,'0'},
    {"-thresh", 1, '3'},
    {"-w", 1, '7'},
    {"-s", 1, '9'},
-   {"-rac",1,'a'},
    {"-D",0,'D'},
    {"-sd", 1, 'd'},
    {"-m", 1, 'm'},
-   {"-rpc",1,'p'},
    {"-cubicspline", 0, 'c'},
    {0, 0, 0}
 };
 
 int opt_acpc=NO;
-int opt_I=NO;
 int opt_A=NO;
 int opt_D=NO;
 int opt_w=NO;
@@ -110,7 +105,7 @@ short *computeReslicedImage2(short *,int,int,int,float,float,float,int,int,int,f
 void print_help_and_exit()
 {
    printf("\n\nUsage:\n"
-   "\t3dwarper [-v or -verbose] [-h or -help] [-iter N] [-I -acpc -A] [-T <filename>]\n"
+   "\t3dwarper [-v or -verbose] [-h or -help] [-iter N] [-acpc -A] [-T <filename>]\n"
    "\t[-trgorient <orientation code>] [-suborient <orientation code>] [-u <filename>]\n"
    "\t[-o <filename>] [-cubicspline] [-sd N] [-w N] [-s N]\n"
    "\t-sub <subject image> -trg <target image>\n\n" 
@@ -134,9 +129,6 @@ void print_help_and_exit()
    "\t-iter N\n"
    "\t\tSpecifies the number of iterations used in finding the initial affine transformation\n"
    "\t\twhen the -A option is specified (default: N=4).\n\n"
-
-   "\t-I\n"
-   "\t\tUses the identity matrix as the initial subject to target transformation.\n\n"
 
    "\t-acpc\n"
    "\t\tUses AC-PC alignment to find a initial subject to target rigid-body transformation.\n\n"
@@ -597,6 +589,9 @@ int Lx, int Wx, float sd, int thresh)
 
 int main(int argc, char **argv)
 {
+   char subjectlmfile[1024]="";
+   char trglmfile[1024]="";
+
    int iter8=1;
    int iter4=1;
    int iter2=1;
@@ -618,11 +613,6 @@ int main(int argc, char **argv)
    float *invT;		
    float T[16];		// overall rigid body transformation
    float *Xwarp, *Ywarp, *Zwarp;
-
-   // searchradius[0] is for RP
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
 
    DIM dim_trg;
    DIM dim_sub;
@@ -679,9 +669,6 @@ int main(int argc, char **argv)
    subOrient[0]='\0'; 
    trgOrient[0]='\0'; 
    modelfile[0]='\0';
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
    /////////////////////////////////////////////////////////////////////
 
    dum = (char *)malloc(1024);
@@ -715,9 +702,6 @@ int main(int argc, char **argv)
          case 'i':
             niter=atoi(optarg);
             break;
-         case 'I':
-            opt_I=YES;
-            break;
          case 'v':
             opt_v=YES;
             break;
@@ -738,15 +722,6 @@ int main(int argc, char **argv)
             break;
          case 'm':
             sprintf(modelfile,"%s",optarg);
-            break;
-         case '0':
-            searchradius[0] = atof(optarg);
-            break;
-         case 'a':
-            searchradius[1] = atof(optarg);
-            break;
-         case 'p':
-            searchradius[2] = atof(optarg);
             break;
          case '7':
             N=atoi(optarg);
@@ -881,7 +856,7 @@ int main(int argc, char **argv)
       }
    }
 
-   if( Tfile[0] != '\0') // -T option overrides -A and -I
+   if( Tfile[0] != '\0') // -T option overrides -acpc and 
    {
       if( loadTransformation(Tfile,sub_to_trg) == 1 )
       {
@@ -889,41 +864,21 @@ int main(int argc, char **argv)
          exit(0);
       }
    }
-   else if( opt_acpc ) // -A option overrides -I
+   else if( opt_acpc ) // -acpc option overrides 
    {
-      float AC_trg[4], AC_sub[4];
-      float PC_trg[4], PC_sub[4];
-      float RP_trg[4], RP_sub[4];
-      float Tmsp_sub[16]; // transforms the input subject volume to MSP aligned PIL orientation
-      float Tmsp_trg[16]; // transforms the input subject volume to MSP aligned PIL orientation
-      float Tacpc_trg[16];
-      float Tacpc_sub[16];
+      float subjectTPIL[16];
+      float trgTPIL[16];
+      float *invT;
 
-      if( searchradius[0] < 0.0) searchradius[0] = 50.0;
-      if( searchradius[1] < 0.0) searchradius[1] = 15.0;
-      if( searchradius[2] < 0.0) searchradius[2] = 15.0;
+      if(opt_v) printf("Computing subject image PIL transformation ...\n");
+      new_PIL_transform(subjectImageFile, subjectlmfile, subjectTPIL);
 
-      detect_AC_PC_MSP(subjectImageFile, subOrient, modelfile, searchradius, AC_sub, PC_sub, RP_sub, Tmsp_sub, opt_D, opt_v, 0);
-      detect_AC_PC_MSP(targetImageFile, trgOrient, modelfile, searchradius, AC_trg, PC_trg, RP_trg, Tmsp_trg, opt_D, opt_v, 0);
+      if(opt_v) printf("Computing target image PIL transformation ...\n");
+      new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
 
-      orig_ijk_to_pil_xyz(Tmsp_sub, dim_sub, AC_sub, PC_sub);
-      ACPCtransform(Tacpc_sub, Tmsp_sub, AC_sub, PC_sub, 1);
-
-      orig_ijk_to_pil_xyz(Tmsp_trg, dim_trg, AC_trg, PC_trg);
-      ACPCtransform(Tacpc_trg, Tmsp_trg, AC_trg, PC_trg, 1);
-
-      invT = inv4(Tacpc_trg);
-      multi(invT, 4,4, Tacpc_sub, 4, 4, sub_to_trg);
+      invT = inv4(trgTPIL);
+      multi(invT, 4,4, subjectTPIL, 4, 4, sub_to_trg);
       free(invT);
-   }
-   else if(opt_I)
-   {
-      // set sub_to_trg equal to the identity matrix
-      for(int i=0; i<16; i++) 
-      {
-         sub_to_trg[i]=0.0; 
-      }
-      sub_to_trg[0]=sub_to_trg[5]=sub_to_trg[10]=sub_to_trg[15]=1.0;
    }
 
    if(opt_v)
