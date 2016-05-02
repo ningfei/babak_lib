@@ -1405,7 +1405,7 @@ float8 compute_hi(char *imfile, char *roifile)
       }
 
       sprintf(filename,"%s_hist",roifileprefix);
-      hist1D_plot(filename, n, bin, data1, data2);
+      hist1D_plot(filename, n, bin, data1, data2,gmpk+im_min,hist_thresh+im_min);
    }
 
    float8 csfvol=0.0;
