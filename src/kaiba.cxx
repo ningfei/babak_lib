@@ -1109,18 +1109,10 @@ void compute_lm_transformation(char *lmfile, SHORTIM im, float4 *A)
 
    fclose(fp);
 
-   float4 *invLMLMT;
-   float4 LMLMT[16];
-   float4 CMLMT[16];
-
-   mat_mat_trans(LM, 4, NLM, LM , 4, LMLMT);
-   invLMLMT = inv4(LMLMT);
-   mat_mat_trans(CM, 4, NLM, LM , 4, CMLMT);
-   multi(CMLMT,4,4,invLMLMT,4,4, A);
+   leastSquaresAffineTrans(LM, CM, NLM, A);
 
    free(LM);
    free(CM);
-   free(invLMLMT);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

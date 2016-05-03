@@ -74,6 +74,26 @@ void subtractVector(float *v1, float *v2, int n)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+int subtractAvgCol(float *X, int N, int P, float *avg)
+{
+   float *rowptr;
+
+   if(N<=0 || P<=0 || X==NULL || avg==NULL) return(1);
+
+   for(int i=0; i<N; i++) 
+   {
+      rowptr = X+i*P;
+
+      for(int j=0; j<P; j++) 
+      {
+         rowptr[j] -= avg[i];
+      }
+   }
+
+   return(0);
+}
+
 int centerMatrixRow(float *X, int N, int P, float *avg)
 {
 	if(N<=0 || P<=0 || X==NULL || avg==NULL) return(1);
@@ -190,6 +210,35 @@ int avgRow(float *X, int N, int P, float *avg)
       }
 
       avg[j] /= N;
+   }
+
+   return(0);
+}
+
+// returns an N-vector in "avg" containing the average of the P columns of X
+int avgCol(float *X, int N, int P, float *avg)
+{
+   float *rowptr; // points to the begining of a row
+   float rowsum;
+
+   // j is the column index
+   // i is the row index
+   // P is the number of columns
+   // N is the number of rows 
+
+   if(N<=0 || P<=0 || X==NULL || avg==NULL) return(1);
+
+   for(int i=0; i<N; i++) // for each row
+   {
+      rowsum=0.0;
+      rowptr = X+i*P;
+
+      for(int j=0; j<P; j++) // add all columns
+      {
+         rowsum += rowptr[j];
+      }
+
+      avg[i] = rowsum/P;
    }
 
    return(0);

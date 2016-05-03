@@ -202,6 +202,8 @@ struct dicominfo
 typedef struct dicominfo dicominfo;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void leastSquaresAffineTrans(float *P, float *Q, int n, float *A);
+
 void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2);
 void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, int max_x);
 void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, int max_x, int thr);
@@ -539,6 +541,11 @@ extern int4 centerMatrixRow(float4 *X, int4 N, int4 P, float4 *avg);
 extern int4 centerMatrixRow(float4 *X, int4 N, int4 P);
 
 // Returns 1 if an error condition occurs, 0 otherwise
+
+// returns an N-vector in "avg" containing the average of the P columns of X
+int4 avgCol(float4 *X, int4 N, int4 P, float4 *avg);
+int subtractAvgCol(float *X, int N, int P, float *avg);
+
 extern int4 avgRow(float4 *X, int4 N, int4 P, float4 *avg, char *rowmask);
 extern int4 avgRow(float8 *X, int4 N, int4 P, float8 *avg, char *rowmask);
 extern int4 avgRow(float4 *X, int4 N, int4 P, float4 *avg);
