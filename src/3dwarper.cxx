@@ -22,6 +22,7 @@
 #include "../include/volume.h"
 #include "../include/spm_analyze.h"
 #include "../include/babak_lib.h"
+#include "../include/sph.h"
 #include "../include/smooth.h"
 #include "../include/minmax.h"
 #include "../include/interpolator.h"
@@ -29,6 +30,11 @@
 #define YES 1
 #define NO 0
 #define MAXITER 10
+
+#define MATRIXSIZE 256
+#define VOXELSIZE 1.0
+
+extern float detect_lm(SPH &searchsph, SPH &testsph, SHORTIM testim, int lmcm[], SPH &refsph, int lm[]);
 
 void print_matrix(const char * title, float *T);
 
@@ -43,6 +49,8 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
 static float v1,v2,v3,v4;
 static float w1,w2;
 
+DIM dim1, dim2, dim4, dim8;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 int opt;
 
@@ -53,7 +61,6 @@ static struct option options[] =
    {"-iter2", 1, '2'},
    {"-iter1", 1, '1'},
 
-   {"-acpc", 0, 'C'},
    {"-trgorient",1,'R'},
    {"-suborient",1,'S'},
 
@@ -65,8 +72,6 @@ static struct option options[] =
    {"-h",0,'h'},
    {"-help",0,'h'},
    {"-iter", 1, 'i'},
-   {"-T", 1, 'T'},
-   {"-A", 0, 'A'},
    {"-u", 1, 'u'},
    {"-o", 1, 'o'},
 
@@ -75,13 +80,10 @@ static struct option options[] =
    {"-s", 1, '9'},
    {"-D",0,'D'},
    {"-sd", 1, 'd'},
-   {"-m", 1, 'm'},
    {"-cubicspline", 0, 'c'},
    {0, 0, 0}
 };
 
-int opt_acpc=NO;
-int opt_A=NO;
 int opt_D=NO;
 int opt_w=NO;
 int opt_s=NO;
@@ -105,7 +107,7 @@ short *computeReslicedImage2(short *,int,int,int,float,float,float,int,int,int,f
 void print_help_and_exit()
 {
    printf("\n\nUsage:\n"
-   "\t3dwarper [-v or -verbose] [-h or -help] [-iter N] [-acpc -A] [-T <filename>]\n"
+   "\t3dwarper [-v or -verbose] [-h or -help] [-iter N] [-A]\n"
    "\t[-trgorient <orientation code>] [-suborient <orientation code>] [-u <filename>]\n"
    "\t[-o <filename>] [-cubicspline] [-sd N] [-w N] [-s N]\n"
    "\t-sub <subject image> -trg <target image>\n\n" 
@@ -130,15 +132,8 @@ void print_help_and_exit()
    "\t\tSpecifies the number of iterations used in finding the initial affine transformation\n"
    "\t\twhen the -A option is specified (default: N=4).\n\n"
 
-   "\t-acpc\n"
-   "\t\tUses AC-PC alignment to find a initial subject to target rigid-body transformation.\n\n"
-
    "\t-A\n"
    "\t\tAutomatically finds an initial subject to target affine transformation.\n\n"
-
-   "\t-T <filename>\n"
-   "\t\tUses the (4x4) matrix specified in <filename> as the initial subject to target\n"
-   "\t\tlinear transformation.\n\n"
 
    "\t-trgorient <orientation code>\n"
    "\t\tOverrides the orientation information in the target image NIFTI header with the\n"
@@ -587,9 +582,157 @@ int Lx, int Wx, float sd, int thresh)
 	free(ARtrg);
 }
 
+// finds an affine registration in "A" to takes points from sub to trg space
+void affineReg(short *sub, short *trg, DIM dim, int r, int R, float *A)
+{
+   SPH subsph(r);
+   SPH trgsph(r);
+   SPH searchsph(R);
+
+   SHORTIM subim;
+   set_dim(subim,dim);
+   subim.v=sub;
+
+   SHORTIM trgim;
+   set_dim(trgim,dim);
+   trgim.v=trg;
+
+   int *PT, *QT;
+   char *flg;
+
+   float *P, *Q;
+
+   flg = (char *)calloc(dim.nv, sizeof(char));
+   PT = (int *)calloc(dim.nv*3, sizeof(int));
+   QT = (int *)calloc(dim.nv*3, sizeof(int));
+   
+   int c=0;
+   int v;
+   for(int k=0; k<dim.nz; k++)
+   for(int j=0; j<dim.ny; j++)
+   for(int i=0; i<dim.nx; i++)
+   {
+      v = k*dim.np+ j*dim.nx+ i;
+
+      if(sub[v]<=0 || trg[v]<=0)
+      {
+         flg[v]=0;
+         continue;
+      }
+
+      subsph.set(subim,i,j,k);
+
+      PT[3*c + 0] = QT[3*c + 0] = i;
+      PT[3*c + 1] = QT[3*c + 1] = j;
+      PT[3*c + 2] = QT[3*c + 2] = k;
+      detect_lm(searchsph, trgsph, trgim, PT+3*c, subsph, QT+3*c);
+
+      flg[v]=1;
+      c++;
+   }
+
+   int n=c;
+
+   P = (float *)calloc(3*n, sizeof(float));
+   Q = (float *)calloc(3*n, sizeof(float));
+
+   c=0;
+   for(int i=0; i<dim.nv; i++)
+   if(flg[i])
+   {
+      P[0*n + c]=(PT[3*c + 0] - (dim.nx-1)/2.0)*dim.dx;
+      P[1*n + c]=(PT[3*c + 1] - (dim.ny-1)/2.0)*dim.dy;
+      P[2*n + c]=(PT[3*c + 2] - (dim.nz-1)/2.0)*dim.dz;
+
+      Q[0*n + c]=(QT[3*c + 0] - (dim.nx-1)/2.0)*dim.dx;
+      Q[1*n + c]=(QT[3*c + 1] - (dim.ny-1)/2.0)*dim.dy;
+      Q[2*n + c]=(QT[3*c + 2] - (dim.nz-1)/2.0)*dim.dz;
+
+      c++;
+   }
+
+   leastSquaresAffineTrans(P, Q, n, A);
+
+   if(opt_v) printMatrix(A,4,4,"A:",NULL);
+
+   free(PT); 
+   free(QT);
+   free(flg);
+   free(P); 
+   free(Q);
+}
+
+void generateMultiResolution(short *im, DIM im_dim, float *T, short **im1, short **im2, short **im4, short **im8)
+{
+   float I[16];
+   float *invT;		
+
+   if( *im1 != NULL ) free(*im1);
+   if( *im2 != NULL ) free(*im2);
+   if( *im4 != NULL ) free(*im4);
+   if( *im8 != NULL ) free(*im8);
+
+   invT=inv4(T); 
+   *im1 = resliceImage(im, im_dim, dim1, invT, LIN); 
+   free(invT);
+
+   set_to_I(I,4); 
+   *im2 = resliceImage(*im1, dim1, dim2, I, LIN); 
+
+   set_to_I(I,4); 
+   *im4 = resliceImage(*im2, dim2, dim4, I, LIN); 
+
+   set_to_I(I,4); 
+   *im8 = resliceImage(*im4, dim4, dim8, I, LIN); 
+}
+
 int main(int argc, char **argv)
 {
-   char subjectlmfile[1024]="";
+   FILE *fp;
+   char filename[1024];
+
+   char trgprefix[1024]=""; //target image prefix
+   char subprefix[1024]=""; //subject image prefix
+
+   getARTHOME();
+
+   nifti_1_header PILhdr;
+   sprintf(filename,"%s/PILbrain.nii",ARTHOME);
+   PILhdr = read_NIFTI_hdr(filename);
+
+   short *subPIL1=NULL, *subPIL2=NULL, *subPIL4=NULL, *subPIL8=NULL;
+   short *trgPIL1=NULL, *trgPIL2=NULL, *trgPIL4=NULL, *trgPIL8=NULL;
+
+   DIM dim_trg;
+   DIM dim_sub;
+
+   dim1.nx = dim1.ny = dim1.nz = MATRIXSIZE;
+   dim1.np=dim1.nx*dim1.nx; 
+   dim1.nv=dim1.np*dim1.nz; 
+   dim1.dx = dim1.dy = dim1.dz = VOXELSIZE;
+
+   dim2.nx = dim2.ny = dim2.nz = MATRIXSIZE/2;
+   dim2.np=dim2.nx*dim2.nx; 
+   dim2.nv=dim2.np*dim2.nz; 
+   dim2.dx = dim2.dy = dim2.dz = VOXELSIZE*2.0;
+
+   dim4.nx = dim4.ny = dim4.nz = MATRIXSIZE/4;
+   dim4.np=dim4.nx*dim4.nx; 
+   dim4.nv=dim4.np*dim4.nz; 
+   dim4.dx = dim4.dy = dim4.dz = VOXELSIZE*4.0;
+
+   dim8.nx = dim8.ny = dim8.nz = MATRIXSIZE/8;
+   dim8.np=dim8.nx*dim8.nx; 
+   dim8.nv=dim8.np*dim8.nz; 
+   dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;
+
+   // a linear transformation that brings the subject image from its native space to PIL space
+   float subTPIL[16]; 
+
+   // a linear transformation that brings the target image from its native space to PIL space
+   float trgTPIL[16];
+
+   char sublmfile[1024]="";
    char trglmfile[1024]="";
 
    int iter8=1;
@@ -602,8 +745,6 @@ int main(int argc, char **argv)
 
    char subjectImageFile[1024]; 
    char targetImageFile[1024];
-   char modelfile[1024];
-   char Tfile[1024]; // subject to target linear transformation file
    char subOrient[4];  // orientation code for the subject image
    char trgOrient[4];  // orientation code for the target image
    char outputfile[1024];
@@ -614,10 +755,7 @@ int main(int argc, char **argv)
    float T[16];		// overall rigid body transformation
    float *Xwarp, *Ywarp, *Zwarp;
 
-   DIM dim_trg;
-   DIM dim_sub;
-
-   short *sub_orig;
+   short *sub;
    int Snx,Sny,Snz,Snv;
    float Sdx,Sdy,Sdz;
 
@@ -630,7 +768,6 @@ int main(int argc, char **argv)
    // number of iterations used in finding the initial affine transformation using -A option
    int niter=4; 
 
-	FILE *fp;
 	short *obj;
 
 	float sd;
@@ -665,10 +802,8 @@ int main(int argc, char **argv)
    warpfile[0]='\0'; 
    subjectImageFile[0]='\0'; 
    targetImageFile[0]='\0'; 
-   Tfile[0]='\0'; 
    subOrient[0]='\0'; 
    trgOrient[0]='\0'; 
-   modelfile[0]='\0';
    /////////////////////////////////////////////////////////////////////
 
    dum = (char *)malloc(1024);
@@ -687,9 +822,6 @@ int main(int argc, char **argv)
             break;
          case '1':
             iter1 = atoi(optarg);
-            break;
-         case 'C':
-            opt_acpc=YES;
             break;
          case 'R':
             sprintf(trgOrient,"%s",optarg);
@@ -713,15 +845,6 @@ int main(int argc, char **argv)
             break;
          case 't':
             sprintf(targetImageFile,"%s",optarg);
-            break;
-         case 'T':
-            sprintf(Tfile,"%s",optarg);
-            break;
-         case 'A':
-            opt_A=YES;
-            break;
-         case 'm':
-            sprintf(modelfile,"%s",optarg);
             break;
          case '7':
             N=atoi(optarg);
@@ -780,7 +903,9 @@ int main(int argc, char **argv)
    {
       printf("\nError: you must specify a \"subject image\" using the -sub argument.\n\n");		
       exit(0);
-   }
+   } 
+
+   if( niftiFilename(subprefix, subjectImageFile)==0 ) { exit(0); }
 
    if( targetImageFile[0] == '\0')
    {
@@ -788,18 +913,20 @@ int main(int argc, char **argv)
       exit(0);
    }
 
+   if( niftiFilename(trgprefix, targetImageFile)==0 ) { exit(0); }
+
    if(opt_v)
    {
-      printf("\nSubject image file = %s\n",subjectImageFile);
-      printf("\nTarget image file = %s\n",targetImageFile);
+      printf("Subject image file = %s\n",subjectImageFile);
+      printf("Target image file = %s\n",targetImageFile);
    }
 
-   sub_orig=readNiftiImage(subjectImageFile, &dim_sub, opt_v);
+   sub=readNiftiImage(subjectImageFile, &dim_sub, opt_v);
    Snv=dim_sub.nx*dim_sub.ny*dim_sub.nz;
    Snx = dim_sub.nx; Sny = dim_sub.ny; Snz = dim_sub.nz;
    Sdx = dim_sub.dx; Sdy = dim_sub.dy; Sdz = dim_sub.dz;
 
-   if(sub_orig==NULL) 
+   if(sub==NULL) 
    {
       printf("\nError: Reading subject image %s failed.\n\n",subjectImageFile);
       exit(0);
@@ -817,74 +944,86 @@ int main(int argc, char **argv)
    }
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   // default method for finding the subject to target linear transformation sub_to_trg
+   // find subTPIL 
+   if(opt_v) printf("Computing subject image PIL transformation ...\n");
+   new_PIL_transform(subjectImageFile, sublmfile, subTPIL);
+
+   // find trgTPIL
+   if(opt_v) printf("Computing target image PIL transformation ...\n");
+   new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
+
+   generateMultiResolution(trg, dim_trg, trgTPIL, &trgPIL1, &trgPIL2, &trgPIL4, &trgPIL8);
+
+   float A[16];
+   if(opt_v) printf("Processing resolution 1/8 ...\n");
+   generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+   affineReg(subPIL8, trgPIL8, dim8, 3, 3, A);
+   multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+
+   if(opt_v) printf("Processing resolution 1/4 ...\n");
+   generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+   affineReg(subPIL4, trgPIL4, dim4, 3, 3, A);
+   multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+
+   if(opt_v) printf("Processing resolution 1/2 ...\n");
+   generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+   affineReg(subPIL2, trgPIL2, dim2, 3, 3, A);
+   multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+
+   invT = inv4(trgTPIL);
+   multi(invT, 4,4, subTPIL, 4, 4, sub_to_trg);
+   free(invT);
+
+   if(opt_v) print_matrix("subject --> target affine transformation",sub_to_trg);
+
+   sprintf(filename,"%s_affine.mrx",subprefix);
+   fp = fopen(filename,"w");
+   printMatrix(sub_to_trg,4,4,"",fp);
+   fclose(fp);
+
+   ////////////////////////////////////////////////////////////////////////////////////////////
    {
-      float sub_to_PIL[16];
-      float PIL_to_trg[16];
+      short *tmp;
 
-      if(subOrient[0]=='\0')
-      {
-         getNiftiImageOrientation(subjectImageFile, subOrient);
-      }
-
-      if(trgOrient[0]=='\0')
-      {
-         getNiftiImageOrientation(targetImageFile, trgOrient);
-      }
-
-      if( !isOrientationCodeValid(subOrient) )
-      {
-         printf("Error: invalid subject image orientation code %s\n",subOrient);
-         exit(0);
-      }
-
-      if( !isOrientationCodeValid(trgOrient) )
-      {
-         printf("Error: invalid target image orientation code %s\n",trgOrient);
-         exit(0);
-      }
-
-      PILtransform(subOrient, sub_to_PIL);
-      inversePILtransform(trgOrient, PIL_to_trg);
-
-      multi(PIL_to_trg,4,4, sub_to_PIL,4,4, sub_to_trg);
-
-      if(opt_v)
-      {
-         printf("\nSubject image orientation: %s\n",subOrient);
-         printf("\nTarget image orientation: %s\n",trgOrient);
-      }
-   }
-
-   if( Tfile[0] != '\0') // -T option overrides -acpc and 
-   {
-      if( loadTransformation(Tfile,sub_to_trg) == 1 )
-      {
-         printf("\nError while reading the specified linear transformation file: %s\n\n",Tfile);		
-         exit(0);
-      }
-   }
-   else if( opt_acpc ) // -acpc option overrides 
-   {
-      float subjectTPIL[16];
-      float trgTPIL[16];
-      float *invT;
-
-      if(opt_v) printf("Computing subject image PIL transformation ...\n");
-      new_PIL_transform(subjectImageFile, subjectlmfile, subjectTPIL);
-
-      if(opt_v) printf("Computing target image PIL transformation ...\n");
-      new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
-
-      invT = inv4(trgTPIL);
-      multi(invT, 4,4, subjectTPIL, 4, 4, sub_to_trg);
+      trg_hdr = read_NIFTI_hdr(targetImageFile);
+      invT=inv4(sub_to_trg);
+      tmp = resliceImage(sub, dim_sub, dim_trg, invT, LIN); 
       free(invT);
-   }
 
-   if(opt_v)
-   {
-      print_matrix("Initial subject --> target affine transformation",sub_to_trg);
+      sprintf(filename,"%s_affine.nii",subprefix);
+      save_nifti_image(filename, tmp, &trg_hdr);
+      free(tmp);
    }
+   //////////////////////////////////////////////////////////////////
+/*
+   generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+
+   set_dim(PILhdr,dim1);
+   sprintf(filename,"%s_PIL1.nii",trgprefix);
+   save_nifti_image(filename, trgPIL1, &PILhdr);
+   sprintf(filename,"%s_PIL1.nii",subprefix);
+   save_nifti_image(filename, subPIL1, &PILhdr);
+
+   set_dim(PILhdr,dim2);
+   sprintf(filename,"%s_PIL2.nii",trgprefix);
+   save_nifti_image(filename, trgPIL2, &PILhdr);
+   sprintf(filename,"%s_PIL2.nii",subprefix);
+   save_nifti_image(filename, subPIL2, &PILhdr);
+
+   set_dim(PILhdr,dim4);
+   sprintf(filename,"%s_PIL4.nii",trgprefix);
+   save_nifti_image(filename, trgPIL4, &PILhdr);
+   sprintf(filename,"%s_PIL4.nii",subprefix);
+   save_nifti_image(filename, subPIL4, &PILhdr);
+
+   set_dim(PILhdr,dim8);
+   sprintf(filename,"%s_PIL8.nii",trgprefix);
+   save_nifti_image(filename, trgPIL8, &PILhdr);
+   sprintf(filename,"%s_PIL8.nii",subprefix);
+   save_nifti_image(filename, subPIL8, &PILhdr);
+*/
+   ////////////////////////////////////////////////////////////////////////////////////////////
+
    ////////////////////////////////////////////////////////////////////////////////////////////
 
    if(!opt_w || N<=0) N=5;
@@ -906,13 +1045,6 @@ int main(int argc, char **argv)
    if(!opt_sd || sd<0.0)
       sd = 2.0*Wx;
 
-   if(opt_v)
-   {
-      printf("\nThreshold level = %d\n",thresh);
-      printf("\nSearch window = %d x %d x %d\n",2*Wx+1, 2*Wy+1, 2*Wz+1);
-      printf("\nCorrelation window size = %d x %d x %d\n",2*Lx+1, 2*Ly+1, 2*Lz+1);
-   }
-
    ////////////////////////////////////////////////////////////////////////////////////////////
 
    // allocate memory for and initialize warp field
@@ -928,94 +1060,6 @@ int main(int argc, char **argv)
 
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   if(opt_A && Tfile[0] == '\0' )
-   {
-      double X[3];
-      float R[9], detR;
-      double d; // displacement
-      short *realigned_subvol;
-
-      if(opt_v)
-      {
-         printf("\n------------------------------------------------------------------------\n");
-         printf("Estimating initial affine transformation ...\n");
-         printf("\nNumber of iterations = %d\n",niter);
-      }
-
-      for(int i=0; i<16; i++) T[i]=sub_to_trg[i];
-
-      for(int i=1; i<=niter; i++)
-      {
-         if(opt_v)
-         {
-            printf("\nIteration %d:",i);
-         }
-
-         X[0]=T[3]; X[1]=T[7]; X[2]=T[11]; // store translations from the previous iteration
-
-
-         // reslice subvol according to the initial linear transformation
-         invT=inv4(T);
-         realigned_subvol=resliceImage(sub_orig, Snx,Sny,Snz,Sdx,Sdy,Sdz,
-         Tnx, Tny, Tnz, Tdx, Tdy, Tdz, invT, LIN);
-         free(invT);
-
-         for(int n=0; n<Tnv; n++) Xwarp[n]=Ywarp[n]=Zwarp[n]=0.0;
-
-         if(i==1)
-         {
-            for(int iter=0; iter<iter8; iter++)
-               computeWarpField(8.0, realigned_subvol, dim_trg, trg, dim_trg, Xwarp, Ywarp, Zwarp,Lx, Wx, sd, thresh);
-         }
-
-         if(i==1)
-         {
-            for(int iter=0; iter<iter4; iter++)
-               computeWarpField(4.0, realigned_subvol, dim_trg, trg, dim_trg, Xwarp, Ywarp, Zwarp, Lx, Wx, sd, thresh);
-         }
-
-         for(int iter=0; iter<iter2; iter++)
-            computeWarpField(2.0, realigned_subvol, dim_trg, trg, dim_trg, Xwarp, Ywarp, Zwarp, Lx, Wx, sd, thresh);
-
-         free(realigned_subvol);
-
-         affineLSE(trg, Tnx, Tny, Tnz, Tdx, Tdy, Tdz, Xwarp, Ywarp, Zwarp, T);
-
-         R[0]=T[0]; R[1]=T[1]; R[2]=T[2];
-         R[3]=T[4]; R[4]=T[5]; R[5]=T[6];
-         R[6]=T[8]; R[7]=T[9]; R[8]=T[10];
-		
-         d = sqrt( (X[0]-T[3])*(X[0]-T[3]) + (X[1]-T[7])*(X[1]-T[7]) + (X[2]-T[11])*(X[2]-T[11]) );
-         detR = det3(R);
-
-         if(opt_v)
-         {
-            print_matrix("subject -----> target affine transformation",T);
-            printf("\nScale change = %f",detR);
-            printf("\nRelative translation = %lf mm\n",d);
-         }
-      }
-
-      for(int i=0; i<16; i++) sub_to_trg[i]=T[i];
-
-      if(opt_v)
-      {
-         printf("\n------------------------------------------------------------------------\n");
-      }
-   }
-
-   ////////////////////////////////////////////////////////////////////////////////////////////
-	
-   trg_hdr = read_NIFTI_hdr(targetImageFile);
-
-   ////////////////////////////////////////////////////////////////////////////////////////////
-
-   // reslice sub_orig according to the initial linear transformation
-
-   invT=inv4(sub_to_trg);
-   obj=resliceImage(sub_orig, Snx, Sny, Snz, Sdx, Sdy, Sdz, Snx, Sny, Snz, Sdx, Sdy, Sdz, invT, LIN);
-   free(invT);
-   //////////////////////////////////////////////////////////////////
 
    //////////////////////////////////////////////////////////////////
    if(opt_v)
@@ -1058,7 +1102,7 @@ int main(int argc, char **argv)
    // save warped subject image
 
    invT=inv4(sub_to_trg);
-   obj=computeReslicedImage2(sub_orig, Snx, Sny, Snz, Sdx, Sdy, Sdz, Tnx, Tny, Tnz, Tdx, Tdy, Tdz, Xwarp, Ywarp, Zwarp, invT);
+   obj=computeReslicedImage2(sub, Snx, Sny, Snz, Sdx, Sdy, Sdz, Tnx, Tny, Tnz, Tdx, Tdy, Tdz, Xwarp, Ywarp, Zwarp, invT);
    free(invT);
 		
    //////////////////////////////////////////////////////////////////////////////////////////
@@ -1160,13 +1204,10 @@ int main(int argc, char **argv)
    }
 
    free(Xwarp); free(Ywarp); free(Zwarp);
-   free(sub_orig);
+   free(sub);
    free(trg);
 
-   if(opt_v)
-   {
-      printf("\nEND\n");
-   }
+   if(opt_v) printf("THE END\n");
 }
 
 

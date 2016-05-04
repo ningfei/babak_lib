@@ -213,6 +213,7 @@ void memory_allocation_error(const char *variablename);
 void file_open_error(const char *filename);
 void errorMessage(const char *message);
 
+void set_dim(nifti_1_header &hdr, DIM dim);
 void set_dim(DIM &dim, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz);
 void set_dim(DIM &dim, nifti_1_header hdr);
 void set_dim(DIM &dim, nifti_1_header *hdr);

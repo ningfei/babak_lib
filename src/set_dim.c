@@ -38,6 +38,16 @@ void set_dim(DIM &dim, nifti_1_header hdr)
    dim.nv= hdr.dim[1]*hdr.dim[2]*hdr.dim[3];
 }
 
+void set_dim(nifti_1_header &hdr, DIM dim)
+{
+   hdr.dim[1]=dim.nx; 
+   hdr.dim[2]=dim.ny; 
+   hdr.dim[3]=dim.nz;
+   hdr.pixdim[1]=dim.dx; 
+   hdr.pixdim[2]=dim.dy; 
+   hdr.pixdim[3]=dim.dz;
+}
+
 void set_dim(SHORTIM &im, nifti_1_header hdr)
 {
    im.nx = hdr.dim[1]; 

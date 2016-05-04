@@ -90,7 +90,8 @@ void makePPM(SHORTIM im, int *lm, const char *ppmfile)
 
 float detect_lm(SPH &searchsph, SPH &testsph, SHORTIM testim, int lmcm[], SPH &refsph, int lm[])
 {
-   float ccmax=-1.0;
+   //float ccmax=-1.0;
+   float ccmax=0.0;
 
    for(int n=0; n<searchsph.n; n++)
    {
