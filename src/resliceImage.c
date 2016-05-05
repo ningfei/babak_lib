@@ -206,11 +206,6 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interp
 	T[11] /= dz1;
 	T[11] += zc1/dz1;
 
-    if(interpolation_method == LIN)
-        interpolator=linearInterpolator;
-    else if(interpolation_method == NEARN)
-        interpolator=nearestNeighbor;
-
 	q=0;
 	for(k=0;k<nz2;k++) 
 	{
@@ -396,10 +391,90 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	T[11] /= dim1.dz;
 	T[11] += zc1/dim1.dz;
 
-    if(interpolation_method == LIN)
-        interpolator=linearInterpolator;
-    else if(interpolation_method == NEARN)
-        interpolator=nearestNeighbor;
+	q=0;
+	for(k=0;k<dim2.nz;k++) 
+	{
+  		zz=k*dim2.dz-zc2;
+	  	Bx=T[2]*zz+T[3];
+	  	By=T[6]*zz+T[7];
+		Bz=T[10]*zz+T[11];
+		for(j=0;j<dim2.ny;j++) 
+		{
+     		yy=j*dim2.dy-yc2;
+			Ax=T[1]*yy+Bx;
+			Ay=T[5]*yy+By;
+			Az=T[9]*yy+Bz;
+
+  			for(i=0;i<dim2.nx;i++) 
+			{
+        		xx=i*dim2.dx-xc2;
+
+           		x=T[0]*xx+Ax;
+	    	   	y=T[4]*xx+Ay;
+	    	   	z=T[8]*xx+Az;
+
+                if(interpolation_method == LIN)
+				   im2[q++]=(short)(linearInterpolator(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1)+0.5);
+                else if(interpolation_method == NEARN)
+				   im2[q++]=(short)(nearestNeighbor(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1)+0.5);
+			}
+		}
+	}
+
+	return( im2 );
+}
+
+// warning: T will be altered.
+float *resliceImage(float *im1, DIM dim1, DIM dim2, float *T, int interpolation_method)
+{
+	float xc1,yc1,zc1; 
+	float xc2,yc2,zc2; 
+	float Ax,Bx;
+	float Ay,By;
+	float Az,Bz;
+  	float xx,yy,zz; /* translation parameters */
+  	float x,y,z;   
+
+	int i,j,k;     /* loop index */
+
+	int q;
+	int np2,nv2;
+	int np1;
+
+	float *im2;
+
+	np2=dim2.nx*dim2.ny;
+	nv2=np2*dim2.nz;
+
+	im2=(float *)calloc(nv2,sizeof(float));
+
+	xc2=dim2.dx*(dim2.nx-1)/2.0;     /* +---+---+ */
+	yc2=dim2.dy*(dim2.ny-1)/2.0;
+	zc2=dim2.dz*(dim2.nz-1)/2.0;
+
+	np1=dim1.nx*dim1.ny;
+
+	xc1=dim1.dx*(dim1.nx-1)/2.0;      /* +---+---+ */
+	yc1=dim1.dy*(dim1.ny-1)/2.0;
+	zc1=dim1.dz*(dim1.nz-1)/2.0;
+
+	T[0] /= dim1.dx;
+	T[1] /= dim1.dx;
+	T[2] /= dim1.dx;
+	T[3] /= dim1.dx;
+	T[3] += xc1/dim1.dx;
+
+	T[4] /= dim1.dy;
+	T[5] /= dim1.dy;
+	T[6] /= dim1.dy;
+	T[7] /= dim1.dy;
+	T[7] += yc1/dim1.dy;
+
+	T[8]  /= dim1.dz;
+	T[9]  /= dim1.dz;
+	T[10] /= dim1.dz;
+	T[11] /= dim1.dz;
+	T[11] += zc1/dim1.dz;
 
 	q=0;
 	for(k=0;k<dim2.nz;k++) 
@@ -423,8 +498,10 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	    	   	y=T[4]*xx+Ay;
 	    	   	z=T[8]*xx+Az;
 
-				im2[q++]=(short)(interpolator(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1)+0.5);
-
+                if(interpolation_method == LIN)
+				   im2[q++]=linearInterpolator(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1);
+                else if(interpolation_method == NEARN)
+				   im2[q++]=nearestNeighbor(x,y,z,im1,dim1.nx,dim1.ny,dim1.nz,np1);
 			}
 		}
 	}
@@ -475,11 +552,6 @@ void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 	T[11] /= im1.dz;
 	T[11] += zc1/im1.dz;
 
-    if(interpolation_method == LIN)
-        interpolator=linearInterpolator;
-    else if(interpolation_method == NEARN)
-        interpolator=nearestNeighbor;
-
 	q=0;
 	for(k=0;k<im2.nz;k++) 
 	{
@@ -502,7 +574,11 @@ void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 	    	   	y=T[4]*xx+Ay;
 	    	   	z=T[8]*xx+Az;
 
-				im2.v[q++]=(short)(interpolator(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np)+0.5);
+                if(interpolation_method == LIN)
+				   im2.v[q++]=(short)(linearInterpolator(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np)+0.5);
+               else if(interpolation_method == NEARN)
+				   im2.v[q++]=(short)(nearestNeighbor(x,y,z,im1.v,im1.nx,im1.ny,im1.nz,im1.np)+0.5);
+
 			}
 		}
 	}

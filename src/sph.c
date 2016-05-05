@@ -91,6 +91,27 @@ void SPH::set(SHORTIM im, int4 ic, int4 jc, int4 kc)
    }
 }
 
+void SPH::set(float4 *im, int4 nx, int4 ny, int4 nz, int4 ic, int4 jc, int4 kc)
+{
+   int4 i0, j0, k0;
+   int4 np=nx*ny;
+
+   for(int4 m=0; m<n; m++)
+   {
+      i0=ic+i[m];
+      j0=jc+j[m];
+      k0=kc+k[m];
+
+      if(i0>=0 && i0<nx && j0>=0 && j0<ny && k0>=0 && k0<nz)
+      {
+         v[m] = im[ np*k0 + nx*j0 + i0 ];
+      } else
+      {
+         v[m] = 0.0;
+      }
+   }
+}
+
 void SPH::reset()
 {
    for(int4 m=0; m<n; m++)

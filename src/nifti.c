@@ -942,6 +942,8 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
    dim->dx = hdr.pixdim[1];
    dim->dy = hdr.pixdim[2];
    dim->dz = hdr.pixdim[3];
+   dim->np = dim->nx*dim->ny;
+   dim->nv = dim->np*dim->nz;
 
    nv = hdr.dim[1]*hdr.dim[2]*hdr.dim[3];
 

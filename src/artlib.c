@@ -2372,40 +2372,41 @@ void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp)
 
 void combine_warps_and_trans(int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T)
 {
-  	float  x,y,z;   
-  	float  xx,yy,zz;   
-	float xc,yc,zc;
-	float *invT;		
-	int q;
+   float  x,y,z;   
+   float  xx,yy,zz;   
+   float xc,yc,zc;
+   float *invT;		
+   int v;
+   int np;
 
-	invT=inv4(T);
+   np = nx*ny;
 
-   	xc=dx*(nx-1)/2.0;     /* +---+---+ */
-	yc=dy*(ny-1)/2.0;
-	zc=dz*(nz-1)/2.0;
+   invT=inv4(T);
 
-	q=0;
-	for(int k=0;k<nz;k++) 
-	for(int j=0;j<ny;j++) 
-  	for(int i=0;i<nx;i++) 
-	{
-		// (i*dx-xc) converts from image coordinates (i,j,z) to (x,y,z) coordinates
-		xx = (i*dx - xc) + Xwarp[q];
-		yy = (j*dy - yc) + Ywarp[q];
-		zz = (k*dz - zc) + Zwarp[q];
+   xc=dx*(nx-1)/2.0;     /* +---+---+ */
+   yc=dy*(ny-1)/2.0;
+   zc=dz*(nz-1)/2.0;
 
-		x = ( invT[0]*xx +invT[1]*yy +invT[2]*zz  +invT[3]  );
-		y = ( invT[4]*xx +invT[5]*yy +invT[6]*zz  +invT[7]  );
-		z = ( invT[8]*xx +invT[9]*yy +invT[10]*zz +invT[11] );
+   for(int k=0;k<nz;k++) 
+   for(int j=0;j<ny;j++) 
+   for(int i=0;i<nx;i++) 
+   {
+      v = k*np + j*nx + i;
+      // (i*dx-xc) converts from image coordinates (i,j,z) to (x,y,z) coordinates
+      xx = (i*dx - xc) + Xwarp[v];
+      yy = (j*dy - yc) + Ywarp[v];
+      zz = (k*dz - zc) + Zwarp[v];
 
-		Xwarp[q] = x - i*dx + xc;
-		Ywarp[q] = y - j*dy + yc;
-		Zwarp[q] = z - k*dz + zc;
-		
-		q++;
-	}
+      x = ( invT[0]*xx +invT[1]*yy +invT[2]*zz  +invT[3]  );
+      y = ( invT[4]*xx +invT[5]*yy +invT[6]*zz  +invT[7]  );
+      z = ( invT[8]*xx +invT[9]*yy +invT[10]*zz +invT[11] );
 
-	free(invT);
+      Xwarp[v] = x - i*dx + xc;
+      Ywarp[v] = y - j*dy + yc;
+      Zwarp[v] = z - k*dz + zc;
+   }
+
+   free(invT);
 }
 
 // xvec, yvec, and zvec should be interpreted in DICOM LPS system

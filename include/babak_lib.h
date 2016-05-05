@@ -611,6 +611,7 @@ extern void multi(float8 *A,int4 iA,int4 jA, float4 *B,int4 iB,int4 jB,float4 *C
 void resliceImage(SHORTIM im1, SHORTIM &im2, float4 *T, int4 interpolation_method);
 
 int2 *resliceImage(int2 *im1, DIM dim1, DIM dim2, float4 *T, int4 interpolation_method);
+float4 *resliceImage(float4 *im1, DIM dim1, DIM dim2, float4 *T, int4 interpolation_method);
 
 float4 *resliceImage(float4 *im1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1,
 int4 nx2, int4 ny2, int4 nz2, float4 dx2, float4 dy2, float4 dz2, float4 *T);
