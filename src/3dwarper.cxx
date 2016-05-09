@@ -8,17 +8,7 @@
 *  copyright laws.                                           *
 \ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <stdlib.h>
-#include <math.h>
-#include <strings.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>       
-#include <sys/types.h>  
-#include <sys/stat.h>  
 #include <sys/resource.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include "../include/volume.h"
 #include "../include/spm_analyze.h"
 #include "../include/babak_lib.h"
@@ -26,36 +16,25 @@
 #include "../include/smooth.h"
 #include "../include/minmax.h"
 #include "../include/interpolator.h"
+#include "../include/stats.h"
 
 #define YES 1
 #define NO 0
 #define MAXITER 10
-
-#define MATRIXSIZE 256
-#define VOXELSIZE 1.0
-
-extern float detect_lm(SPH &searchsph, SPH &testsph, SHORTIM testim, int lmcm[], SPH &refsph, int lm[]);
-
-void print_matrix(const char * title, float *T);
-
-extern float *resizeXYZ(float *image1, 
-int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
-
-extern short *resizeXYZ(short *image1, 
-int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2);
-
-static float v1,v2,v3,v4;
-static float w1,w2;
-
-DIM dim1, dim2, dim4, dim8;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 int opt;
 
 static struct option options[] =
 {
+   {"-version", 0, 'V'},
+   {"-Version", 0, 'V'},
+   {"-affine", 0, 'a'},
+   {"-a", 0, 'a'},
+   {"-I", 0, 'I'},
+   {"-HR", 0, 'H'},
+   {"-hr", 0, 'H'},
+
    {"-iter8", 1, '8'},
    {"-iter4", 1, '4'},
    {"-iter2", 1, '2'},
@@ -75,37 +54,23 @@ static struct option options[] =
    {"-verbose", 0, 'v'},
    {"-h",0,'h'},
    {"-help",0,'h'},
-   {"-iter", 1, 'i'},
    {"-u", 1, 'u'},
    {"-o", 1, 'o'},
 
-   {"-thresh", 1, '3'},
-   {"-D",0,'D'},
    {"-cubicspline", 0, 'c'},
    {0, 0, 0}
 };
 
-int opt_D=NO;
 int opt_cubicspline=NO;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void print_help_and_exit();
-
-short *computeReslicedImage2(short *im1, short *msk, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
-
-short *computeReslicedImage2(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
-
-short *computeReslicedImage2(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp);
-
-short *computeReslicedImage2(short *,int,int,int,float,float,float,int,int,int,float,float,float,float *,float *,float *,float *);
+extern float detect_lm(SPH &searchsph, SPH &testsph, SHORTIM testim, int lmcm[], SPH &refsph, int lm[]);
+DIM dim1, dim2, dim4, dim8;
 
 void print_help_and_exit()
 {
    printf("\n\nUsage:\n"
-   "\t3dwarper [-v or -verbose] [-h or -help] [-iter N] [-A]\n"
+   "\t3dwarper [-v or -verbose] [-h or -help] [-affine or -a] [-I] [-HR] [-version]\n"
    "\t[-trgorient <orientation code>] [-suborient <orientation code>] [-u <filename>]\n"
    "\t[-o <filename>] [-cubicspline]\n"
    "\t-sub <subject image> -trg <target image>\n\n" 
@@ -126,12 +91,17 @@ void print_help_and_exit()
    "\t-h or -help\n"
    "\t\tPrints help message.\n\n"
 
-   "\t-iter N\n"
-   "\t\tSpecifies the number of iterations used in finding the initial affine transformation\n"
-   "\t\twhen the -A option is specified (default: N=4).\n\n"
+   "\t-version\n"
+   "\t\tPrints program vesion.\n\n"
 
-   "\t-A\n"
-   "\t\tAutomatically finds an initial subject to target affine transformation.\n\n"
+   "\t-HR\n"
+   "\t\tPut program in high-resolution mode (warning: will run forever!).\n\n"
+
+   "\t-I\n"
+   "\t\tDoes not perform initial linear registration of any kind.\n\n"
+
+   "\t-affine or -a\n"
+   "\t\tLimits the registration to an affine transformation.\n\n"
 
    "\t-trgorient <orientation code>\n"
    "\t\tOverrides the orientation information in the target image NIFTI header with the\n"
@@ -209,8 +179,9 @@ short *computeReslicedImage2(short *im1, DIM dim1, DIM dim2, float *Xwarp, float
 	return( im2 );
 }
 
-void nlReg(short *sub, short *trg, DIM dim, int r, int R, float *Xwarp, float *Ywarp, float *Zwarp, float sd)
+void nlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float *Xwarp, float *Ywarp, float *Zwarp, int S)
 {
+   float I[16];
    float *Xw, *Yw, *Zw;
 
    SPH subsph(r);
@@ -231,26 +202,33 @@ void nlReg(short *sub, short *trg, DIM dim, int r, int R, float *Xwarp, float *Y
    Xw = (float *)calloc(dim.nv, sizeof(float));
    Yw = (float *)calloc(dim.nv, sizeof(float));
    Zw = (float *)calloc(dim.nv, sizeof(float));
-   
+
+   for(int i=0; i<dim.nv; i++) if(msk[i]==0) sub[i]=trg[i]=0;
+    
    for(int k=0; k<dim.nz; k++)
    for(int j=0; j<dim.ny; j++)
    for(int i=0; i<dim.nx; i++)
    {
       v = k*dim.np + j*dim.nx + i;
 
-      if(trg[v]<=0)
+      if(msk[v]<=0 || trg[v]<=0)
       {
          continue;
       }
 
       trgsph.set(trgim,i,j,k);
+      standardize(trgsph.v,trgsph.v,trgsph.n);
 
       P[0]=i; P[1]=j; P[2]=k;
       detect_lm(searchsph, subsph, subim, P, trgsph, Q);
 
-      Xw[v] = (Q[0]-P[0])*dim.dx;
-      Yw[v] = (Q[1]-P[1])*dim.dy;
-      Zw[v] = (Q[2]-P[2])*dim.dz;
+      // make sure Q is within the mask
+      if(msk[ Q[2]*dim.np + Q[1]*dim.nx + Q[0] ] != 0)
+      {
+         Xw[v] = (Q[0]-P[0])*dim.dx;
+         Yw[v] = (Q[1]-P[1])*dim.dy;
+         Zw[v] = (Q[2]-P[2])*dim.dz;
+      }
    }
 
    float *Xww, *Yww, *Zww;
@@ -259,9 +237,9 @@ void nlReg(short *sub, short *trg, DIM dim, int r, int R, float *Xwarp, float *Y
    Zww = (float *)calloc(dim.nv, sizeof(float));
 
    {
-      SPH xsph(5);
-      SPH ysph(5);
-      SPH zsph(5);
+      SPH xsph(S);
+      SPH ysph(S);
+      SPH zsph(S);
 
       for(int k=0; k<dim.nz; k++)
       for(int j=0; j<dim.ny; j++)
@@ -290,13 +268,16 @@ void nlReg(short *sub, short *trg, DIM dim, int r, int R, float *Xwarp, float *Y
 
    float *tmp;
 
-   tmp=resizeXYZ(Xw,dim.nx,dim.ny,dim.nz,dim.dx,dim.dy,dim.dz,dim1.nx,dim1.ny,dim1.nz,dim1.dx,dim1.dy,dim1.dz);
+   set_to_I(I,4); 
+   tmp = resliceImage(Xw, dim, dim1, I, LIN); 
    free(Xw); Xw=tmp;
 
-   tmp=resizeXYZ(Yw,dim.nx,dim.ny,dim.nz,dim.dx,dim.dy,dim.dz,dim1.nx,dim1.ny,dim1.nz,dim1.dx,dim1.dy,dim1.dz);
+   set_to_I(I,4); 
+   tmp = resliceImage(Yw, dim, dim1, I, LIN); 
    free(Yw); Yw=tmp;
 
-   tmp=resizeXYZ(Zw,dim.nx,dim.ny,dim.nz,dim.dx,dim.dy,dim.dz,dim1.nx,dim1.ny,dim1.nz,dim1.dx,dim1.dy,dim1.dz);
+   set_to_I(I,4); 
+   tmp = resliceImage(Zw, dim, dim1, I, LIN); 
    free(Zw); Zw=tmp;
 
    for(int i=0; i<dim1.nv; i++) {
@@ -308,7 +289,7 @@ void nlReg(short *sub, short *trg, DIM dim, int r, int R, float *Xwarp, float *Y
 }
 
 // finds an affine registration in "A" to takes points from sub to trg space
-void affineReg(short *sub, short *trg, DIM dim, int r, int R, float *A)
+void affineReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float *A)
 {
    SPH subsph(r);
    SPH trgsph(r);
@@ -339,13 +320,14 @@ void affineReg(short *sub, short *trg, DIM dim, int r, int R, float *A)
    {
       v = k*dim.np+ j*dim.nx+ i;
 
-      if(sub[v]<=0 || trg[v]<=0)
+      if(msk[v]<=0 || sub[v]<=0 || trg[v]<=0)
       {
          flg[v]=0;
          continue;
       }
 
       subsph.set(subim,i,j,k);
+      standardize(subsph.v,subsph.n);
 
       PT[3*c + 0] = QT[3*c + 0] = i;
       PT[3*c + 1] = QT[3*c + 1] = j;
@@ -378,8 +360,6 @@ void affineReg(short *sub, short *trg, DIM dim, int r, int R, float *A)
 
    leastSquaresAffineTrans(P, Q, n, A);
 
-   if(opt_v) printMatrix(A,4,4,"",NULL);
-
    free(PT); 
    free(QT);
    free(flg);
@@ -409,8 +389,7 @@ void generateMultiResolution(short *sub, DIM dim_sub, float *T, float *Xwarp, fl
 
    combine_warps_and_trans(dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xw, Yw, Zw, T);
 
-   *im1=computeReslicedImage2(sub, dim_sub.nx, dim_sub.ny, dim_sub.nz, dim_sub.dx, dim_sub.dy, dim_sub.dz,
-   dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xw, Yw, Zw);
+   *im1=computeReslicedImage2(sub, dim_sub, dim1, Xw, Yw, Zw);
 
    set_to_I(I,4); 
    *im2 = resliceImage(*im1, dim1, dim2, I, LIN); 
@@ -496,10 +475,24 @@ void combine_warps_and_trans(float *trgTPIL, float *Xwarp, float *Ywarp, float *
 
 int main(int argc, char **argv)
 {
+   float I[16];
+
+   char opt_affine=NO;
+   char opt_I=NO;
+   char opt_HR=NO;
+
+   int patch_r=3; // patch radius
+   int search_R=3; // search radius 
+   int MATRIXSIZE=256;
+   float VOXELSIZE=1.0; // mm units
+
+   float *Xout, *Yout, *Zout; // final displacement field
+
    char affineTransformationFile[1024]="";
 
    short *subPIL1=NULL, *subPIL2=NULL, *subPIL4=NULL, *subPIL8=NULL;
    short *trgPIL1=NULL, *trgPIL2=NULL, *trgPIL4=NULL, *trgPIL8=NULL;
+   short *mskPIL1=NULL, *mskPIL2=NULL, *mskPIL4=NULL, *mskPIL8=NULL;
 
    FILE *fp;
    char filename[1024];
@@ -509,32 +502,8 @@ int main(int argc, char **argv)
 
    getARTHOME();
 
-   nifti_1_header PILhdr;
-   sprintf(filename,"%s/PILbrain.nii",ARTHOME);
-   PILhdr = read_NIFTI_hdr(filename);
-
    DIM dim_trg;
    DIM dim_sub;
-
-   dim1.nx = dim1.ny = dim1.nz = MATRIXSIZE;
-   dim1.np=dim1.nx*dim1.nx; 
-   dim1.nv=dim1.np*dim1.nz; 
-   dim1.dx = dim1.dy = dim1.dz = VOXELSIZE;
-
-   dim2.nx = dim2.ny = dim2.nz = MATRIXSIZE/2;
-   dim2.np=dim2.nx*dim2.nx; 
-   dim2.nv=dim2.np*dim2.nz; 
-   dim2.dx = dim2.dy = dim2.dz = VOXELSIZE*2.0;
-
-   dim4.nx = dim4.ny = dim4.nz = MATRIXSIZE/4;
-   dim4.np=dim4.nx*dim4.nx; 
-   dim4.nv=dim4.np*dim4.nz; 
-   dim4.dx = dim4.dy = dim4.dz = VOXELSIZE*4.0;
-
-   dim8.nx = dim8.ny = dim8.nz = MATRIXSIZE/8;
-   dim8.np=dim8.nx*dim8.nx; 
-   dim8.nv=dim8.np*dim8.nz; 
-   dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;
 
    // a linear transformation that brings the subject image from its native space to PIL space
    float subTPIL[16]; 
@@ -545,21 +514,20 @@ int main(int argc, char **argv)
    char trglmfile[1024]="";
    char sublmfile[1024]="";
 
-   int iter8=1;
-   int iter4=1;
-   int iter2=1;
+   int iter8=4;
+   int iter4=3;
+   int iter2=2;
    int iter1=1;
 
    nifti_1_header trg_hdr;
    nifti_1_header sub_hdr;
-   nifti1_extender extender;
 
-   char subjectImageFile[1024]; 
-   char targetImageFile[1024];
-   char subOrient[4];  // orientation code for the subject image
-   char trgOrient[4];  // orientation code for the target image
+   char subjectImageFile[1024]=""; 
+   char targetImageFile[1024]="";
+   char subOrient[4]="";  // orientation code for the subject image
+   char trgOrient[4]="";  // orientation code for the target image
    char outputfile[1024]="";
-   char warpfile[1024];
+   char warpfile[1024]="";
 
    float sub_to_trg[16];
    float *invT;		
@@ -574,52 +542,37 @@ int main(int argc, char **argv)
    int Tnx,Tny,Tnz;
    float Tdx,Tdy,Tdz;
 
-   int thresh=0;
-
-   // number of iterations used in finding the initial affine transformation using -A option
-   int niter=4; 
-
-	short *obj;
-
-	int Wx,Wy,Wz;
-	int Lx,Ly,Lz;
-	int N;	// N=2*L+1
-
-	char *dum;
-
-	int search_win;
-
-	/////////////////////////////////////////////////////////////////////
-	// maximize the stack size
-	/////////////////////////////////////////////////////////////////////
-	{
-		// define a rlimit structure
-		struct rlimit rlpty;
-
-		// get the resource limit of type RLIMIT_STACK for stack size
-		(void) getrlimit(RLIMIT_STACK,&rlpty);
-
-		// set the stack size to its maximum
-		rlpty.rlim_cur=rlpty.rlim_max;
-		(void) setrlimit(RLIMIT_STACK,&rlpty);
-	}
-	/////////////////////////////////////////////////////////////////////
-
    /////////////////////////////////////////////////////////////////////
-   // important initializations
-
-   warpfile[0]='\0'; 
-   subjectImageFile[0]='\0'; 
-   targetImageFile[0]='\0'; 
-   subOrient[0]='\0'; 
-   trgOrient[0]='\0'; 
+   // maximize the stack size
    /////////////////////////////////////////////////////////////////////
+   {
+      // define a rlimit structure
+      struct rlimit rlpty;
 
-   dum = (char *)malloc(1024);
+      // get the resource limit of type RLIMIT_STACK for stack size
+      (void) getrlimit(RLIMIT_STACK,&rlpty);
+
+      // set the stack size to its maximum
+      rlpty.rlim_cur=rlpty.rlim_max;
+      (void) setrlimit(RLIMIT_STACK,&rlpty);
+   }
+   /////////////////////////////////////////////////////////////////////
 
    while( (opt=getoption(argc, argv, options)) != -1)
    {
       switch (opt) {
+         case 'V':
+            printf("Version 2.0 (last modified: May 17, 2016)\n");
+            exit(0);
+         case 'H':
+            opt_HR= YES;
+            break;
+         case 'I':
+            opt_I= YES;
+            break;
+         case 'a':
+            opt_affine = YES;
+            break;
          case '8':
             iter8 = atoi(optarg);
             break;
@@ -649,23 +602,15 @@ int main(int argc, char **argv)
             break;
          case 'h':
             print_help_and_exit();
-         case 'i':
-            niter=atoi(optarg);
             break;
          case 'v':
             opt_v=YES;
-            break;
-         case 'D':
-            opt_D=YES;
             break;
          case 's':
             sprintf(subjectImageFile,"%s",optarg);
             break;
          case 't':
             sprintf(targetImageFile,"%s",optarg);
-            break;
-         case '3':
-            thresh=atoi(optarg);
             break;
          case 'u':
             sprintf(warpfile,"%s",optarg);
@@ -683,23 +628,41 @@ int main(int argc, char **argv)
 
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   // reset unreasonable values to default
-   if(iter8 < 0 || iter8>MAXITER ) iter8=1;
-   if(iter4 < 0 || iter4>MAXITER ) iter4=1;
-   if(iter2 < 0 || iter2>MAXITER ) iter2=1;
-   if(iter1 < 0 || iter1>MAXITER ) iter1=1;
+   if(opt_HR)
+   {
+      patch_r *= 2; 
+      search_R *= 2;
+      MATRIXSIZE *= 2;
+      VOXELSIZE /= 2.0; 
+   }
+
+   dim1.nx = dim1.ny = dim1.nz = MATRIXSIZE;
+   dim1.np=dim1.nx*dim1.nx; 
+   dim1.nv=dim1.np*dim1.nz; 
+   dim1.dx = dim1.dy = dim1.dz = VOXELSIZE;
+
+   dim2.nx = dim2.ny = dim2.nz = MATRIXSIZE/2;
+   dim2.np=dim2.nx*dim2.nx; 
+   dim2.nv=dim2.np*dim2.nz; 
+   dim2.dx = dim2.dy = dim2.dz = VOXELSIZE*2.0;
+
+   dim4.nx = dim4.ny = dim4.nz = MATRIXSIZE/4;
+   dim4.np=dim4.nx*dim4.nx; 
+   dim4.nv=dim4.np*dim4.nz; 
+   dim4.dx = dim4.dy = dim4.dz = VOXELSIZE*4.0;
+
+   dim8.nx = dim8.ny = dim8.nz = MATRIXSIZE/8;
+   dim8.np=dim8.nx*dim8.nx; 
+   dim8.nv=dim8.np*dim8.nz; 
+   dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;
 
    ////////////////////////////////////////////////////////////////////////////////////////////
-
-   // ensure niter is positive and less than MAXITER
-   if(niter<0)
-   {
-      niter=4;
-   }
-   else if (niter>MAXITER) 
-   {
-      niter=MAXITER;
-   }
+   
+   // reset unreasonable values to default
+   if(iter8 < 0 || iter8>MAXITER ) iter8=4;
+   if(iter4 < 0 || iter4>MAXITER ) iter4=3;
+   if(iter2 < 0 || iter2>MAXITER ) iter2=2;
+   if(iter1 < 0 || iter1>MAXITER ) iter1=1;
 
    ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -750,40 +713,94 @@ int main(int argc, char **argv)
    }
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   // find subTPIL 
-   if(opt_v) printf("Computing subject image PIL transformation ...\n");
-   if(sublmfile[0] != '\0' && opt_v) printf("Subject image landmarks are read from %s\n",sublmfile);
-   new_PIL_transform(subjectImageFile, sublmfile, subTPIL);
+   if(opt_I==YES)
+   {
+      set_to_I(subTPIL,4);
+   }
+   else {
+      // find subTPIL 
+      if(opt_v) printf("Computing subject image PIL transformation ...\n");
+      if(sublmfile[0] != '\0' && opt_v) printf("Subject image landmarks are read from %s\n",sublmfile);
+      new_PIL_transform(subjectImageFile, sublmfile, subTPIL);
+   }
 
-   // find trgTPIL
-   if(opt_v) printf("Computing target image PIL transformation ...\n");
-   if(trglmfile[0] != '\0' && opt_v) printf("Target image landmarks are read from %s\n",trglmfile);
-   new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
+   if(opt_I==YES)
+   {
+      set_to_I(trgTPIL,4);
+   }
+   else {
+      // find trgTPIL
+      if(opt_v) printf("Computing target image PIL transformation ...\n");
+      if(trglmfile[0] != '\0' && opt_v) printf("Target image landmarks are read from %s\n",trglmfile);
+      new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
+   }
 
    generateMultiResolution(trg, dim_trg, trgTPIL, &trgPIL1, &trgPIL2, &trgPIL4, &trgPIL8);
 
+   // generate the masks
+   if(opt_I == YES)
+   {
+      set_to_I(I,4);
+      generateMultiResolution(sub, dim_sub, I, &mskPIL1, &mskPIL2, &mskPIL4, &mskPIL8);
+   }
+   else
+   {
+      int2 *PILbraincloud;
+      DIM PILbraincloud_dim;
+      nifti_1_header PILbraincloud_hdr;
+
+      sprintf(filename,"%s/PILbrain.nii",ARTHOME);
+
+      PILbraincloud = (int2 *)read_nifti_image(filename, &PILbraincloud_hdr);
+
+      if(PILbraincloud==NULL)
+      {
+            printf("Error reading %s, aborting ...\n", filename);
+            exit(1);
+      }
+
+      set_dim(PILbraincloud_dim, PILbraincloud_hdr);
+
+      set_to_I(I,4);
+      generateMultiResolution(PILbraincloud, PILbraincloud_dim, I, &mskPIL1, &mskPIL2, &mskPIL4, &mskPIL8);
+
+      free(PILbraincloud);
+   }
+
    float A[16];
+
+   if(opt_v) printf("Patch radius = %d mm\n", patch_r);
+   if(opt_v) printf("search radius = %d mm\n", search_R);
 
    if( affineTransformationFile[0] != '\0' )
    {
-      loadTransformation(affineTransformationFile,sub_to_trg);
-      multi(trgTPIL,4,4,sub_to_trg,4,4,subTPIL);  // update subTPIL according to A
+      if( loadTransformation(affineTransformationFile,sub_to_trg)== 0 ) // no error
+         multi(trgTPIL,4,4,sub_to_trg,4,4,subTPIL);  // update subTPIL according to A
+      else
+      {
+         printf("Reading %s failed, aborting ...\n",affineTransformationFile);
+         exit(0);
+      }
+   }
+   else if(opt_I == YES)
+   {
+      set_to_I(sub_to_trg,4);
    }
    else
    {
       if(opt_v) printf("Affine registration @ 12.5\% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-      affineReg(subPIL8, trgPIL8, dim8, 3, 3, A);
+      affineReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
       if(opt_v) printf("Affine registration @ 25\% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-      affineReg(subPIL4, trgPIL4, dim4, 3, 3, A);
+      affineReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
       if(opt_v) printf("Affine registration @ 50\% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-      affineReg(subPIL2, trgPIL2, dim2, 3, 3, A);
+      affineReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
       invT = inv4(trgTPIL);
@@ -791,12 +808,13 @@ int main(int argc, char **argv)
       free(invT);
 
       sprintf(filename,"%s_affine.mrx",subprefix);
+      if(opt_v) printf("Saving subject image -> target image affine transformaion in %s ...\n",filename);
       fp = fopen(filename,"w");
       printMatrix(sub_to_trg,4,4,"",fp);
       fclose(fp);
    }
 
-   if(opt_v) print_matrix("subject --> target affine transformation",sub_to_trg);
+   if(opt_v) printMatrix(sub_to_trg,4,4,"subject image -> target image affine transformation",NULL);
 
    ////////////////////////////////////////////////////////////////////////////////////////////
    {
@@ -811,6 +829,12 @@ int main(int argc, char **argv)
       save_nifti_image(filename, tmp, &trg_hdr);
       free(tmp);
    }
+
+   if(opt_affine) 
+   {
+      if(opt_v) printf("THE END\n");
+      exit(0);
+   }
    //////////////////////////////////////////////////////////////////
    
    Xwarp = (float *)calloc(dim1.nv, sizeof(float));
@@ -818,33 +842,50 @@ int main(int argc, char **argv)
    Zwarp = (float *)calloc(dim1.nv, sizeof(float));
 
 
-   if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
-   generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-   nlReg(subPIL8, trgPIL8, dim8, 3, 3, Xwarp, Ywarp, Zwarp, 4.0);
+   if(iter8>=1)
+   {
+      if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
+      generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+      nlReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
+      for(int i=1; i<iter8; i++)
+      {
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         nlReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
+      }
+   }
 
-   if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
-   generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-   nlReg(subPIL4, trgPIL4, dim4, 3, 3, Xwarp, Ywarp, Zwarp, 4.0);
+   if(iter4>=1)
+   {
+      if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
+      for(int i=0; i<iter4; i++)
+      {
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         nlReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, 2*search_R/3, Xwarp, Ywarp, Zwarp,5);
+      }
+   }
 
-   if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
-   generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-   nlReg(subPIL2, trgPIL2, dim2, 3, 3, Xwarp, Ywarp, Zwarp, 4.0);
+   if(iter2>=1)
+   {
+      if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
+      for(int i=0; i<iter2; i++)
+      {
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         nlReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
+      }
+   }
 
-   if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
-   generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-   nlReg(subPIL1, trgPIL1, dim1, 3, 3, Xwarp, Ywarp, Zwarp, 2.0);
-
-
-   generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
-   set_dim(PILhdr,dim1);
-   sprintf(filename,"%s_PIL1.nii",trgprefix);
-   save_nifti_image(filename, trgPIL1, &PILhdr);
-   sprintf(filename,"%s_PIL1.nii",subprefix);
-   save_nifti_image(filename, subPIL1, &PILhdr);
+   if(iter1>=1)
+   {
+      if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
+      for(int i=0; i<iter1; i++)
+      {
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         nlReg(subPIL1, trgPIL1, mskPIL1, dim1, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
+      }
+   }
 
    {
       short *Csub;
-      float *Xout, *Yout, *Zout;
       float T[16];
 
       Xout = (float *)calloc(dim_trg.nv, sizeof(float));
@@ -862,47 +903,29 @@ int main(int argc, char **argv)
       if(opt_v) printf("Saving output (warped) image file %s ...\n",filename);
       save_nifti_image(filename, Csub, &trg_hdr);
 
-      free(Xout); free(Yout); free(Zout);
       free(Csub);
    }
 
-exit(0);
    ////////////////////////////////////////////////////////////////////////////////////////////
 
    {
       float min, max, s=0.0;
       short *sdum;
+      nifti1_extender extender;
 
-      //////////////////////////////////////////////////////////////////////////////////////////
-      /// If no displacement field filename is specified, the program automatically sets it to be
-      /// the subject filename appended by '_wrp'. For example, if the subject filename is
-      /// test.nii, the warp parameters filename will be test_wrp.nii
-      //////////////////////////////////////////////////////////////////////////////////////////
-      if(warpfile[0]=='\0') 
-      {
-         // returns the filename in dum, without the path information.
-         getfilename(dum,subjectImageFile);
+      if(warpfile[0]=='\0') sprintf(warpfile,"%s_wrp.nii",subprefix);
 
-         sprintf(warpfile,"%s_wrp.nii", strsep(&dum, "."));
-      }
+      if(opt_v) printf("Saving displacement field %s ...\n",warpfile);
 
-      if(opt_v)
-      {
-         printf("\nOutput warp parameters file = %s\n",warpfile);
-      }
-      //////////////////////////////////////////////////////////////////////////////////////////
-
-      combine_warps_and_trans(Tnx, Tny, Tnz, Tdx, Tdy, Tdz, Xwarp, Ywarp, Zwarp, sub_to_trg);
- 
-      minmax(Xwarp, dim_trg.nv, min, max);
+      minmax(Xout, dim_trg.nv, min, max);
       if(max>s) s=max;
       if(-min>s) s=-min;
 
-      minmax(Ywarp, dim_trg.nv, min, max);
+      minmax(Yout, dim_trg.nv, min, max);
       if(max>s) s=max;
       if(-min>s) s=-min;
 
-      minmax(Zwarp, dim_trg.nv, min, max);
+      minmax(Zout, dim_trg.nv, min, max);
       if(max>s) s=max;
       if(-min>s) s=-min;
 
@@ -923,19 +946,19 @@ exit(0);
       sdum = (short *)calloc(dim_trg.nv, sizeof(short));
       for(int i=0; i<dim_trg.nv; i++)
       {
-         sdum[i] = (short)(Xwarp[i]*32000/s + 0.5);
+         sdum[i] = (short)(Xout[i]*32000/s + 0.5);
       }
       fwrite(sdum,sizeof(short),dim_trg.nv,fp);
 
       for(int i=0; i<dim_trg.nv; i++)
       {
-         sdum[i] = (short)(Ywarp[i]*32000/s + 0.5);
+         sdum[i] = (short)(Yout[i]*32000/s + 0.5);
       }
       fwrite(sdum,sizeof(short),dim_trg.nv,fp);
 
       for(int i=0; i<dim_trg.nv; i++)
       {
-         sdum[i] = (short)(Zwarp[i]*32000/s + 0.5);
+         sdum[i] = (short)(Zout[i]*32000/s + 0.5);
       }
       fwrite(sdum,sizeof(short),dim_trg.nv,fp);
 
@@ -944,270 +967,10 @@ exit(0);
       free(sdum);
    }
 
+   free(Xout); free(Yout); free(Zout);
    free(Xwarp); free(Ywarp); free(Zwarp);
    free(sub);
    free(trg);
 
    if(opt_v) printf("THE END\n");
 }
-
-short *computeReslicedImage2(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
-{
-  	float  x,y,z;   
-	int q;
-	int np1;
-	short *im2;
-	float xc1, yc1, zc1;
-	float xc2, yc2, zc2;
-
-	float *beta, del;
-	float *c;
-
-	if(opt_cubicspline)
-	{
-		beta=computeBeta(&del);
-		c = (float *)calloc(nx1*ny1*nz1, sizeof(float));
-		cubicSplineAnalysis(im1, c, nx1, ny1, nz1);
-	}
-
-	np1=nx1*ny1;
-
-	im2=(short *)calloc(nx2*ny2*nz2,sizeof(short));
-
-	xc1=dx1*(nx1-1)/2.0;     /* +---+---+ */
-	yc1=dy1*(ny1-1)/2.0;
-	zc1=dz1*(nz1-1)/2.0;
-
-   	xc2=dx2*(nx2-1)/2.0;     /* +---+---+ */
-	yc2=dy2*(ny2-1)/2.0;
-	zc2=dz2*(nz2-1)/2.0;
-
-	q=0;
-	for(int k=0;k<nz2;k++) 
-	for(int j=0;j<ny2;j++) 
-  	for(int i=0;i<nx2;i++) 
-	{
-		z = (k*dz2 - zc2 + Zwarp[q] + zc1) /dz1;
-		y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
-		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
-
-		if(opt_cubicspline)
-			im2[q++] = (short)(cubicSplineSynthesis(c, nx1, ny1, nz1, x, y, z, beta, del)+0.5);
-		else
-			im2[q++]=(short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
-	}
-
-	if(opt_cubicspline)
-	{
-		free(beta);
-		free(c);
-	}
-
-	return( im2 );
-}
-
-short *computeReslicedImage2(short *im1, short *msk, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
-{
-  	float  x,y,z;   
-	int q;
-	int np1;
-	short *im2;
-	float xc1, yc1, zc1;
-	float xc2, yc2, zc2;
-
-	float *beta, del;
-	float *c;
-
-	if(opt_cubicspline)
-	{
-		beta=computeBeta(&del);
-		c = (float *)calloc(nx1*ny1*nz1, sizeof(float));
-		cubicSplineAnalysis(im1, c, nx1, ny1, nz1);
-	}
-
-	np1=nx1*ny1;
-
-	im2=(short *)calloc(nx2*ny2*nz2,sizeof(short));
-
-	xc1=dx1*(nx1-1)/2.0;     /* +---+---+ */
-	yc1=dy1*(ny1-1)/2.0;
-	zc1=dz1*(nz1-1)/2.0;
-
-   	xc2=dx2*(nx2-1)/2.0;     /* +---+---+ */
-	yc2=dy2*(ny2-1)/2.0;
-	zc2=dz2*(nz2-1)/2.0;
-
-	q=0;
-	for(int k=0;k<nz2;k++) 
-	for(int j=0;j<ny2;j++) 
-  	for(int i=0;i<nx2;i++) 
-	{
-		if(!msk[q])
-		{
-			im2[q++]=0;
-		}
-		else
-		{
-			z = (k*dz2 - zc2 + Zwarp[q] + zc1) /dz1;
-			y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
-       		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
-
-			if(opt_cubicspline)
-				im2[q++] = (short)(cubicSplineSynthesis(c, nx1, ny1, nz1, x, y, z, beta, del)+0.5);
-			else
-				im2[q++] = (short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
-		}
-	}
-
-	if(opt_cubicspline)
-	{
-		free(beta);
-		free(c);
-	}
-
-	return( im2 );
-}
-
-short *computeReslicedImage2(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
-{
-  	float  x,y,z;   
-	int q;
-	int np1;
-	short *im2;
-	float xc1, yc1, zc1;
-	float xc2, yc2, zc2;
-
-	float *beta, del;
-	float *c;
-
-	if(opt_cubicspline)
-	{
-		beta=computeBeta(&del);
-		c = (float *)calloc(nx1*ny1*nz1, sizeof(float));
-		cubicSplineAnalysis(im1, c, nx1, ny1, nz1);
-	}
-
-	np1=nx1*ny1;
-
-   im2=(short *)calloc(nx2*ny2*nz2,sizeof(short));
-   if(im2==NULL)
-   {
-      printf("Error: memory allocation failure for variable 'im2', aborting ...\n");
-      exit(1);
-   }
-
-	xc1=dx1*(nx1-1)/2.0;     /* +---+---+ */
-	yc1=dy1*(ny1-1)/2.0;
-	zc1=dz1*(nz1-1)/2.0;
-
-   	xc2=dx2*(nx2-1)/2.0;     /* +---+---+ */
-	yc2=dy2*(ny2-1)/2.0;
-	zc2=dz2*(nz2-1)/2.0;
-
-	q=0;
-	for(int k=0;k<nz2;k++) 
-	for(int j=0;j<ny2;j++) 
-  	for(int i=0;i<nx2;i++) 
-	{
-
-		z = (k*dz2 - zc2 + Zwarp[q] + zc1) /dz1;
-		y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
-		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
-
-			if(opt_cubicspline)
-            {
-				im2[q++] = (short)(cubicSplineSynthesis(c, nx1, ny1, nz1, x, y, z, beta, del)+0.5);
-            }
-			else
-            {
-	   			im2[q++] = (short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
-            }
-	}
-
-	if(opt_cubicspline)
-	{
-		free(beta);
-		free(c);
-	}
-
-	return( im2 );
-}
-
-short *computeReslicedImage2(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
-int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp, float *T)
-{
-  	float  x,y,z;   
-  	float  xx,yy,zz;   
-	int q;
-	int np1;
-	short *im2;
-	float xc1, yc1, zc1;
-	float xc2, yc2, zc2;
-
-	float *beta, del;
-	float *c;
-
-	if(opt_cubicspline)
-	{
-		beta=computeBeta(&del);
-		c = (float *)calloc(nx1*ny1*nz1, sizeof(float));
-		cubicSplineAnalysis(im1, c, nx1, ny1, nz1);
-	}
-
-	np1=nx1*ny1;
-
-	im2=(short *)calloc(nx2*ny2*nz2,sizeof(short));
-
-	xc1=dx1*(nx1-1)/2.0;     /* +---+---+ */
-	yc1=dy1*(ny1-1)/2.0;
-	zc1=dz1*(nz1-1)/2.0;
-
-   	xc2=dx2*(nx2-1)/2.0;     /* +---+---+ */
-	yc2=dy2*(ny2-1)/2.0;
-	zc2=dz2*(nz2-1)/2.0;
-
-	q=0;
-	for(int k=0;k<nz2;k++) 
-	{
-		for(int j=0;j<ny2;j++) 
-		{
-  			for(int i=0;i<nx2;i++) 
-			{
-				zz = k*dz2 - zc2 + Zwarp[q];
-				yy = j*dy2 - yc2 + Ywarp[q];
-				xx = i*dx2 - xc2 + Xwarp[q];
-
-				x = ( T[0]*xx +T[1]*yy +T[2]*zz  +T[3]   + xc1 )/dx1;
-				y = ( T[4]*xx +T[5]*yy +T[6]*zz  +T[7]   + yc1 )/dy1;
-				z = ( T[8]*xx +T[9]*yy +T[10]*zz +T[11]  + zc1 )/dz1;
-
-				if(opt_cubicspline)
-					im2[q++] = (short)(cubicSplineSynthesis(c, nx1, ny1, nz1, x, y, z, beta, del)+0.5);
-				else
-					im2[q++] = (short)(linearInterpolator(x,y,z,im1,nx1,ny1,nz1,np1)+0.5);
-			}
-		}
-	}
-
-	if(opt_cubicspline)
-	{
-		free(beta);
-		free(c);
-	}
-
-	return( im2 );
-}
-
-void print_matrix(const char * title, float *T)
-{
-	printf("\n%s:",title);
-	printf("\n%f\t%f\t%f\t%f",T[0],T[1],T[2],T[3]);
-	printf("\n%f\t%f\t%f\t%f",T[4],T[5],T[6],T[7]);
-	printf("\n%f\t%f\t%f\t%f",T[8],T[9],T[10],T[11]);
-	printf("\n%f\t%f\t%f\t%f",T[12],T[13],T[14],T[15]);
-	printf("\n");
-}
-

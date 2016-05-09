@@ -244,6 +244,7 @@ float4 *rotate(float4 alpha, float4 x, float4 y, float4 z);
 void rotate(float4 *T, float4 CosAlpha, float4 SinAlpha, float4 x, float4 y, float4 z);
 void compute_cm(int2 *image, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *x, float4 *y, float4 *z);
 void standardize(float4 *x, int4 n);
+void standardize(float *x, float *mask, int n);
 void irodrigues_formula(float4 *R, float4 *w, float4 &theta);
 void rodrigues_formula(float4 *R, float4 *w, float4 theta);
 void rodrigues_formula4x4(float4 *R, float4 *w, float4 theta);

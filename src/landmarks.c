@@ -96,7 +96,8 @@ float detect_lm(SPH &searchsph, SPH &testsph, SHORTIM testim, int lmcm[], SPH &r
    for(int n=0; n<searchsph.n; n++)
    {
       testsph.set(testim, lmcm[0]+searchsph.i[n], lmcm[1]+searchsph.j[n], lmcm[2]+searchsph.k[n]);
-      standardize(testsph.v, testsph.n);
+      //standardize(testsph.v, testsph.n);
+      standardize(testsph.v, refsph.v, testsph.n);
       searchsph.v[n] = dot(testsph.v, refsph.v, testsph.n);
       if( searchsph.v[n] > ccmax )
       {

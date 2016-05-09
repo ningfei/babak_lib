@@ -74,6 +74,21 @@ template <class TYPE> TYPE dot(TYPE *a, TYPE *b, int n)
    return(dotproduct);
 }
 
+// Compute the dot product between n-dimensional vectors a and b
+template <class TYPE> TYPE dot(TYPE *a, TYPE *b, TYPE *w, int n)
+{
+   TYPE dotproduct=0.0;
+
+   if(n<0) return(dotproduct);
+
+   for(int i=0; i<n; i++)
+   {
+      dotproduct += a[i]*b[i]*w[i];
+   }
+
+   return(dotproduct);
+}
+
 // Implements Eq. (2.2.1) of J. Cohen & P. Cohen (2nd ed.)
 template <class TYPE> double standardDeviation(TYPE *x, int n)
 {
