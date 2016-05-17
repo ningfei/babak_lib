@@ -1,6 +1,7 @@
 #define _EMFIT
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 void EMFIT1d(double *hist, double *fit, short *label, int nb, double *mean, double *var, double *p, int nclass, int niter)
@@ -8,6 +9,7 @@ void EMFIT1d(double *hist, double *fit, short *label, int nb, double *mean, doub
    double pi;
    double val;
    double *g;
+   double sum=0.0;
 
    pi = 4.0*atan(1.0);
 
@@ -21,35 +23,44 @@ void EMFIT1d(double *hist, double *fit, short *label, int nb, double *mean, doub
       label[b] = (b*nclass)/nb;
    }
 
-	for(int k=0; k<nclass; k++)  // for each row
-	for(int b=0; b<nb; b++) 
-	{
-		if( label[b]==k )
-			g[k*nb + b]=hist[b];
-		else
-			g[k*nb + b]=0.0;
-	}
-	///////////////////////////////////////////////////////////////
+   for(int k=0; k<nclass; k++)  // for each row
+   {
+      for(int b=0; b<nb; b++) 
+      {
+         if( label[b]==k )
+            g[k*nb + b]=hist[b];
+         else
+            g[k*nb + b]=0.0;
+      }
+   }
+   ///////////////////////////////////////////////////////////////
 
-	for(int iter=0; iter<niter; iter++)
-	{
-		for(int k=0; k<nclass; k++) 
-		{
-			p[k] = 0.0;
+   for(int iter=0; iter<niter; iter++)
+   {
+      for(int k=0; k<nclass; k++) 
+      {
+         p[k] = 0.0;
 
-			for(int b=0; b<nb; b++) p[k] += g[k*nb + b];
-		}
+         for(int b=0; b<nb; b++) p[k] += g[k*nb + b];
+      }
 
-		for(int k=0; k<nclass; k++) 
-		if(p[k]>0.0)
-		{
-			mean[k] = 0.0;
+      sum = 0.0;
+      for(int k=0; k<nclass; k++) sum += p[k];
 
-			for(int b=0; b<nb; b++) mean[k] += b*g[k*nb + b];
+      if( sum > 0.0) for(int k=0; k<nclass; k++) p[k]/=sum;
 
-			mean[k] /= p[k];
-		}
-		else	 mean[k] = 0.0;
+      for(int k=0; k<nclass; k++) if(p[k]<0.0001) p[k]=0.0;
+
+      for(int k=0; k<nclass; k++) 
+      if(p[k]>0.0)
+      {
+         mean[k] = 0.0;
+
+         for(int b=0; b<nb; b++) mean[k] += b*g[k*nb + b];
+
+         mean[k] /= p[k];
+      }
+      else mean[k] = 0.0;
 
 		for(int k=0; k<nclass; k++) 
 		if(p[k]>0.0)
