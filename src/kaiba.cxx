@@ -43,7 +43,8 @@ int opt;
 // Global variables
 
 int opt_png=NO; // flag for outputing PNG images
-char opt_flip=NO;
+char opt_flip=YES;
+char flipped; // Takes YES or NO
 FILE *logfp=NULL;
 
 /////////////////////////////////////////////////////////////////////////
@@ -52,7 +53,7 @@ static struct option options[] =
 {
    {"-v",0,'v'},
    {"-F",0,'F'},
-   {"-flip",0,'F'},
+   {"-noflip",0,'F'},
    {"-version",0,'V'},
    {"-V",0,'V'},
    {"-png",0,'g'},
@@ -1015,22 +1016,6 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
       save_nifti_image(filename, bimpil.v, &PILbraincloud_hdr);
       free(invT);
 
-      // if flip flag is on, make aimpil PIR 
-      if(opt_flip) 
-      { 
-         delete bimpil.v;
-         Tb[8]*=-1.0; Tb[9]*=-1.0; Tb[10]*=-1.0; Tb[11]*=-1.0; 
-         invT = inv4(Tb);
-         bimpil.v = resliceImage(bim, dimb, PILbraincloud_dim, invT, LIN);
-         free(invT);
- 
-         delete fimpil.v;
-         Tf[8]*=-1.0; Tf[9]*=-1.0; Tf[10]*=-1.0; Tf[11]*=-1.0; 
-         invT = inv4(Tb);
-         fimpil.v= resliceImage(fim, dimf, PILbraincloud_dim, invT, LIN);
-         free(invT);
-      }
-
       set_dim(aimpil, PILbraincloud_dim);
       aimpil.v = (int2 *)calloc(aimpil.nv, sizeof(int2));
       for(int i=0; i<aimpil.nv; i++) 
@@ -1188,17 +1173,17 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
       // and 'rhc3' finds the LHROI
       if( side[0]=='r')
       {
-         if(!opt_flip)
-            sprintf(filename,"%s_RHROI%d.nii",prefix,opt_flip);
+         if(!flipped)
+            sprintf(filename,"%s_RHROI.nii",prefix);
          else
-            sprintf(filename,"%s_LHROI%d.nii",prefix,opt_flip);
+            sprintf(filename,"%s_LHROIf.nii",prefix);
       }
       if( side[0]=='l')
       {
-         if(!opt_flip)
-            sprintf(filename,"%s_LHROI%d.nii",prefix,opt_flip);
+         if(!flipped)
+            sprintf(filename,"%s_LHROI.nii",prefix);
          else
-            sprintf(filename,"%s_RHROI%d.nii",prefix,opt_flip);
+            sprintf(filename,"%s_RHROIf.nii",prefix);
       }
 
       for(int n=0; n<hcim.nv; n++) stndrd_roi[n] = 0;
@@ -1417,7 +1402,10 @@ float8 compute_hi(char *imfile, char *roifile)
 
 int main(int argc, char **argv)
 {
-   float4 LHI, RHI;
+   short *tmp;
+   float4 RHI0, RHI1, LHI0, LHI1;
+   float4 bRHI0, bRHI1, bLHI0, bLHI1;
+   float4 fRHI0, fRHI1, fLHI0, fLHI1;
    char cmnd[1024]=""; // stores the command to run with system
    opt_ppm=YES;
    opt_txt=NO;
@@ -1451,7 +1439,7 @@ int main(int argc, char **argv)
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
          case 'F':
-            opt_flip=YES;
+            opt_flip=NO;
             break;
          case 'v':
             opt_v=YES;
@@ -1503,6 +1491,8 @@ int main(int argc, char **argv)
    }
 
    float4 pilT[16];
+   float4 bpilT[16];
+   float4 fpilT[16];
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // read PILbraincloud.nii from the $ARTHOME directory
@@ -1542,10 +1532,10 @@ int main(int argc, char **argv)
       symmetric_registration(aimpil, bfile, ffile, blmfile, flmfile, opt_v);
 
       ///////////////////////////////////////////////////////////////////////////////////////////////
-      // processing baseline image
-      ///////////////////////////////////////////////////////////////////////////////////////////////
       SHORTIM bim; // baseline image
       nifti_1_header bim_hdr;  // baseline image NIFTI header
+      SHORTIM fim; // followup image
+      nifti_1_header fim_hdr;  // followup image NIFTI header
 
       bim.v = (int2 *)read_nifti_image(bfile, &bim_hdr);
       if(bim.v==NULL)
@@ -1555,44 +1545,6 @@ int main(int argc, char **argv)
       }
       free(bim.v);
 
-      sprintf(filename,"%s_PIL.mrx",bprefix);
-      loadTransformation(filename, pilT);
-
-      // if aimpil is PIR, then use 'lhc3' to find the RHROI
-      // and 'rhc3' to find the LHROI
-      if(opt_flip) 
-      { 
-         pilT[8]*=-1.0; pilT[9]*=-1.0; pilT[10]*=-1.0; pilT[11]*=-1.0; 
-
-         find_roi(&bim_hdr, aimpil, pilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",bprefix,opt_flip);
-         RHI=compute_hi(bfile, roifile);
-
-         find_roi(&bim_hdr, aimpil, pilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",bprefix,opt_flip);
-         LHI=compute_hi(bfile, roifile);
-      }
-      else
-      { 
-         find_roi(&bim_hdr, aimpil, pilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",bprefix,opt_flip);
-         RHI=compute_hi(bfile, roifile);
-
-         find_roi(&bim_hdr, aimpil, pilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",bprefix,opt_flip);
-         LHI=compute_hi(bfile, roifile);
-      }
-
-      fprintf(fp,"%s,Right,%lf\n",bfile,RHI);
-      fprintf(fp,"%s,Left,%lf\n",bfile,LHI);
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      // processing followup image
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      SHORTIM fim; // followup image
-      nifti_1_header fim_hdr;  // followup image NIFTI header
-
       fim.v = (int2 *)read_nifti_image(ffile, &fim_hdr);
       if(fim.v==NULL)
       {
@@ -1601,36 +1553,73 @@ int main(int argc, char **argv)
       }
       free(fim.v);
 
+      sprintf(filename,"%s_PIL.mrx",bprefix);
+      loadTransformation(filename, bpilT);
+
       sprintf(filename,"%s_PIL.mrx",fprefix);
-      loadTransformation(filename, pilT);
+      loadTransformation(filename, fpilT);
+
+      { 
+         flipped=NO;
+         find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
+         sprintf(roifile,"%s_RHROI.nii",bprefix);
+         bRHI0=compute_hi(bfile, roifile);
+
+         find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
+         sprintf(roifile,"%s_LHROI.nii",bprefix);
+         bLHI0=compute_hi(bfile, roifile);
+
+         find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
+         sprintf(roifile,"%s_RHROI.nii",fprefix);
+         fRHI0=compute_hi(ffile, roifile);
+      
+         find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
+         sprintf(roifile,"%s_LHROI.nii",fprefix);
+         fLHI0=compute_hi(ffile, roifile);
+      }
 
       // if aimpil is PIR, then use 'lhc3' to find the RHROI
       // and 'rhc3' to find the LHROI
       if(opt_flip) 
-      {
-         pilT[8]*=-1.0; pilT[9]*=-1.0; pilT[10]*=-1.0; pilT[11]*=-1.0; 
+      { 
+         float I[16];
 
-         find_roi(&fim_hdr, aimpil, pilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",fprefix,opt_flip);
-         RHI=compute_hi(ffile, roifile);
+         set_to_I(I,4);
+         I[10]=-1.0;
+         tmp = resliceImage(aimpil.v, PILbraincloud_dim, PILbraincloud_dim, I, LIN);
+         free(aimpil.v);
+         aimpil.v=tmp;
+
+         bpilT[8]*=-1.0; bpilT[9]*=-1.0; bpilT[10]*=-1.0; bpilT[11]*=-1.0; 
+         fpilT[8]*=-1.0; fpilT[9]*=-1.0; fpilT[10]*=-1.0; fpilT[11]*=-1.0; 
+
+         flipped=YES;
+         find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
+         sprintf(roifile,"%s_RHROIf.nii",bprefix);
+         bRHI1=compute_hi(bfile, roifile);
+
+         find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
+         sprintf(roifile,"%s_LHROIf.nii",bprefix);
+         bLHI1=compute_hi(bfile, roifile);
+
+         find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
+         sprintf(roifile,"%s_RHROIf.nii",fprefix);
+         fRHI1=compute_hi(ffile, roifile);
       
-         find_roi(&fim_hdr, aimpil, pilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",fprefix,opt_flip);
-         LHI=compute_hi(ffile, roifile);
+         find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
+         sprintf(roifile,"%s_LHROIf.nii",fprefix);
+         fLHI1=compute_hi(ffile, roifile);
       }
       else
       {
-         find_roi(&fim_hdr, aimpil, pilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",fprefix,opt_flip);
-         RHI=compute_hi(ffile, roifile);
-      
-         find_roi(&fim_hdr, aimpil, pilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",fprefix,opt_flip);
-         LHI=compute_hi(ffile, roifile);
+         bRHI1=bRHI0; bLHI1=bLHI0;
+         fRHI1=fRHI0; fLHI1=fLHI0;
       }
 
-      fprintf(fp,"%s,Right,%lf\n",ffile,RHI);
-      fprintf(fp,"%s,Left,%lf\n",ffile,LHI);
+      fprintf(fp,"%s,Right,%lf\n",bfile,(bRHI1+bRHI0)/2.0);
+      fprintf(fp,"%s,Left,%lf\n",bfile,(bLHI1+bLHI0)/2.0);
+      fprintf(fp,"%s,Right,%lf\n",ffile,(fRHI1+fRHI0)/2.0);
+      fprintf(fp,"%s,Left,%lf\n",ffile,(fLHI1+fLHI0)/2.0);
 
       ///////////////////////////////////////////////////////////////////////////////////////////////
       delete aimpil.v;
@@ -1693,8 +1682,20 @@ int main(int argc, char **argv)
       sprintf(filename,"%s_PIL.nii",bprefix);
       save_nifti_image(filename, bimpil.v, &PILbraincloud_hdr);
 
+      {
+         flipped=NO;
+         find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
+         sprintf(roifile,"%s_RHROI.nii",bprefix);
+         RHI0=compute_hi(bfile, roifile);
+
+         find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
+         sprintf(roifile,"%s_LHROI.nii",bprefix);
+         LHI0=compute_hi(bfile, roifile);
+      }
+
       if(opt_flip) 
       { 
+         flipped=YES;
          delete bimpil.v;
          bTPIL[8]*=-1.0; bTPIL[9]*=-1.0; bTPIL[10]*=-1.0; bTPIL[11]*=-1.0; 
          invT = inv4(bTPIL);
@@ -1704,28 +1705,22 @@ int main(int argc, char **argv)
          // since bimpil is PIR, use 'lhc3' to find the RHROI
          // and 'rhc3' to find the LHROI
          find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",bprefix,opt_flip);
-         RHI=compute_hi(bfile, roifile);
+         sprintf(roifile,"%s_RHROIf.nii",bprefix);
+         RHI1=compute_hi(bfile, roifile);
 
          find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",bprefix,opt_flip);
-         LHI=compute_hi(bfile, roifile);
+         sprintf(roifile,"%s_LHROIf.nii",bprefix);
+         LHI1=compute_hi(bfile, roifile);
       }
       else
       {
-         find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI%d.nii",bprefix,opt_flip);
-         RHI=compute_hi(bfile, roifile);
-
-         find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI%d.nii",bprefix,opt_flip);
-         LHI=compute_hi(bfile, roifile);
+         RHI1=RHI0; LHI1=LHI0;
       }
 
       delete bimpil.v;
 
-      fprintf(fp,"%s,Right,%lf\n",bfile,RHI);
-      fprintf(fp,"%s,Left,%lf\n",bfile,LHI);
+      fprintf(fp,"%s,Right,%lf\n",bfile,(RHI1+RHI0)/2.0);
+      fprintf(fp,"%s,Left,%lf\n",bfile,(LHI1+LHI0)/2.0);
    }
 
    fclose(fp);
