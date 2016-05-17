@@ -97,7 +97,7 @@ void print_help_and_exit()
    "\t\tSpecifies the patch radius (default=3 pixels).\n\n"
 
    "\t-R <search radius>\n"
-   "\t\tSpecifies the serach radius (default=3 pixels).\n\n"
+   "\t\tSpecifies the search radius (default=3 pixels).\n\n"
 
    "\t-h or -help\n"
    "\t\tPrints help message.\n\n"
@@ -116,8 +116,8 @@ void print_help_and_exit()
    "\t\t(default: <filename>=<subject image>_wrp.nii).'\n\n"
 
    "\t-o <filename>\n"
-   "\t\tStores the transformed (registered) <subject image> in the specified <filename>\n"
-   "\t\t(default: <filename>=C<subject image>.nii).\n\n"
+   "\t\tStores the non-linearly transformed (registered) <subject image> in\n"
+   "\t\tthe specified <filename> (default: <filename>=C<subject image>.nii).\n\n"
 
    "\t-cubicspline\n"
    "\t\tThe output transformed (registered) <subject image> is generated using the\n"
@@ -367,15 +367,12 @@ void affineReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float 
    free(Q);
 }
 
-void generateMultiResolution(short *sub, DIM dim_sub, float *T, float *Xwarp, float *Ywarp, float *Zwarp, short **im1, short **im2, short **im4, short **im8)
+void generateMultiResolution(short *sub, DIM subdim, float *T, float *Xwarp, float *Ywarp, float *Zwarp, short *im1, short *im2, short *im4, short *im8)
 {
+   short *tmp;
+
    float I[16];
    float *Xw,*Yw,*Zw;
-
-   if( *im1 != NULL ) free(*im1);
-   if( *im2 != NULL ) free(*im2);
-   if( *im4 != NULL ) free(*im4);
-   if( *im8 != NULL ) free(*im8);
 
    Xw = (float *)calloc(dim1.nv, sizeof(float));
    Yw = (float *)calloc(dim1.nv, sizeof(float));
@@ -389,44 +386,57 @@ void generateMultiResolution(short *sub, DIM dim_sub, float *T, float *Xwarp, fl
 
    combine_warps_and_trans(dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xw, Yw, Zw, T);
 
-   *im1=computeReslicedImage2(sub, dim_sub, dim1, Xw, Yw, Zw);
+   tmp=computeReslicedImage2(sub, subdim, dim1, Xw, Yw, Zw);
+   for(int i=0; i<dim1.nv; i++) im1[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im2 = resliceImage(*im1, dim1, dim2, I, LIN); 
+   tmp = resliceImage(im1, dim1, dim2, I, LIN); 
+   for(int i=0; i<dim2.nv; i++) im2[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im4 = resliceImage(*im2, dim2, dim4, I, LIN); 
+   tmp = resliceImage(im2, dim2, dim4, I, LIN); 
+   for(int i=0; i<dim4.nv; i++) im4[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im8 = resliceImage(*im4, dim4, dim8, I, LIN); 
+   tmp = resliceImage(im4, dim4, dim8, I, LIN); 
+   for(int i=0; i<dim8.nv; i++) im8[i]=tmp[i];
+   free(tmp);
 
    free(Xw); free(Yw); free(Zw);
 }
 
-void generateMultiResolution(short *im, DIM im_dim, float *T, short **im1, short **im2, short **im4, short **im8)
+void generateMultiResolution(short *im, DIM im_dim, float *T, short *im1, short *im2, short *im4, short *im8)
 {
+   short *tmp;
    float I[16];
    float *invT;		
 
-   if( *im1 != NULL ) free(*im1);
-   if( *im2 != NULL ) free(*im2);
-   if( *im4 != NULL ) free(*im4);
-   if( *im8 != NULL ) free(*im8);
-
    invT=inv4(T); 
-   *im1 = resliceImage(im, im_dim, dim1, invT, LIN); 
+   tmp = resliceImage(im, im_dim, dim1, invT, LIN); 
    free(invT);
+   for(int i=0; i<dim1.nv; i++) im1[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im2 = resliceImage(*im1, dim1, dim2, I, LIN); 
+   tmp = resliceImage(im1, dim1, dim2, I, LIN); 
+   for(int i=0; i<dim2.nv; i++) im2[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im4 = resliceImage(*im2, dim2, dim4, I, LIN); 
+   tmp = resliceImage(im2, dim2, dim4, I, LIN); 
+   for(int i=0; i<dim4.nv; i++) im4[i]=tmp[i];
+   free(tmp);
 
    set_to_I(I,4); 
-   *im8 = resliceImage(*im4, dim4, dim8, I, LIN); 
+   tmp = resliceImage(im4, dim4, dim8, I, LIN); 
+   for(int i=0; i<dim8.nv; i++) im8[i]=tmp[i];
+   free(tmp);
+
+   return;
 }
-
 void combine_warps_and_trans(float *trgTPIL, float *Xwarp, float *Ywarp, float *Zwarp, float *Xout, float *Yout, float *Zout, DIM dim_trg)
 {
    int v;
@@ -649,6 +659,19 @@ int main(int argc, char **argv)
    dim8.nv=dim8.np*dim8.nz; 
    dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;
 
+   trgPIL1 = (short *)calloc(dim1.nv,sizeof(short));
+   subPIL1 = (short *)calloc(dim1.nv,sizeof(short));
+   mskPIL1 = (short *)calloc(dim1.nv,sizeof(short));
+   trgPIL2 = (short *)calloc(dim2.nv,sizeof(short));
+   subPIL2 = (short *)calloc(dim2.nv,sizeof(short));
+   mskPIL2 = (short *)calloc(dim2.nv,sizeof(short));
+   trgPIL4 = (short *)calloc(dim4.nv,sizeof(short));
+   subPIL4 = (short *)calloc(dim4.nv,sizeof(short));
+   mskPIL4 = (short *)calloc(dim4.nv,sizeof(short));
+   trgPIL8 = (short *)calloc(dim8.nv,sizeof(short));
+   subPIL8 = (short *)calloc(dim8.nv,sizeof(short));
+   mskPIL8 = (short *)calloc(dim8.nv,sizeof(short));
+
    // reset unreasonable values to default
    if(iter8 < 0 || iter8>MAXITER ) iter8=4;
    if(iter4 < 0 || iter4>MAXITER ) iter4=3;
@@ -729,14 +752,14 @@ int main(int argc, char **argv)
    ////////////////////////////////////////////////////////////////////////////////////////////
    
    // compute trgPIL1, trgPIL2, trgPIL4 and trgPIL8
-   generateMultiResolution(trg, dim_trg, trgTPIL, &trgPIL1, &trgPIL2, &trgPIL4, &trgPIL8);
+   generateMultiResolution(trg, dim_trg, trgTPIL, trgPIL1, trgPIL2, trgPIL4, trgPIL8);
 
    ////////////////////////////////////////////////////////////////////////////////////////////
    // compute mskPIL1, mskPIL2, mskPIL4 and mskPIL8
    if(opt_I == YES)
    {
       set_to_I(I,4);
-      generateMultiResolution(sub, dim_sub, I, &mskPIL1, &mskPIL2, &mskPIL4, &mskPIL8);
+      generateMultiResolution(sub, dim_sub, I, mskPIL1, mskPIL2, mskPIL4, mskPIL8);
    }
    else
    {
@@ -757,7 +780,7 @@ int main(int argc, char **argv)
       set_dim(PILbraincloud_dim, PILbraincloud_hdr);
 
       set_to_I(I,4);
-      generateMultiResolution(PILbraincloud, PILbraincloud_dim, I, &mskPIL1, &mskPIL2, &mskPIL4, &mskPIL8);
+      generateMultiResolution(PILbraincloud, PILbraincloud_dim, I, mskPIL1, mskPIL2, mskPIL4, mskPIL8);
 
       free(PILbraincloud);
    }
@@ -790,17 +813,17 @@ int main(int argc, char **argv)
       FILE *fp;
 
       if(opt_v) printf("Affine registration @ 12.5\% resolution ...\n");
-      generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+      generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
       if(opt_v) printf("Affine registration @ 25\% resolution ...\n");
-      generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+      generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
       if(opt_v) printf("Affine registration @ 50\% resolution ...\n");
-      generateMultiResolution(sub, dim_sub, subTPIL, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+      generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
@@ -856,7 +879,7 @@ int main(int argc, char **argv)
       if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
       for(int i=0; i<iter8; i++)
       {
-         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
          nlReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
       }
    }
@@ -866,7 +889,7 @@ int main(int argc, char **argv)
       if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
       for(int i=0; i<iter4; i++)
       {
-         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
          nlReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, 2*search_R/3, Xwarp, Ywarp, Zwarp,5);
       }
    }
@@ -876,7 +899,7 @@ int main(int argc, char **argv)
       if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
       for(int i=0; i<iter2; i++)
       {
-         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
          nlReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
       }
    }
@@ -886,7 +909,7 @@ int main(int argc, char **argv)
       if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
       for(int i=0; i<iter1; i++)
       {
-         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, &subPIL1, &subPIL2, &subPIL4, &subPIL8);
+         generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
          nlReg(subPIL1, trgPIL1, mskPIL1, dim1, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
       }
    }
