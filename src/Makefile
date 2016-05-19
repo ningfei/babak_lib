@@ -5,7 +5,7 @@ INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
 #LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
-all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi
+all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -175,6 +175,10 @@ clean:
 	rm -f *.o
 
 # compilation of executables
+PILtransform: libbabak_lib_linux.a PILtransform.cxx
+	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(LIBS) $(INC)
+	mv PILtransform ../bin
+
 brainwash: libbabak_lib_linux.a brainwash.cxx
 	$(CC) $(CFLAGS) -o brainwash brainwash.cxx $(LIBS) $(INC)
 	mv brainwash ../bin
