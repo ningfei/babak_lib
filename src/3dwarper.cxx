@@ -23,7 +23,9 @@
 #define MAXITER 10
 #define MAXR 15
 
-#define MATRIXSIZE 256
+#define XMATRIXSIZE 256
+#define YMATRIXSIZE 256
+#define ZMATRIXSIZE 192
 #define VOXELSIZE 1.0
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -639,22 +641,30 @@ int main(int argc, char **argv)
    getARTHOME();
 
    // Initialize dim1, dim2, dim4, and dim8 multi-resolution image dimensions
-   dim1.nx = dim1.ny = dim1.nz = MATRIXSIZE;
+   dim1.nx = XMATRIXSIZE;
+   dim1.ny = YMATRIXSIZE;
+   dim1.nz = ZMATRIXSIZE;
    dim1.np=dim1.nx*dim1.ny; 
    dim1.nv=dim1.np*dim1.nz; 
    dim1.dx = dim1.dy = dim1.dz = VOXELSIZE;
 
-   dim2.nx = dim2.ny = dim2.nz = MATRIXSIZE/2;
+   dim2.nx = XMATRIXSIZE/2;
+   dim2.ny = YMATRIXSIZE/2;
+   dim2.nz = ZMATRIXSIZE/2;
    dim2.np=dim2.nx*dim2.ny; 
    dim2.nv=dim2.np*dim2.nz; 
    dim2.dx = dim2.dy = dim2.dz = VOXELSIZE*2.0;
 
-   dim4.nx = dim4.ny = dim4.nz = MATRIXSIZE/4;
+   dim4.nx = XMATRIXSIZE/4;
+   dim4.ny = YMATRIXSIZE/4;
+   dim4.nz = ZMATRIXSIZE/4;
    dim4.np=dim4.nx*dim4.ny; 
    dim4.nv=dim4.np*dim4.nz; 
    dim4.dx = dim4.dy = dim4.dz = VOXELSIZE*4.0;
 
-   dim8.nx = dim8.ny = dim8.nz = MATRIXSIZE/8;
+   dim8.nx = XMATRIXSIZE/8;
+   dim8.ny = YMATRIXSIZE/8;
+   dim8.nz = ZMATRIXSIZE/8;
    dim8.np=dim8.nx*dim8.nx; 
    dim8.nv=dim8.np*dim8.nz; 
    dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;

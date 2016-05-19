@@ -20,6 +20,7 @@ void print_help_and_exit()
    "\tPILtransform [-v] [-lm <landmarks>] -i <image>.nii\n\n");
    exit(0);
 }
+
 int main(int argc, char **argv)
 {
    char lmfile[256]=""; 
@@ -58,6 +59,5 @@ int main(int argc, char **argv)
 
    if(lmfile[0] != '\0' && opt_v) printf("Landmarks are read from %s\n",lmfile);
 
-exit(0);
    new_PIL_transform(subfile,lmfile,TPIL);
 }
