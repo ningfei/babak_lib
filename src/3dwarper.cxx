@@ -23,9 +23,9 @@
 #define MAXITER 10
 #define MAXR 15
 
-#define XMATRIXSIZE 256
-#define YMATRIXSIZE 256
-#define ZMATRIXSIZE 192
+#define XMATRIXSIZE 255
+#define YMATRIXSIZE 255
+#define ZMATRIXSIZE 189
 #define VOXELSIZE 1.0
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
