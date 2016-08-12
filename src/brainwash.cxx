@@ -25,7 +25,7 @@
 #define NO 0
 #define MAXITER 10
 #define MAXR 15
-#define MAXNATLAS 150
+#define MAXNATLAS 999
 
 #define XMATRIXSIZE 255
 #define YMATRIXSIZE 255
@@ -35,7 +35,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 float FWHM=1.0;
-char atlasfilename[MAXNATLAS][1024];
+char atlasfilename[MAXNATLAS][64];
 
 // multi-resolution image dimensions
 DIM dim1, dim2, dim4, dim8;
@@ -46,6 +46,8 @@ static struct option options[] =
 {
    {"-version", 0, 'V'},
    {"-Version", 0, 'V'},
+
+   {"-n", 1, 'n'},
 
    {"-iter8", 1, '8'},
    {"-iter4", 1, '4'},
@@ -59,8 +61,8 @@ static struct option options[] =
    {"-threshold", 1, 't'},
    {"-t", 1, 't'},
 
-   {"-sub", 1, 's'},
-   {"-sublm", 1, 'M'},
+   {"-i", 1, 'i'},
+   {"-lm", 1, 'M'},
 
    {"-atlaslist", 1, 'l'},
    {"-list", 1, 'l'},
@@ -88,11 +90,11 @@ void print_help_and_exit()
    printf("\n\nUsage:\n"
    "\tbrainwash [-v or -verbose] [-h or -help] [-version]\n"
    "\t[-r <patch radius>] [-R <search radius>] [-t <percent threshold>]\n"
-   "\t-sub <subject image>\n\n" 
+   "\t-i <image>\n\n" 
 
    "Required arguments:\n\n"
-   "\t-sub <subject image>\n"
-   "\t\tSpecifies the image to be registred to the <target image>. <subject image> is expected\n"
+   "\t-i <image>\n"
+   "\t\tSpecifies the image to be skull-stripped. <image> is expected\n"
    "\t\tto be of type short in NIFTI format.\n\n"
 
    "Optional arguments:\n\n"
@@ -167,22 +169,22 @@ short *computeReslicedImage2(short *im1, DIM dim1, DIM dim2, float *Xwarp, float
 	return( im2 );
 }
 
-void brainwashnlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float *Xwarp, float *Ywarp, float *Zwarp, int S)
+void brainwashnlReg(short *im1, short *im2, short *msk, DIM dim, int r, int R, float *Xwarp, float *Ywarp, float *Zwarp, int S)
 {
    float I[16];
    float *Xw, *Yw, *Zw;
 
-   SPH subsph(r);
-   SPH trgsph(r);
+   SPH im1sph(r);
+   SPH im2sph(r);
    SPH searchsph(R);
 
-   SHORTIM subim;
-   set_dim(subim,dim);
-   subim.v=sub;
+   SHORTIM sim1;
+   set_dim(sim1,dim);
+   sim1.v=im1;
 
-   SHORTIM trgim;
-   set_dim(trgim,dim);
-   trgim.v=trg;
+   SHORTIM sim2;
+   set_dim(sim2,dim);
+   sim2.v=im2;
 
    int v; // voxel index going from 0 to dim.nv-1
    int P[3], Q[3];
@@ -191,7 +193,7 @@ void brainwashnlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, f
    Yw = (float *)calloc(dim.nv, sizeof(float));
    Zw = (float *)calloc(dim.nv, sizeof(float));
 
-   for(int i=0; i<dim.nv; i++) if(msk[i]==0) sub[i]=trg[i]=0;
+   for(int i=0; i<dim.nv; i++) if(msk[i]==0) im1[i]=im2[i]=0;
     
    for(int k=0; k<dim.nz; k++)
    for(int j=0; j<dim.ny; j++)
@@ -199,16 +201,17 @@ void brainwashnlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, f
    {
       v = k*dim.np + j*dim.nx + i;
 
-      if(msk[v]==100 || msk[v]<=0 || trg[v]<=0)
+      if(msk[v]==100 || msk[v]<=0 || im2[v]<=0)
       {
+         Xw[v] = Yw[v] = Zw[v] = 0.0;
          continue;
       }
 
-      trgsph.set(trgim,i,j,k);
-      standardize(trgsph.v,trgsph.v,trgsph.n);
+      im2sph.set(sim2,i,j,k);
+      standardize(im2sph.v,im2sph.v,im2sph.n);
 
       P[0]=i; P[1]=j; P[2]=k;
-      detect_lm(searchsph, subsph, subim, P, trgsph, Q);
+      detect_lm(searchsph, im1sph, sim1, P, im2sph, Q);
 
       // make sure Q is within the mask
       if(msk[ Q[2]*dim.np + Q[1]*dim.nx + Q[0] ] != 0)
@@ -235,8 +238,9 @@ void brainwashnlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, f
       {
          v = k*dim.np + j*dim.nx + i;
 
-         if(trg[v]<=0)
+         if(msk[v]==100 || msk[v]<=0 || im2[v]<=0)
          {
+            Xww[v] = Yww[v] = Zww[v] = 0.0;
             continue;
          }
 
@@ -273,23 +277,24 @@ void brainwashnlReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, f
       Ywarp[i] += Yw[i];
       Zwarp[i] += Zw[i];
    }
+
    free(Xw); free(Yw); free(Zw);
 }
 
-// finds an affine registration in "A" to takes points from sub to trg space
-void affineReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float *A)
+// finds an affine registration in "A" to takes points from im1 to im2 space
+void affineReg(short *im1, short *im2, short *msk, DIM dim, int r, int R, float *A)
 {
-   SPH subsph(r);
-   SPH trgsph(r);
+   SPH im1sph(r);
+   SPH im2sph(r);
    SPH searchsph(R);
 
-   SHORTIM subim;
-   set_dim(subim,dim);
-   subim.v=sub;
+   SHORTIM sim1; // structured im1
+   set_dim(sim1,dim);
+   sim1.v=im1;
 
-   SHORTIM trgim;
-   set_dim(trgim,dim);
-   trgim.v=trg;
+   SHORTIM sim2;
+   set_dim(sim2,dim);
+   sim2.v=im2;
 
    int *PT, *QT;
    char *flg;
@@ -306,21 +311,21 @@ void affineReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float 
    for(int j=0; j<dim.ny; j++)
    for(int i=0; i<dim.nx; i++)
    {
-      v = k*dim.np+ j*dim.nx+ i;
+      v = k*dim.np + j*dim.nx + i;
 
-      if(msk[v]<=0 || sub[v]<=0 || trg[v]<=0)
+      if(msk[v]<=0 || msk[v]==100 || im1[v]<=0 || im2[v]<=0)
       {
          flg[v]=0;
          continue;
       }
 
-      subsph.set(subim,i,j,k);
-      standardize(subsph.v,subsph.n);
+      im1sph.set(sim1,i,j,k);
+      standardize(im1sph.v, im1sph.v, im1sph.n);
 
       PT[3*c + 0] = QT[3*c + 0] = i;
       PT[3*c + 1] = QT[3*c + 1] = j;
       PT[3*c + 2] = QT[3*c + 2] = k;
-      detect_lm(searchsph, trgsph, trgim, PT+3*c, subsph, QT+3*c);
+      detect_lm(searchsph, im2sph, sim2, PT+3*c, im1sph, QT+3*c);
 
       flg[v]=1;
       c++;
@@ -355,7 +360,7 @@ void affineReg(short *sub, short *trg, short *msk, DIM dim, int r, int R, float 
    free(Q);
 }
 
-void generateMultiResolution(short *sub, DIM subdim, float *T, float *Xwarp, float *Ywarp, float *Zwarp, short *im1, short *im2, short *im4, short *im8)
+void generateMultiResolution(short *im, DIM dim, float *T, float *Xwarp, float *Ywarp, float *Zwarp, short *im1, short *im2, short *im4, short *im8)
 {
    short *tmp;
 
@@ -374,7 +379,7 @@ void generateMultiResolution(short *sub, DIM subdim, float *T, float *Xwarp, flo
 
    combine_warps_and_trans(dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xw, Yw, Zw, T);
 
-   tmp=computeReslicedImage2(sub, subdim, dim1, Xw, Yw, Zw);
+   tmp=computeReslicedImage2(im, dim, dim1, Xw, Yw, Zw);
    for(int i=0; i<dim1.nv; i++) im1[i]=tmp[i];
    free(tmp);
 
@@ -426,7 +431,7 @@ void generateMultiResolution(short *im, DIM im_dim, float *T, short *im1, short 
    return;
 }
 
-void combine_warps_and_trans(float *trgTPIL, float *Xwarp, float *Ywarp, float *Zwarp, float *Xout, float *Yout, float *Zout, DIM trgdim)
+void combine_warps_and_trans(float *T, float *Xwarp, float *Ywarp, float *Zwarp, float *Xout, float *Yout, float *Zout, DIM dim)
 {
    int v;
    float xc,yc,zc;
@@ -435,28 +440,28 @@ void combine_warps_and_trans(float *trgTPIL, float *Xwarp, float *Ywarp, float *
    float x1,y1,z1;   
    float i1,j1,k1;   
 
-   xc=trgdim.dx*(trgdim.nx-1.0)/2.0;     /* +---+---+ */
-   yc=trgdim.dy*(trgdim.ny-1.0)/2.0;
-   zc=trgdim.dz*(trgdim.nz-1.0)/2.0;
+   xc=dim.dx*(dim.nx-1.0)/2.0;     /* +---+---+ */
+   yc=dim.dy*(dim.ny-1.0)/2.0;
+   zc=dim.dz*(dim.nz-1.0)/2.0;
 
    xc1=dim1.dx*(dim1.nx-1.0)/2.0;     /* +---+---+ */
    yc1=dim1.dy*(dim1.ny-1.0)/2.0;
    zc1=dim1.dz*(dim1.nz-1.0)/2.0;
  
-   for(int k=0;k<trgdim.nz;k++) 
-   for(int j=0;j<trgdim.ny;j++) 
-   for(int i=0;i<trgdim.nx;i++) 
+   for(int k=0;k<dim.nz;k++) 
+   for(int j=0;j<dim.ny;j++) 
+   for(int i=0;i<dim.nx;i++) 
    {
-      v = k*trgdim.np + j*trgdim.nx + i;
+      v = k*dim.np + j*dim.nx + i;
 
       // (i*dx-xc) converts from image coordinates (i,j,z) to (x,y,z) coordinates
-      x = (i*trgdim.dx - xc);
-      y = (j*trgdim.dy - yc);
-      z = (k*trgdim.dz - zc);
+      x = (i*dim.dx - xc);
+      y = (j*dim.dy - yc);
+      z = (k*dim.dz - zc);
 
-      x1 =  trgTPIL[0]*x +trgTPIL[1]*y +trgTPIL[2]*z  +trgTPIL[3];
-      y1 =  trgTPIL[4]*x +trgTPIL[5]*y +trgTPIL[6]*z  +trgTPIL[7];
-      z1 =  trgTPIL[8]*x +trgTPIL[9]*y +trgTPIL[10]*z +trgTPIL[11];
+      x1 =  T[0]*x +T[1]*y +T[2]*z  +T[3];
+      y1 =  T[4]*x +T[5]*y +T[6]*z  +T[7];
+      z1 =  T[8]*x +T[9]*y +T[10]*z +T[11];
 
       i1 = (x1 + xc1) / dim1.dx;
       j1 = (y1 + yc1) / dim1.dy;
@@ -466,9 +471,9 @@ void combine_warps_and_trans(float *trgTPIL, float *Xwarp, float *Ywarp, float *
       y1 += linearInterpolator(i1,j1,k1,Ywarp,dim1.nx,dim1.ny,dim1.nz,dim1.np);
       z1 += linearInterpolator(i1,j1,k1,Zwarp,dim1.nx,dim1.ny,dim1.nz,dim1.np);
       
-      Xout[v] = x1 - i*trgdim.dx + xc;
-      Yout[v] = y1 - j*trgdim.dy + yc;
-      Zout[v] = z1 - k*trgdim.dz + zc;
+      Xout[v] = x1 - i*dim.dx + xc;
+      Yout[v] = y1 - j*dim.dy + yc;
+      Zout[v] = z1 - k*dim.dz + zc;
    }
 }
 
@@ -823,7 +828,10 @@ void ivf(float *Xwarp1, float *Ywarp1, float *Zwarp1, DIM dim1, float *Xwarp2, f
 
 void read_default_atlas_names(const char *brainwashatlasdir, int &natlas)
 {
+   int2 L; // number of charaters in the filename (i.e., its length)
+
    char fileprefix[1024];
+   char filename[1024];
 
    DIR *dp;
    // struct direct *dir; // this one didn't work on SUN 
@@ -846,15 +854,17 @@ void read_default_atlas_names(const char *brainwashatlasdir, int &natlas)
    // returns NULL, the end of the directory has been reached.  
    while( (dir=readdir(dp)) != NULL && natlas<MAXNATLAS)
    {
-      // If the string length is less than 5, it cannot be a NIFTI file since
-      // NIFTI files have names like *.nii which are at least 5 characters
-      if(strlen(dir->d_name) < 5 )
+      L=strlen(dir->d_name);
+
+      if(L != 8 || strcmp(dir->d_name+(L-4), ".nii")!=0 )
          continue;
 
+      sprintf(filename,"%s/%s",brainwashatlasdir,dir->d_name);
+
       // then looks like a real NIFTI image since niftiFilename does some checks
-      if( niftiFilename(fileprefix, dir->d_name)==1 ) 
+      if( niftiFilename(fileprefix, filename)==1 ) 
       {
-         sprintf(atlasfilename[natlas],"%s/%s",brainwashatlasdir,dir->d_name);
+         sprintf(atlasfilename[natlas],"%s",fileprefix);
          natlas++; // increment natlas to indicate that one more atlas has been read 
       }
    };
@@ -895,59 +905,77 @@ void read_atlas_list(const char *atlaslistfile, int &natlas)
    fclose(fp);
 }
 
+void matchpatch(SPH &searchsph, SPH &testsph, SHORTIM testim, int P[], SPH &refsph)
+{
+   for(int n=0; n<searchsph.n; n++)
+   {
+      testsph.set(testim, P[0]+searchsph.i[n], P[1]+searchsph.j[n], P[2]+searchsph.k[n]);
+      standardize(testsph.v, testsph.n);
+
+      searchsph.v[n] = dot(testsph.v, refsph.v, testsph.n);
+   }
+}
+
 int main(int argc, char **argv)
 {
+   float *invT;		
+   short *tmpmsk;
+   char atlaspath[1024];
+   char atlasmskpath[1024];
+   int natlas_used=11;
+
+   int4 *atlas_indx;
+
+   int2 *PILbraincloud;
+   DIM PILbraincloudDim;
+   nifti_1_header PILbraincloudHdr;
+
    float threshold=50.0;
 
    char atlaslistfile[1024]=""; 
 
-   float *label;
+   float *label, *evidence0, *evidence1;
 
    char brainwashatlasdir[1024]=""; 
    int natlas; // number of available atlases
    
-   // input "subject image" full path
-   char subjectImageFile[1024]=""; 
+   // input image full path
+   char subImageFile[1024]=""; 
 
-   // points to the current atlas
-   char *targetImageFile;
 
-   // extracted subject image filename only without suffix
+   // extracted image filename without suffix
    char subprefix[1024]=""; 
-   // extracted target image filename only without suffix
-   char trgprefix[1024]="";
+   char atlprefix[1024]="";
 
-   // original subject and target images loaded 
-   // from subjectImageFile and targetImageFile
-   short *sub, *trg;
+   // original atlas and subject images loaded 
+   short *sub, *atl, *atl_msk;
 
-   // NIFTI headers for input subject and target images
-   nifti_1_header sub_hdr, trg_hdr;
+   // NIFTI headers for subject and atlas images
+   nifti_1_header subHdr, atlHdr;
 
-   // structures for holding subject and target image dimensions
-   DIM subdim, trgdim;
+   // structures for holding atlas and subject image dimensions
+   DIM subDim, atlDim;
 
-   // a linear transformation that brings the subject/target image from its native space to PIL space
-   float subTPIL[16], trgTPIL[16];
+   // a linear transformation that brings the atlas/subject image from its native space to PIL space
+   float sub2PIL[16];
+   float *atl2PIL;
 
-   // filenames where AC, PC, and VSPS are manually specific for subject/target image
-   char sublmfile[1024]="";
-   char trglmfile[1024]=""; // always going to be null
+   // filenames where AC, PC, and VSPS are manually specific for atlas/subject image
+   char subLMfile[1024]="";
 
    // number if iterations of NL registration at each resolution level
    int iter8=4;
-   int iter4=3;
-   int iter2=2;
-   int iter1=0;
+   int iter4=2;
+   int iter2=1;
+   int iter1=1;
 
-   // Subject and target PIL versions and brain mask at different resolutons
-   short *subPIL1=NULL, *subPIL2=NULL, *subPIL4=NULL, *subPIL8=NULL;
-   short *trgPIL1=NULL, *trgPIL2=NULL, *trgPIL4=NULL, *trgPIL8=NULL;
-   short *mskPIL1=NULL, *mskPIL2=NULL, *mskPIL4=NULL, *mskPIL8=NULL;
+   // Subject and atlas PIL versions and brain mask at different resolutons
+   short *PILsub1=NULL, *PILsub2=NULL, *PILsub4=NULL, *PILsub8=NULL;
+   short *PILatl1=NULL, *PILatl2=NULL, *PILatl4=NULL, *PILatl8=NULL;
+   short *PILmsk1=NULL, *PILmsk2=NULL, *PILmsk4=NULL, *PILmsk8=NULL;
 
-   // intermediate displacement field from trgPIL to subPIL
+   // intermediate displacement field from PILatl to PILsub
    float *Xwarp=NULL, *Ywarp=NULL, *Zwarp=NULL;
-   float *invXout, *invYout, *invZout;
 
    // 4x4 identity matrix
    float I[16];
@@ -958,8 +986,8 @@ int main(int argc, char **argv)
    int patch_r=3; // patch radius
    int search_R=3; // search radius 
 
-   // subject to target image affine transformation
-   float sub_to_trg[16];
+   // atlas to subject image affine transformation
+   float *atl_to_sub;
 
    opt_ppm = NO;
    opt_txt=NO;
@@ -998,6 +1026,9 @@ int main(int argc, char **argv)
          case 'R':
             search_R = atoi(optarg);
             break;
+         case 'n':
+            natlas_used = atoi(optarg);
+            break;
          case '8':
             iter8 = atoi(optarg);
             break;
@@ -1017,7 +1048,7 @@ int main(int argc, char **argv)
             sprintf(brainwashatlasdir,"%s",optarg);
             break;
          case 'M':
-            sprintf(sublmfile,"%s",optarg);
+            sprintf(subLMfile,"%s",optarg);
             break;
          case 'h':
             print_help_and_exit();
@@ -1025,8 +1056,8 @@ int main(int argc, char **argv)
          case 'v':
             opt_v=YES;
             break;
-         case 's':
-            sprintf(subjectImageFile,"%s",optarg);
+         case 'i':
+            sprintf(subImageFile,"%s",optarg);
             break;
          case '?':
             print_help_and_exit();
@@ -1048,6 +1079,9 @@ int main(int argc, char **argv)
    dim1.np=dim1.nx*dim1.ny; 
    dim1.nv=dim1.np*dim1.nz; 
    dim1.dx = dim1.dy = dim1.dz = VOXELSIZE;
+   PILatl1 = (short *)calloc(dim1.nv,sizeof(short));
+   PILsub1 = (short *)calloc(dim1.nv,sizeof(short));
+   PILmsk1 = (short *)calloc(dim1.nv,sizeof(short));
 
    dim2.nx = XMATRIXSIZE/2;
    dim2.ny = YMATRIXSIZE/2;
@@ -1055,6 +1089,9 @@ int main(int argc, char **argv)
    dim2.np=dim2.nx*dim2.ny; 
    dim2.nv=dim2.np*dim2.nz; 
    dim2.dx = dim2.dy = dim2.dz = VOXELSIZE*2.0;
+   PILatl2 = (short *)calloc(dim2.nv,sizeof(short));
+   PILsub2 = (short *)calloc(dim2.nv,sizeof(short));
+   PILmsk2 = (short *)calloc(dim2.nv,sizeof(short));
 
    dim4.nx = XMATRIXSIZE/4;
    dim4.ny = YMATRIXSIZE/4;
@@ -1062,6 +1099,9 @@ int main(int argc, char **argv)
    dim4.np=dim4.nx*dim4.ny; 
    dim4.nv=dim4.np*dim4.nz; 
    dim4.dx = dim4.dy = dim4.dz = VOXELSIZE*4.0;
+   PILatl4 = (short *)calloc(dim4.nv,sizeof(short));
+   PILsub4 = (short *)calloc(dim4.nv,sizeof(short));
+   PILmsk4 = (short *)calloc(dim4.nv,sizeof(short));
 
    dim8.nx = XMATRIXSIZE/8;
    dim8.ny = YMATRIXSIZE/8;
@@ -1069,23 +1109,9 @@ int main(int argc, char **argv)
    dim8.np=dim8.nx*dim8.nx; 
    dim8.nv=dim8.np*dim8.nz; 
    dim8.dx = dim8.dy = dim8.dz = VOXELSIZE*8.0;
-
-   trgPIL1 = (short *)calloc(dim1.nv,sizeof(short));
-   subPIL1 = (short *)calloc(dim1.nv,sizeof(short));
-   mskPIL1 = (short *)calloc(dim1.nv,sizeof(short));
-   trgPIL2 = (short *)calloc(dim2.nv,sizeof(short));
-   subPIL2 = (short *)calloc(dim2.nv,sizeof(short));
-   mskPIL2 = (short *)calloc(dim2.nv,sizeof(short));
-   trgPIL4 = (short *)calloc(dim4.nv,sizeof(short));
-   subPIL4 = (short *)calloc(dim4.nv,sizeof(short));
-   mskPIL4 = (short *)calloc(dim4.nv,sizeof(short));
-   trgPIL8 = (short *)calloc(dim8.nv,sizeof(short));
-   subPIL8 = (short *)calloc(dim8.nv,sizeof(short));
-   mskPIL8 = (short *)calloc(dim8.nv,sizeof(short));
-
-   Xwarp = (float *)calloc(dim1.nv, sizeof(float));
-   Ywarp = (float *)calloc(dim1.nv, sizeof(float));
-   Zwarp = (float *)calloc(dim1.nv, sizeof(float));
+   PILatl8 = (short *)calloc(dim8.nv,sizeof(short));
+   PILsub8 = (short *)calloc(dim8.nv,sizeof(short));
+   PILmsk8 = (short *)calloc(dim8.nv,sizeof(short));
 
    // reset unreasonable values to default
    if(iter8 < 0 || iter8>MAXITER ) iter8=4;
@@ -1108,11 +1134,11 @@ int main(int argc, char **argv)
       if(opt_v) printf("Brainwash atlases are read from %s directory.\n",brainwashatlasdir);
       read_default_atlas_names(brainwashatlasdir, natlas);
    }
-   else
-   {
-      if(opt_v) printf("Brainwash atlases are read from %s list.\n",atlaslistfile);
-      read_atlas_list(atlaslistfile, natlas);
-   }
+//   else
+//   {
+//      if(opt_v) printf("Brainwash atlases are read from %s list.\n",atlaslistfile);
+//      read_atlas_list(atlaslistfile, natlas);
+//   }
 
    if(opt_v) 
    {
@@ -1124,17 +1150,15 @@ int main(int argc, char **argv)
       exit(0);
    }
 
+   atlas_indx = (int *)calloc(natlas, sizeof(int));
+
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   // compute mskPIL1, mskPIL2, mskPIL4 and mskPIL8
+   // compute PILmsk1, PILmsk2, PILmsk4 and PILmsk8
    {
-      int2 *PILbraincloud;
-      DIM PILbraincloud_dim;
-      nifti_1_header PILbraincloud_hdr;
-
       sprintf(filename,"%s/PILbrain.nii",ARTHOME);
 
-      PILbraincloud = (int2 *)read_nifti_image(filename, &PILbraincloud_hdr);
+      PILbraincloud = (int2 *)read_nifti_image(filename, &PILbraincloudHdr);
 
       if(PILbraincloud==NULL)
       {
@@ -1142,214 +1166,460 @@ int main(int argc, char **argv)
             exit(1);
       }
 
-      set_dim(PILbraincloud_dim, PILbraincloud_hdr);
+      set_dim(PILbraincloudDim, PILbraincloudHdr);
 
       set_to_I(I,4);
-      generateMultiResolution(PILbraincloud, PILbraincloud_dim, I, mskPIL1, mskPIL2, mskPIL4, mskPIL8);
-
-      free(PILbraincloud);
+      generateMultiResolution(PILbraincloud, PILbraincloudDim, I, PILmsk1, PILmsk2, PILmsk4, PILmsk8);
    }
 
    // ensure the subject image is specified at the command line
-   if( subjectImageFile[0] == '\0')
+   if( subImageFile[0] == '\0')
    {
-      printf("\nPlease specify a \"subject image\" using -sub <filename.nii> ...\n\n");		
+      printf("\nPlease specify an image for skull-stripping using -i <image.nii> ...\n\n");		
       exit(0);
    } 
 
    // extract the subject filename without path/suffix
-   if( niftiFilename(subprefix, subjectImageFile)==0 ) { exit(0); }
+   if( niftiFilename(subprefix, subImageFile)==0 ) { exit(0); }
 
    // read the subject image
-   sub = (int2 *)read_nifti_image(subjectImageFile, &sub_hdr);
+   sub = (int2 *)read_nifti_image(subImageFile, &subHdr);
    if(sub==NULL) 
    {
-      printf("\nError: Reading subject image %s failed.\n\n",subjectImageFile);
+      printf("\nError: Reading image %s failed.\n\n",subImageFile);
       exit(0);
    }
-   set_dim(subdim,sub_hdr); // transfer info from sub_hdr to subdim
+   set_dim(subDim,subHdr); // transfer info from subHdr to subDim
 
-   // print some info about the subject image
+   // print some info about the image
    if(opt_v)
    {
-      printf("Subject image file: %s\n",subjectImageFile);
-      printf("\tMatrix size: %d x %d x %d\n",subdim.nx, subdim.ny, subdim.nz);
-      printf("\tVoxel size: %6.4f x %6.4f x %6.4f\n",subdim.dx, subdim.dy, subdim.dz);
+      printf("Image file: %s\n",subImageFile);
+      printf("\tMatrix size: %d x %d x %d\n",subDim.nx, subDim.ny, subDim.nz);
+      printf("\tVoxel size: %6.4f x %6.4f x %6.4f\n",subDim.dx, subDim.dy, subDim.dz);
    }
 
-   // find subTPIL using automated MSP, AC/PC and 8 MSP landmarks detection
-   if(opt_v) printf("Computing subject image PIL transformation ...\n");
-   if(sublmfile[0] != '\0' && opt_v) printf("Subject image landmarks are read from %s\n",sublmfile);
-   new_PIL_transform(subjectImageFile, sublmfile, subTPIL);
+   // find sub2PIL using automated MSP, AC/PC and 8 MSP landmarks
+   if(opt_v) printf("Computing PIL transformation for %s ...\n",subImageFile);
+   opt_ppm=YES;
+   if(subLMfile[0] != '\0' && opt_v) printf("Image landmarks are read from %s\n",subLMfile);
+   new_PIL_transform(subImageFile, subLMfile, sub2PIL);
+   opt_ppm=NO;
+
+   // atlas selection
+   {
+      if(opt_v) printf("Selecting top %d atlases ...\n",natlas_used);
+
+      float4 *corr;
+
+      int2 *tmp1, *tmp2;
+
+      corr=(float *)calloc(natlas,sizeof(float));
+      tmpmsk =(int2 *)calloc(PILbraincloudDim.nv,sizeof(int2));
+
+      for(int v=0; v<PILbraincloudDim.nv; v++) 
+      {
+         if(PILbraincloud[v]<100 && PILbraincloud[v]>0) 
+         {
+            tmpmsk[v]=1; 
+         } else {
+            tmpmsk[v]=0;
+         }
+      }
+      //save_nifti_image("M1.nii", tmpmsk, &PILbraincloudHdr);
+
+      invT=inv4(sub2PIL); 
+      tmp1 = resliceImage(sub, subDim, PILbraincloudDim, invT, LIN); 
+      free(invT);
+
+      for(int a=0; a<natlas; a++)
+      {
+         sprintf(atlaspath,"%s/%s_PIL.nii",brainwashatlasdir,atlasfilename[a]);
+
+         tmp2 = (int2 *)read_nifti_image(atlaspath, &PILbraincloudHdr);
+
+         atlas_indx[a]=a;
+         corr[a] = pearsonCorrelation(tmp1, tmp2, tmpmsk, PILbraincloudDim.nv);
+
+         free(tmp2);
+      }
+
+      hpsort(natlas, corr, atlas_indx);
+
+      if(opt_v)
+      {
+         printf("Selected atlases:\n");
+         for(int i=0; i<natlas_used; i++)
+         {
+            int a = atlas_indx[natlas-1-i];
+            float c=corr[natlas-1-i];
+            printf("Rank=%03d, Atlas=%s, Correlation=%5.3f\n",i+1,atlasfilename[a],c);
+         }
+      }
+
+      free(corr);
+      free(tmp1);
+      free(tmpmsk);
+   }
 
    if(opt_v) printf("Patch radius = %d mm\n", patch_r);
    if(opt_v) printf("Search radius = %d mm\n", search_R);
 
-   invXout = (float *)calloc(subdim.nv,sizeof(float));
-   invYout = (float *)calloc(subdim.nv,sizeof(float));
-   invZout = (float *)calloc(subdim.nv,sizeof(float));
+   label = (float *)calloc(dim1.nv,sizeof(float));
+   evidence0 = (float *)calloc(dim1.nv,sizeof(float));
+   evidence1 = (float *)calloc(dim1.nv,sizeof(float));
 
-   label = (float *)calloc(subdim.nv,sizeof(float));
+   // compute PILsub1, PILsub2, PILsub4 and PILsub8
+   generateMultiResolution(sub, subDim, sub2PIL, PILsub1, PILsub2, PILsub4, PILsub8);
 
-   for(int a=0; a<natlas; a++)
+   atl_to_sub=(float *)calloc(natlas_used*16,sizeof(float));
+   atl2PIL=(float *)calloc(natlas_used*16,sizeof(float));
+
+   for(int i=0; i<natlas_used; i++)
    {
-      float *invT;		
+      int a; // atlas index
+      short *atlmsk;
       float A[16];
       short *tmp;
-
-      // final displacement field from trg to sub
       float *Xout=NULL, *Yout=NULL, *Zout=NULL; 
 
-      targetImageFile=atlasfilename[a];
+      a = atlas_indx[natlas-2-i];
 
-      // extract the target filename without path/suffix
-      if( niftiFilename(trgprefix, targetImageFile)==0 ) { exit(0); }
+      sprintf(atlaspath,"%s/%s.nii",brainwashatlasdir,atlasfilename[a]);
+      sprintf(atlasmskpath,"%s/%s_msk.nii",brainwashatlasdir,atlasfilename[a]);
 
-      // read the target image
-      trg = (int2 *)read_nifti_image(targetImageFile, &trg_hdr);
-      if(trg==NULL) 
+      // extract the atlas filename without path/suffix
+      if( niftiFilename(atlprefix, atlasmskpath )==0 ) { exit(0); } // just for checking
+      if( niftiFilename(atlprefix, atlaspath )==0 ) { exit(0); }
+
+      // read the atlas image
+      atl = (int2 *)read_nifti_image(atlaspath, &atlHdr);
+      if(atl==NULL) 
       {
-         printf("\nError: Reading target image %s failed.\n\n",targetImageFile);
+         printf("\nError: Reading atlas %s failed.\n\n",atlaspath);
          exit(0);
       }
-      set_dim(trgdim,trg_hdr); // transfer info from trg_hdr to trgdim
+      set_dim(atlDim,atlHdr); // transfer info from atlHdr to atlDim
 
-      // print some info about the target image
+      atlmsk = (int2 *)read_nifti_image(atlasmskpath, &atlHdr);
+      if(atlmsk==NULL) 
+      {
+         printf("\nError: Reading atlas %s failed.\n\n",atlasmskpath);
+         exit(0);
+      }
+
+      for(int v=0; v<atlDim.nv; v++) if(atlmsk[v]==0) atl[v]=0;
+
+      // print some info about the atlas image
       if(opt_v)
       {
-         printf("Atlas %d image file: %s\n",a+1,targetImageFile);
-         printf("\tMatrix size: %d x %d x %d\n",trgdim.nx, trgdim.ny, trgdim.nz);
-         printf("\tVoxel size: %6.4f x %6.4f x %6.4f\n",trgdim.dx, trgdim.dy, trgdim.dz);
+         printf("Atlas %03d: %s\n",i+1,atlaspath);
       }
 
-      // find trgTPIL using automated MSP, AC/PC and 8 MSP landmarks detection
-      if(opt_v) printf("Computing atlas image PIL transformation ...\n");
-      new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
-   
-      // compute trgPIL1, trgPIL2, trgPIL4 and trgPIL8
-      generateMultiResolution(trg, trgdim, trgTPIL, trgPIL1, trgPIL2, trgPIL4, trgPIL8);
+      if(opt_v) printf("Computing PIL transformation for %s ...\n", atlaspath);
+      new_PIL_transform(atlaspath,"", atl2PIL+i*16);
 
       ////////////////////////////////////////////////////////////////////////////////////////////
-      // Compute the affine transformation  sub_to_trg and update subTPIL
+      // Compute the affine transformation  atl_to_sub and update atl2PIL
       if(opt_v) printf("Affine registration @ 12.5\% resolution ...\n");
-      generateMultiResolution(sub, subdim, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
-      affineReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R, A);
-      multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+      generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
+      affineReg(PILatl8, PILsub8, PILmsk8, dim8, patch_r, search_R, A);
+      multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
 
       if(opt_v) printf("Affine registration @ 25\% resolution ...\n");
-      generateMultiResolution(sub, subdim, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
-      affineReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, search_R, A);
-      multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+      generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
+      affineReg(PILatl4, PILsub4, PILmsk4, dim4, patch_r, search_R, A);
+      multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
 
       if(opt_v) printf("Affine registration @ 50\% resolution ...\n");
-      generateMultiResolution(sub, subdim, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
-      affineReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, A);
-      multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
+      generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
+      affineReg(PILatl2, PILsub2, PILmsk2, dim2, patch_r, search_R, A);
+      multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
 
-      invT = inv4(trgTPIL);
-      multi(invT, 4,4, subTPIL, 4, 4, sub_to_trg);
+      invT = inv4(sub2PIL);
+      multi(invT,4,4, atl2PIL+i*16,4,4, atl_to_sub+i*16);
       free(invT);
 
-      if(opt_v) printMatrix(sub_to_trg,4,4,"Atlas image -> target image affine transformation",NULL);
-      ////////////////////////////////////////////////////////////////////////////////////////////
+      if(opt_v) printMatrix(atl_to_sub+i*16,4,4,"Atlas image -> subject image affine transformation",NULL);
 
-      for(int i=0; i<dim1.nv; i++) Xwarp[i]=Ywarp[i]=Zwarp[i]=0.0;
+      invT=inv4(atl2PIL+i*16); 
+      tmp = resliceImage(atlmsk, atlDim, dim1, invT, LIN); 
+      free(invT);
+      for(int v=0; v<dim1.nv; v++) label[v] += tmp[v]/100.0;
+      free(tmp);
 
-      //////////////////////////////////////////////////////////////////
-      // Non-linear registration from trgPIL to subPIL
-      
-      if(iter8>=1)
+      free(atlmsk);
+      free(atl);
+   }
+
+   tmpmsk = (short *)calloc(dim1.nv,sizeof(short));
+   for(int v=0; v<dim1.nv; v++)
+   {
+      label[v] /= natlas_used; // makes label range from 0.0-1.0
+
+      if(label[v]>0.0 && label[v]<1.0) { tmpmsk[v]=1; } else { tmpmsk[v]=0; }
+
+   }
+   //save_nifti_image("M2.nii", tmpmsk, &PILbraincloudHdr);
+   
+   for(int i=0; i<dim1.nv; i++) evidence0[i]=evidence1[i]=0.0; //resetting
+
+   for(int ai=0; ai<natlas_used; ai++)
+   {
+      int a; // atlas index
+      short *atlmsk;
+      int v, vv; // voxel index
+      SPH subsph(patch_r);
+      SPH atlsph(patch_r);
+      SPH searchsph(search_R);
+      int P[3];
+      int Q[3];
+      float cc;
+
+      a = atlas_indx[natlas-2-ai];
+
+      sprintf(atlaspath,"%s/%s.nii",brainwashatlasdir,atlasfilename[a]);
+      sprintf(atlasmskpath,"%s/%s_msk.nii",brainwashatlasdir,atlasfilename[a]);
+
+      // extract the atlas filename without path/suffix
+      if( niftiFilename(atlprefix, atlasmskpath )==0 ) { exit(0); } // just for checking
+      if( niftiFilename(atlprefix, atlaspath )==0 ) { exit(0); }
+
+      // read the atlas image
+      atl = (int2 *)read_nifti_image(atlaspath, &atlHdr);
+      if(atl==NULL) 
       {
-         if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
-         for(int i=0; i<iter8; i++)
-         {
-            generateMultiResolution(sub, subdim, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
-            brainwashnlReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
-         }
+         printf("\nError: Reading atlas %s failed.\n\n",atlaspath);
+         exit(0);
+      }
+      set_dim(atlDim,atlHdr); // transfer info from atlHdr to atlDim
+
+      atlmsk = (int2 *)read_nifti_image(atlasmskpath, &atlHdr);
+      if(atlmsk==NULL) 
+      {
+         printf("\nError: Reading atlas %s failed.\n\n",atlasmskpath);
+         exit(0);
       }
 
-      if(iter4>=1)
+      // print some info about the atlas image
+      if(opt_v)
       {
-         if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
-         for(int i=0; i<iter4; i++)
-         {
-            generateMultiResolution(sub, subdim, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
-            brainwashnlReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, 2*search_R/3, Xwarp, Ywarp, Zwarp,5);
-         }
+         printf("Atlas %03d: %s\n",ai+1,atlaspath);
       }
 
-      if(iter2>=1)
+      if(PILatl1!=NULL) free(PILatl1);
+      if(PILmsk1!=NULL) free(PILmsk1);
+
+      invT=inv4(atl2PIL+ai*16); 
+      PILmsk1 = resliceImage(atlmsk, atlDim, dim1, invT, NEARN); 
+      free(invT);
+
+      invT=inv4(atl2PIL+ai*16); 
+      PILatl1 = resliceImage(atl, atlDim, dim1, invT, LIN); 
+      free(invT);
+
+      //sprintf(filename,"%s_bw.nii",atlprefix);
+      //save_nifti_image(filename, PILatl1, &PILbraincloudHdr);
+
+      SHORTIM subim; 
+      set_dim(subim,dim1); 
+      subim.v=PILsub1;
+
+      SHORTIM atlim; 
+      set_dim(atlim,dim1); 
+      atlim.v=PILatl1;
+
+      for(int k=0; k<dim1.nz; k++)
+      for(int j=0; j<dim1.ny; j++)
+      for(int i=0; i<dim1.nx; i++)
       {
-         if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
-         for(int i=0; i<iter2; i++)
-         {
-            generateMultiResolution(sub, subdim, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
-            brainwashnlReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
-         }
+         v = k*dim1.np + j*dim1.nx + i;
+         if( tmpmsk[v] == 0 ) continue;
+         
+         subsph.set(subim,i,j,k);
+         standardize(subsph.v,subsph.n);
+
+         P[0]=i; P[1]=j; P[2]=k;
+         Q[0]=i; Q[1]=j; Q[2]=k;
+         cc=0.0;
+         cc=detect_lm(searchsph, atlsph, atlim, P, subsph, Q);
+
+         vv = Q[2]*dim1.np + Q[1]*dim1.nx + Q[0];
+
+         if( PILmsk1[vv] == 100 ) evidence1[v] += cc;
+         if( PILmsk1[vv] == 0 )   evidence0[v] += cc;
       }
+  
+      free(PILmsk1); PILmsk1=NULL;
+      free(PILatl1); PILatl1=NULL;
+      free(atl);
+      free(atlmsk);
+   }
 
-      // default value of iter1=0 for brainwash
-      if(iter1>=1)
-      {
-         if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
-         for(int i=0; i<iter1; i++)
-         {
-            generateMultiResolution(sub, subdim, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
-            brainwashnlReg(subPIL1, trgPIL1, mskPIL1, dim1, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
-         }
-      }
-      //////////////////////////////////////////////////////////////////
-      
-      //////////////////////////////////////////////////////////////////
-      // combine trgTPIL, (Xwarp,Ywarp,Zwarp) and subTPIL to obtain (Xout,Yout,Zout)
+   for(int v=0; v<dim1.nv; v++)
+   if( tmpmsk[v] != 0 )
+   {
+//      if( evidence1[v]*label[v] > evidence0[v]*(1.0-label[v]) ) label[v]=1.0; else label[v]=0.0;
+      if( evidence1[v] > evidence0[v] ) label[v]=1.0; else label[v]=0.0;
+   }
 
-      Xout = (float *)calloc(trgdim.nv, sizeof(float));
-      Yout = (float *)calloc(trgdim.nv, sizeof(float));
-      Zout = (float *)calloc(trgdim.nv, sizeof(float));
+   free(tmpmsk);
 
-      combine_warps_and_trans(dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xwarp, Ywarp, Zwarp, subTPIL);
-      combine_warps_and_trans(trgTPIL, Xwarp, Ywarp, Zwarp, Xout, Yout, Zout, trgdim);
+   {
+      short *tmp;
 
-      for(int i=0; i<subdim.nv; i++) invXout[i]=invYout[i]=invZout[i]=0.0;
+      PILmsk1 = (int2 *)calloc(dim1.nv, sizeof(int2));
 
-      ivf(Xout, Yout, Zout, trgdim, invXout, invYout, invZout, subdim);
+      for(int v=0; v<dim1.nv; v++) if(label[v]>0.5) PILmsk1[v] = 100; else PILmsk1[v]=0;
 
-      for(int i=0; i<trgdim.nv; i++) 
-      if(trg[i]>0) trg[i]=100;
+      tmp = resliceImage(PILmsk1, dim1, subDim, sub2PIL, LIN); 
 
-      tmp=computeReslicedImage2(trg,trgdim,subdim,invXout,invYout,invZout);
+      for(int v=0; v<subDim.nv; v++) if(tmp[v]<50) sub[v] = 0;
 
-      for(int i=0; i<subdim.nv; i++) label[i] += tmp[i]/100.0;
+      sprintf(filename,"%s_bw.nii",subprefix);
+      save_nifti_image(filename, sub, &subHdr);
 
       free(tmp);
-      free(trg);
-      free(Xout); free(Yout); free(Zout);
    }
+exit(0);
 
-   if(opt_v) printf("Thresholding at %6.2f\%\n",threshold);
+   Xwarp = (float *)calloc(dim1.nv, sizeof(float));
+   Ywarp = (float *)calloc(dim1.nv, sizeof(float));
+   Zwarp = (float *)calloc(dim1.nv, sizeof(float));
 
-   for(int i=0; i<subdim.nv; i++)
+   for(int ai=0; ai<natlas_used; ai++)
    {
-      label[i] /= (natlas/100.0); // makes label range from 0.0-100.0
-      if(label[i] < threshold ) sub[i]=0;
+      int a; // atlas index
+      short *atlmsk;
+      short *tmp;
+      float *Xout=NULL, *Yout=NULL, *Zout=NULL; 
+
+      a = atlas_indx[natlas-2-ai];
+
+      sprintf(atlaspath,"%s/%s.nii",brainwashatlasdir,atlasfilename[a]);
+      sprintf(atlasmskpath,"%s/%s_msk.nii",brainwashatlasdir,atlasfilename[a]);
+
+      // extract the atlas filename without path/suffix
+      if( niftiFilename(atlprefix, atlasmskpath )==0 ) { exit(0); } // just for checking
+      if( niftiFilename(atlprefix, atlaspath )==0 ) { exit(0); }
+
+      // read the atlas image
+      atl = (int2 *)read_nifti_image(atlaspath, &atlHdr);
+      if(atl==NULL) 
+      {
+         printf("\nError: Reading atlas %s failed.\n\n",atlaspath);
+         exit(0);
+      }
+      set_dim(atlDim,atlHdr); // transfer info from atlHdr to atlDim
+
+      atlmsk = (int2 *)read_nifti_image(atlasmskpath, &atlHdr);
+      if(atlmsk==NULL) 
+      {
+         printf("\nError: Reading atlas %s failed.\n\n",atlasmskpath);
+         exit(0);
+      }
+
+      // print some info about the atlas image
+      if(opt_v)
+      {
+         printf("Atlas %03d: %s\n",ai+1,atlaspath);
+      }
+
+      //////////////////////////////////////////////////////////////////
+      // Non-linear registration from PILatl to PILsub
+      
+      for(int v=0; v<dim1.nv; v++) Xwarp[v]=Ywarp[v]=Zwarp[v]=0.0;
+
+/*
+      if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
+      for(int i=0; i<iter8; i++)
+      {
+         generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
+         brainwashnlReg(PILatl8, PILsub8, PILmsk8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
+      }
+
+      if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
+      for(int i=0; i<iter4; i++)
+      {
+         generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
+         brainwashnlReg(PILatl4, PILsub4, PILmsk4, dim4, patch_r, 2*search_R/3, Xwarp, Ywarp, Zwarp,5);
+      }
+*/
+
+      if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
+      for(int i=0; i<iter2; i++)
+      {
+         generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
+         brainwashnlReg(PILatl2, PILsub2, PILmsk2, dim2, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
+      }
+
+      if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
+      for(int i=0; i<iter1; i++)
+      {
+         generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
+         brainwashnlReg(PILatl1, PILsub1, PILmsk1, dim1, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
+      }
+
+      //////////////////////////////////////////////////////////////////
+      // combine atl2PIL, (Xwarp,Ywarp,Zwarp) and sub2PIL to obtain (Xout,Yout,Zout)
+
+      Xout = (float *)calloc(subDim.nv, sizeof(float));
+      Yout = (float *)calloc(subDim.nv, sizeof(float));
+      Zout = (float *)calloc(subDim.nv, sizeof(float));
+
+      combine_warps_and_trans(dim1.nx, dim1.ny, dim1.nz, dim1.dx, dim1.dy, dim1.dz, Xwarp, Ywarp, Zwarp, atl2PIL+ai*16);
+      combine_warps_and_trans(sub2PIL, Xwarp, Ywarp, Zwarp, Xout, Yout, Zout, subDim);
+
+      tmp=computeReslicedImage2(atlmsk,atlDim,subDim,Xout,Yout,Zout);
+
+      for(int v=0; v<subDim.nv; v++) label[v] += tmp[v]/100.0;
+      free(tmp);
+
+      free(Xout); free(Yout); free(Zout);
+
+      free(atlmsk);
+      free(atl);
    }
 
-   sprintf(filename,"%s_brainwash.nii",subprefix);
-   save_nifti_image(filename, sub, &sub_hdr);
+   for(int i=0; i<subDim.nv; i++)
+   {
+      label[i] /= natlas_used; // makes label range from 0.0-1.0
+   }
 
-   for(int i=0; i<subdim.nv; i++)
+   {
+      short *tmp; // brain cloud in PIL space
+
+      tmp = (int2 *)calloc(subDim.nv, sizeof(int2));
+
+      for(int i=0; i<subDim.nv; i++) tmp[i] = (int2)(label[i]*100.0 + 0.5);
+
+      for(int v=0; v<subDim.nv; v++) if( tmp[v]>threshold) tmp[v]=1; else tmp[v]=0;
+
+      save_nifti_image("kk.nii", tmp, &subHdr);
+
+      free(tmp);
+   }
+
+   //sprintf(filename,"%s_brainwash.nii",subprefix);
+   //save_nifti_image(filename, sub, &subHdr);
+
+/*
+   for(int i=0; i<subDim.nv; i++)
       sub[i] = (short)(label[i]+0.5);
    sprintf(filename,"%s_brainmask.nii",subprefix);
-   save_nifti_image(filename, sub, &sub_hdr);
+   save_nifti_image(filename, sub, &subHdr);
+*/
 
    ////////////////////////////////////////////////////////////////////////////////////////////
    // free allocated memory 
+   free(PILbraincloud);
    free(Xwarp); free(Ywarp); free(Zwarp);
-   free(invXout); free(invYout); free(invZout);
    free(sub);
-   free(trgPIL1); free(trgPIL2); free(trgPIL4); free(trgPIL8);
-   free(subPIL1); free(subPIL2); free(subPIL4); free(subPIL8);
-   free(mskPIL1); free(mskPIL2); free(mskPIL4); free(mskPIL8);
+   free(PILatl1); free(PILatl2); free(PILatl4); free(PILatl8);
+   free(PILsub1); free(PILsub2); free(PILsub4); free(PILsub8);
+   free(PILmsk1); free(PILmsk2); free(PILmsk4); free(PILmsk8);
+   free(label);
+   free(atlas_indx);
    ////////////////////////////////////////////////////////////////////////////////////////////
 
    if(opt_v) printf("THE END\n");

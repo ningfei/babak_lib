@@ -145,6 +145,45 @@ template <class TYPE1, class TYPE2> float pearsonCorrelation(TYPE1 *x, TYPE2 *y,
 		return( 0.0 );
 }
 
+// Computes the Pearson correlation coefficient between x and y.
+// Implements Eq. (2.3.2) of J. Cohen & P. Cohen (2nd ed.)
+template <class TYPE1, class TYPE2> float pearsonCorrelation(TYPE1 *x, TYPE2 *y, int2 *msk, int n)
+{
+   int count;
+   double sx,sy,sxx,syy,sxy; 
+   double Sxx, Sxy, Syy;
+   double dum=0.0;
+
+	sx=sy=sxx=syy=sxy=0.0;
+    count=0;
+	for(int i=0; i<n; i++)
+    if(msk[i] != 0)
+	{
+        count++;
+
+		sx += x[i];
+		sxx += x[i]*x[i];
+
+		sy += y[i];
+		syy += y[i]*y[i];
+
+		sxy += x[i]*y[i];
+	}
+
+    if(count == 0) return(0.0);
+
+	Sxx = count*sxx - sx*sx;
+	Syy = count*syy - sy*sy;
+	Sxy = count*sxy - sx*sy;
+
+	if(Sxx*Syy > 0.0) dum = sqrt(Sxx*Syy);
+	
+	if(dum != 0.0)
+		return ( (float)(Sxy/dum) );
+	else
+		return( 0.0 );
+}
+
 template <class TYPE> double independent_samples_t(TYPE *x1, int n1, TYPE *x2, int n2, int &df, double &meandiff)
 {
    double var1, var2;
