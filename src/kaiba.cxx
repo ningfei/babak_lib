@@ -69,13 +69,13 @@ void print_help_and_exit()
 {
    printf("\nUsage: kaiba [options] -p <prefix> -b <basline>.nii [-f <follow-up>.nii]\n"
    "\nRequired arguments:\n"
-   "   -p <prefix>: Output files prefix\n"
-   "   -b <basline>.nii: Baseline T1W volume (NIFTI format)\n"
+   "   -p <prefix>: Prefix used for naming output files\n"
+   "   -b <basline>.nii: Baseline T1-weighted 3D structural MRI (NIFTI format of type short)\n"
    "\nOptions:\n"
    "   -v : Enables verbose mode\n"
    "   -V or -version : Prints program version\n"
    "   -png : Outputs images in PNG format in addition to PPM\n"
-   "   -f <follow-up>.nii: Follow-up T1W volume (NIFTI format)\n"
+   "   -f <follow-up>.nii: Follow-up T1-weighted 3D structural MRI (NIFTI format of type short)\n"
    "   -blm <filename>: Manually specifies AC/PC/RP landmarks at baseline\n"
    "   -flm <filename>: Manually specifies AC/PC/RP landmarks at follow-up\n"
    "\n");
@@ -1065,8 +1065,8 @@ void compute_lm_transformation(char *lmfile, SHORTIM im, float4 *A)
    if(opt_v)
    {
       printf("\nLandmark detection ...\n");
-      printf("Landmarks file: %s\n", lmfile);
-      printf("Number of landmarks sought = %d\n", NLM);
+//      printf("Landmarks file: %s\n", lmfile);
+//      printf("Number of landmarks sought = %d\n", NLM);
    }
    fprintf(logfp,"\nLandmark detection ...\n");
    fprintf(logfp,"Landmarks file: %s\n", lmfile);
@@ -1174,16 +1174,16 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
       if( side[0]=='r')
       {
          if(!flipped)
-            sprintf(filename,"%s_RHROI.nii",prefix);
+            sprintf(filename,"%s_RHROI1.nii",prefix);
          else
-            sprintf(filename,"%s_LHROIf.nii",prefix);
+            sprintf(filename,"%s_LHROI2.nii",prefix);
       }
       if( side[0]=='l')
       {
          if(!flipped)
-            sprintf(filename,"%s_LHROI.nii",prefix);
+            sprintf(filename,"%s_LHROI1.nii",prefix);
          else
-            sprintf(filename,"%s_RHROIf.nii",prefix);
+            sprintf(filename,"%s_RHROI2.nii",prefix);
       }
 
       for(int n=0; n<hcim.nv; n++) stndrd_roi[n] = 0;
@@ -1262,18 +1262,18 @@ float8 compute_hi(char *imfile, char *roifile)
       fuzzy_roisize += (1.0*roi[i])/roimax;
    }
 
-   if(opt_v)
-   {
-      printf("ROI size = %d voxels\n", roisize);
+//   if(opt_v)
+//   {
+//      printf("ROI size = %d voxels\n", roisize);
       //printf("Fuzzy ROI size = %f\n", fuzzy_roisize);
-   }
+//   }
    fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    im = (int2 *)read_nifti_image(imfile, &hdr);
    setMX(im, roi, nv, mx, HISTCUTOFF);
 
-   if(opt_v)
-      printf("MX = %d\n",mx);
+//   if(opt_v)
+//      printf("MX = %d\n",mx);
    fprintf(logfp,"MX = %d\n",mx);
 
    /////////////////////////////////////////////////////////////
@@ -1307,7 +1307,7 @@ float8 compute_hi(char *imfile, char *roifile)
       }
    }
 
-   if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
+//   if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
    fprintf(logfp,"Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
 
    nbin = im_max-im_min+1;
@@ -1353,11 +1353,11 @@ float8 compute_hi(char *imfile, char *roifile)
    // Al's method for find the hist_threshold
    hist_thresh = (int)(gmpk - mx*MXFRAC2 + 0.5);
 
-   if(opt_v)
-   {
-      printf("A histogram peak detected at: %d\n",gmpk+im_min);
-      printf("Image intensity threshold: %d\n",hist_thresh+im_min);
-   }
+//   if(opt_v)
+//   {
+//      printf("A histogram peak detected at: %d\n",gmpk+im_min);
+//      printf("Image intensity threshold: %d\n",hist_thresh+im_min);
+//   }
    fprintf(logfp,"A histogram peak detected at: %d\n",gmpk+im_min);
    fprintf(logfp,"Image intensity threshold: %d\n",hist_thresh+im_min);
 
@@ -1435,7 +1435,7 @@ int main(int argc, char **argv)
       switch (opt) 
       {
          case 'V':
-            printf("KAIBA Version 2.0 released March 1, 2016.\n");
+            printf("KAIBA Version 2.0 released August 12, 2016.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
          case 'F':
@@ -1472,7 +1472,7 @@ int main(int argc, char **argv)
    // Ensure that an output prefix has been specified at the command line.
    if( opprefix[0]=='\0' )
    {
-      printf("Please specify an output prefix using -p argument.\n");
+      printf("Please specify an output prefix using argument: -p <prefix>\n");
       exit(0);
    }
 
@@ -1519,7 +1519,7 @@ int main(int argc, char **argv)
    sprintf(filename,"%s.csv",opprefix);
    fp = fopen(filename,"w");
    if(fp==NULL) file_open_error(filename);
-   fprintf(fp,"image, roi, hi\n");
+   fprintf(fp,"Image,Side,HVI\n");
 
    // for longitudinal case
    if( bfile[0]!='\0' && ffile[0]!='\0')
@@ -1562,19 +1562,19 @@ int main(int argc, char **argv)
       { 
          flipped=NO;
          find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI.nii",bprefix);
+         sprintf(roifile,"%s_RHROI1.nii",bprefix);
          bRHI0=compute_hi(bfile, roifile);
 
          find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI.nii",bprefix);
+         sprintf(roifile,"%s_LHROI1.nii",bprefix);
          bLHI0=compute_hi(bfile, roifile);
 
          find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_RHROI.nii",fprefix);
+         sprintf(roifile,"%s_RHROI1.nii",fprefix);
          fRHI0=compute_hi(ffile, roifile);
       
          find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_LHROI.nii",fprefix);
+         sprintf(roifile,"%s_LHROI1.nii",fprefix);
          fLHI0=compute_hi(ffile, roifile);
       }
 
@@ -1595,19 +1595,19 @@ int main(int argc, char **argv)
 
          flipped=YES;
          find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROIf.nii",bprefix);
+         sprintf(roifile,"%s_RHROI2.nii",bprefix);
          bRHI1=compute_hi(bfile, roifile);
 
          find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROIf.nii",bprefix);
+         sprintf(roifile,"%s_LHROI2.nii",bprefix);
          bLHI1=compute_hi(bfile, roifile);
 
          find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_RHROIf.nii",fprefix);
+         sprintf(roifile,"%s_RHROI2.nii",fprefix);
          fRHI1=compute_hi(ffile, roifile);
       
          find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_LHROIf.nii",fprefix);
+         sprintf(roifile,"%s_LHROI2.nii",fprefix);
          fLHI1=compute_hi(ffile, roifile);
       }
       else
@@ -1685,11 +1685,11 @@ int main(int argc, char **argv)
       {
          flipped=NO;
          find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI.nii",bprefix);
+         sprintf(roifile,"%s_RHROI1.nii",bprefix);
          RHI0=compute_hi(bfile, roifile);
 
          find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI.nii",bprefix);
+         sprintf(roifile,"%s_LHROI1.nii",bprefix);
          LHI0=compute_hi(bfile, roifile);
       }
 
@@ -1705,11 +1705,11 @@ int main(int argc, char **argv)
          // since bimpil is PIR, use 'lhc3' to find the RHROI
          // and 'rhc3' to find the LHROI
          find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROIf.nii",bprefix);
+         sprintf(roifile,"%s_RHROI2.nii",bprefix);
          RHI1=compute_hi(bfile, roifile);
 
          find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROIf.nii",bprefix);
+         sprintf(roifile,"%s_LHROI2.nii",bprefix);
          LHI1=compute_hi(bfile, roifile);
       }
       else
