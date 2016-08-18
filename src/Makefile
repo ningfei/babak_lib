@@ -222,6 +222,10 @@ reslice: libbabak_lib_linux.a reslice.cxx
 kaiba: libbabak_lib_linux.a kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
 	mv kaiba ../bin
+#Example: $(CC) $(CFLAGS) -o kaiba kaiba.cxx -DBETA_PARAM=0.3 $(INC) $(LIBS)
+# If we used the option -DBETA_PARAM=0.3 as in the above example, it will be the same as
+# having the following statement in kaiba.cxx
+#define BETA_PARAM 0.3
 
 oi: libbabak_lib_linux.a oi.cxx
 	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)

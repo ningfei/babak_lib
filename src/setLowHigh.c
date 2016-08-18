@@ -92,7 +92,7 @@ void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high, float4 percent)
    free(histogram);
 }
 
-void setMX(int2 *image, int2 *msk, int4 nv, int4 &high, float4 percent)
+void setMX(int2 *image, int2 *msk, int4 nv, int4 &high, float4 alpha)
 {
    int2 min, max;
    int4 *histogram;
@@ -129,7 +129,7 @@ void setMX(int2 *image, int2 *msk, int4 nv, int4 &high, float4 percent)
    // (nv-histogram[0]) should equal msk size
    int4 msksize=nv-histogram[0];
    
-   nmax = percent*msksize/100.0;
+   nmax = alpha*msksize;
 
    // find *high
    {

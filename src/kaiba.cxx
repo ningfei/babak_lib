@@ -18,10 +18,21 @@
 
 #define YES 1
 #define NO 0
-#define HISTCUTOFF 0.25
 #define MAXNCLASS 15
+
+#ifndef MAXFRAC
 #define MXFRAC 0.4
-#define MXFRAC2 0.2
+#endif
+
+#ifndef ALPHA_PARAM
+#define ALPHA_PARAM 0.0025
+#endif
+
+#ifndef BETA_PARAM
+//#define BETA_PARAM 0.2
+// new value determine systematically using OASIS_longitudinal data
+#define BETA_PARAM 0.16   
+#endif
 
 // Won't be re-defined if this variable is defined at compilation time
 #ifndef MAXITER
@@ -1221,7 +1232,7 @@ float8 compute_hi(char *imfile, char *roifile)
    int nx, ny, nz, np, nv;
    float4 dx, dy, dz;
    int2 roimin, roimax; // minimum and maximum voxels values in the ROI image
-   int mx;
+   int I_alpha;
    int nbin;
 
    if(opt_v)
@@ -1270,14 +1281,13 @@ float8 compute_hi(char *imfile, char *roifile)
    fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    im = (int2 *)read_nifti_image(imfile, &hdr);
-   setMX(im, roi, nv, mx, HISTCUTOFF);
+   setMX(im, roi, nv, I_alpha, ALPHA_PARAM);
 
 //   if(opt_v)
-//      printf("MX = %d\n",mx);
-   fprintf(logfp,"MX = %d\n",mx);
+//      printf("I_alpha = %d\n",I_alpha);
+   fprintf(logfp,"I_alpha = %d\n",I_alpha);
 
    /////////////////////////////////////////////////////////////
-   int hist_thresh;
    int im_min, im_max;
    float8 *hist;
    float8 *fit;
@@ -1285,7 +1295,8 @@ float8 compute_hi(char *imfile, char *roifile)
    float8 var[MAXNCLASS+1];
    float8 p[MAXNCLASS+1];
    int2 *label;
-   int gmpk=0;
+   int I_gm=0;
+   int I_csf;
    
    // initialize min and max variables
    for(int i=0; i<nv; i++)
@@ -1329,7 +1340,7 @@ float8 compute_hi(char *imfile, char *roifile)
 
    for(int i=0; i<nbin; i++) hist[i]/=roisize;
 
-   gm_pk_srch_strt = (mx * MXFRAC - im_min);
+   gm_pk_srch_strt = (I_alpha * MXFRAC - im_min);
    if( gm_pk_srch_strt < 0) gm_pk_srch_strt=0;
 
    //if(opt_v)
@@ -1339,27 +1350,29 @@ float8 compute_hi(char *imfile, char *roifile)
 
    EMFIT1d(hist, fit, label, nbin, mean, var, p, nclass, 1000);
 
-   // find gmpk
+   // find I_gm
    float8 hmax=0.0;
    for(int i=gm_pk_srch_strt; i<nbin; i++)
    {
       if( fit[i] > hmax ) 
       { 
          hmax=fit[i]; 
-         gmpk=i; 
+         I_gm=i; 
       }
    }
 
-   // Al's method for find the hist_threshold
-   hist_thresh = (int)(gmpk - mx*MXFRAC2 + 0.5);
+   I_gm += im_min;
+
+   // Al's method for find the I_csf
+   I_csf = (int)(I_gm - I_alpha*BETA_PARAM + 0.5);
 
 //   if(opt_v)
 //   {
-//      printf("A histogram peak detected at: %d\n",gmpk+im_min);
-//      printf("Image intensity threshold: %d\n",hist_thresh+im_min);
+//      printf("A histogram peak detected at: %d\n",I_gm);
+//      printf("Image intensity threshold: %d\n",I_csf);
 //   }
-   fprintf(logfp,"A histogram peak detected at: %d\n",gmpk+im_min);
-   fprintf(logfp,"Image intensity threshold: %d\n",hist_thresh+im_min);
+   fprintf(logfp,"I_gm = %d\n",I_gm);
+   fprintf(logfp,"I_csf = %d\n",I_csf);
 
    {
       int n=nbin;
@@ -1382,12 +1395,15 @@ float8 compute_hi(char *imfile, char *roifile)
       }
 
       sprintf(filename,"%s_hist",roifileprefix);
-      hist1D_plot(filename, n, bin, data1, data2,gmpk+im_min,hist_thresh+im_min);
+      hist1D_plot(filename, n, bin, data1, data2, I_gm, I_csf);
+
+      free(data1);
+      free(data2);
    }
 
    float8 csfvol=0.0;
 
-   for(int i=0; i<hist_thresh; i++)
+   for(int i=0; i<I_csf-im_min; i++)
    {
       csfvol += hist[i];
    }
@@ -1435,7 +1451,7 @@ int main(int argc, char **argv)
       switch (opt) 
       {
          case 'V':
-            printf("KAIBA Version 2.0 released August 12, 2016.\n");
+            printf("KAIBA Version 2.0 released August 16, 2016.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
          case 'F':
