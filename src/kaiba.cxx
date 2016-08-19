@@ -1225,13 +1225,11 @@ float8 compute_hi(char *imfile, char *roifile)
 {
    int gm_pk_srch_strt;
    int roisize; // number of non-zero voxels in roi
-   float4 fuzzy_roisize=0.0;
    int2 *roi;
    int2 *im;
    nifti_1_header hdr;
    int nx, ny, nz, np, nv;
    float4 dx, dy, dz;
-   int2 roimin, roimax; // minimum and maximum voxels values in the ROI image
    int I_alpha;
    int nbin;
 
@@ -1255,37 +1253,27 @@ float8 compute_hi(char *imfile, char *roifile)
    nv = nx*ny*nz;
    np = nx*ny;
 
-   minmax(roi,nv,roimin,roimax);
-
-   //if(opt_v)
-   //{
-   //   printf("Matrix size = %d x %d x %d\n", nx, ny, nz);
-   //   printf("Voxel size = %f x %f x %f\n", dx, dy, dz);
-   //   printf("Min = %d Max = %d\n", roimin, roimax);
-   //}
-
-   roisize = 0;
-   fuzzy_roisize=0.0;
-   for(int i=0; i<nv; i++) 
-   {
-      if( roi[i]>0 ) roisize++;
-   
-      fuzzy_roisize += (1.0*roi[i])/roimax;
-   }
-
-//   if(opt_v)
-//   {
-//      printf("ROI size = %d voxels\n", roisize);
-      //printf("Fuzzy ROI size = %f\n", fuzzy_roisize);
-//   }
-   fprintf(logfp,"ROI size = %d voxels\n", roisize);
-
    im = (int2 *)read_nifti_image(imfile, &hdr);
    setMX(im, roi, nv, I_alpha, ALPHA_PARAM);
 
 //   if(opt_v)
 //      printf("I_alpha = %d\n",I_alpha);
    fprintf(logfp,"I_alpha = %d\n",I_alpha);
+
+   for(int i=0; i<nv; i++)
+      if( im[i] > I_alpha ) roi[i]=0;
+
+   roisize = 0;
+   for(int i=0; i<nv; i++) 
+   {
+      if( roi[i]>0 ) roisize++;
+   }
+
+//   if(opt_v)
+//   {
+//      printf("ROI size = %d voxels\n", roisize);
+//   }
+   fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    /////////////////////////////////////////////////////////////
    int im_min, im_max;
@@ -1301,7 +1289,7 @@ float8 compute_hi(char *imfile, char *roifile)
    // initialize min and max variables
    for(int i=0; i<nv; i++)
    {
-      if( roi[i] > 0)
+      if( roi[i] > 0 )
       {
          im_min=im_max=im[i];
          break;
@@ -1311,7 +1299,7 @@ float8 compute_hi(char *imfile, char *roifile)
    // find im_min and im_max amongst the core voxels
    for(int i=0; i<nv; i++)
    {
-      if( roi[i] > 0)
+      if( roi[i] > 0 )
       {
          if( im[i]<im_min ) im_min=im[i];
          else if( im[i]>im_max ) im_max=im[i];
