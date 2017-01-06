@@ -29,6 +29,22 @@ float imageMean(short *im, short *msk, int nv)
    return( (float)sum);
 }
 
+float imageMean(short *im, int nv)
+{
+   double sum=0.0;
+
+   for(int i=0; i<nv; i++)
+   {
+         sum += im[i];
+   }
+
+   if(nv>0)
+   {
+      sum /= nv;
+   }
+
+   return( (float)sum);
+}
 //////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////

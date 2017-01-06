@@ -353,6 +353,7 @@ extern void Connected_Component_location(char *im, int4 nx, int4 ny, int4 nz, in
 
 #ifndef _statistics
 extern float4 imageMean(int2 *im, int2 *msk, int4 nv);
+extern float4 imageMean(int2 *im, int4 nv);
 extern float8 one_sample_t(float8 *x, int4 n);
 
 extern float4 median(float4 *x, char *mask, int4 n);

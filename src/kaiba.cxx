@@ -29,9 +29,9 @@
 #endif
 
 #ifndef BETA_PARAM
-//#define BETA_PARAM 0.2
-// new value determine systematically using OASIS_longitudinal data
-#define BETA_PARAM 0.16   
+#define BETA_PARAM 0.2
+// value determined systematically using OASIS_longitudinal data
+//#define BETA_PARAM 0.16   
 #endif
 
 // Won't be re-defined if this variable is defined at compilation time
@@ -93,6 +93,20 @@ void print_help_and_exit()
 
    exit(0);
 }
+
+// this is worked out in my technical note notebook
+// compute 1/sqrt(2*var) * (integral from -inf to x) of exp[ (x-mu)^2/(2*var) ]
+float8 normalCDF(float8 x, float8 mu, float8 var)
+{
+   if( var == 0.0 ) 
+   {
+      printf("Warning: Zero variance passed to normalCDF()\n");
+      return(0.0);
+   }
+
+   return( 0.5 + 0.5*erf ( (x-mu)/sqrt(2.0*var) ) );
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 float8 ssd_cost_function(float4 *T, DIM dimb, DIM dimf, float4 *sclbim, float4 *sclfim, int2 *bmsk, int2 *fmsk)
@@ -1256,8 +1270,7 @@ float8 compute_hi(char *imfile, char *roifile)
    im = (int2 *)read_nifti_image(imfile, &hdr);
    setMX(im, roi, nv, I_alpha, ALPHA_PARAM);
 
-//   if(opt_v)
-//      printf("I_alpha = %d\n",I_alpha);
+//   if(opt_v) printf("I_alpha = %d\n",I_alpha);
    fprintf(logfp,"I_alpha = %d\n",I_alpha);
 
    for(int i=0; i<nv; i++)
@@ -1269,10 +1282,7 @@ float8 compute_hi(char *imfile, char *roifile)
       if( roi[i]>0 ) roisize++;
    }
 
-//   if(opt_v)
-//   {
-//      printf("ROI size = %d voxels\n", roisize);
-//   }
+//   if(opt_v) printf("ROI size = %d voxels\n", roisize);
    fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    /////////////////////////////////////////////////////////////
@@ -1326,13 +1336,11 @@ float8 compute_hi(char *imfile, char *roifile)
       }
    }
 
+   // normalize hist
    for(int i=0; i<nbin; i++) hist[i]/=roisize;
 
    gm_pk_srch_strt = (I_alpha * MXFRAC - im_min);
    if( gm_pk_srch_strt < 0) gm_pk_srch_strt=0;
-
-   //if(opt_v)
-   //   printf("gm_pk_srch_strt = %d\n",gm_pk_srch_strt);
 
    int nclass=5;
 
@@ -1349,9 +1357,57 @@ float8 compute_hi(char *imfile, char *roifile)
       }
    }
 
+#if 0
+   // implementation of minimum error threshold selection method
+   // Do not remove
+   
+   // find GM class
+   int gmclass;
+   {
+      float8 del;
+      del = fabs(I_gm - mean[0]);
+      gmclass=0;
+
+      for(int i=1; i<nclass; i++) 
+      {
+         if( fabs(I_gm - mean[i]) < del ) 
+         {
+            del = fabs(I_gm - mean[i]);
+            gmclass=i;
+         }
+      }
+   }
+
+   {
+      float8 total_error;
+      float8 min_total_error=1.0;
+      int x_at_min_total_error;
+
+      for(int x=0; x<I_gm; x++)
+      {
+         total_error=0.0;
+         for(int i=0; i<gmclass; i++)
+         {
+            if(p[i]>0.0) total_error += p[i]*(1.0 - normalCDF(x,mean[i],var[i]) );
+         }
+         for(int i=gmclass; i<nclass; i++)
+         {
+            if(p[i]>0.0) total_error += p[i]*normalCDF(x,mean[i],var[i]);
+         }
+         if( total_error < min_total_error )
+         {
+            min_total_error = total_error;
+            x_at_min_total_error = x;
+         }
+      }
+
+      I_csf = x_at_min_total_error + im_min;
+   }
+#endif
+
    I_gm += im_min;
 
-   // Al's method for find the I_csf
+   // Al's method for finding the I_csf
    I_csf = (int)(I_gm - I_alpha*BETA_PARAM + 0.5);
 
 //   if(opt_v)
@@ -1391,7 +1447,7 @@ float8 compute_hi(char *imfile, char *roifile)
 
    float8 csfvol=0.0;
 
-   for(int i=0; i<I_csf-im_min; i++)
+   for(int i=0; i<(I_csf-im_min); i++)
    {
       csfvol += hist[i];
    }
