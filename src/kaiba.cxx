@@ -57,6 +57,7 @@ int opt_png=NO; // flag for outputing PNG images
 char opt_flip=YES;
 char flipped; // Takes YES or NO
 FILE *logfp=NULL;
+float alpha_param;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +74,8 @@ static struct option options[] =
    {"-f",1,'f'},   // follow-up image
    {"-blm",1,'l'},  // baseline landmark 
    {"-flm",1,'m'},  // folow-up landmark 
+   {"-alpha",1,'a'}, 
+   {"-a",1,'a'}, 
    {0,0,0}
 };
 
@@ -89,6 +92,7 @@ void print_help_and_exit()
    "   -f <follow-up>.nii: Follow-up T1-weighted 3D structural MRI (NIFTI format of type short)\n"
    "   -blm <filename>: Manually specifies AC/PC/RP landmarks at baseline\n"
    "   -flm <filename>: Manually specifies AC/PC/RP landmarks at follow-up\n"
+   "   -a or -alpha <alpha>: Specifies to alpha parameter\n"
    "\n");
 
    exit(0);
@@ -1268,7 +1272,9 @@ float8 compute_hi(char *imfile, char *roifile)
    np = nx*ny;
 
    im = (int2 *)read_nifti_image(imfile, &hdr);
-   setMX(im, roi, nv, I_alpha, ALPHA_PARAM);
+   setMX(im, roi, nv, I_alpha, alpha_param);
+
+   fprintf(logfp,"Alpha parameter = %f\n", alpha_param);
 
 //   if(opt_v) printf("I_alpha = %d\n",I_alpha);
    fprintf(logfp,"I_alpha = %d\n",I_alpha);
@@ -1490,6 +1496,8 @@ int main(int argc, char **argv)
 
    if(argc==1) print_help_and_exit();
 
+   alpha_param = ALPHA_PARAM;
+
    while ((opt = getoption(argc, argv, options)) != -1 )
    {
       switch (opt) 
@@ -1521,6 +1529,9 @@ int main(int argc, char **argv)
             break;
          case 'f':
             sprintf(ffile,"%s",optarg);
+            break;
+         case 'a':
+            alpha_param = atof(optarg); 
             break;
          case '?':
             print_help_and_exit();
