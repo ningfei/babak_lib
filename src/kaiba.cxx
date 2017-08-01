@@ -16,6 +16,8 @@
 #include "../include/interpolator.h"
 #include "../include/minmax.h"
 
+#define NBIN 256
+
 #define YES 1
 #define NO 0
 #define MAXNCLASS 15
@@ -70,7 +72,9 @@ static struct option options[] =
    {"-V",0,'V'},
    {"-png",0,'g'},
    {"-p",1,'p'},   // output prefix
+   {"-o",1,'p'},   // output prefix
    {"-b",1,'b'},   // baseline image
+   {"-i",1,'b'},   // baseline image
    {"-f",1,'f'},   // follow-up image
    {"-blm",1,'l'},  // baseline landmark 
    {"-flm",1,'m'},  // folow-up landmark 
@@ -84,15 +88,15 @@ void print_help_and_exit()
    printf("\nUsage: kaiba [options] -p <prefix> -b <basline>.nii [-f <follow-up>.nii]\n"
    "\nRequired arguments:\n"
    "   -p <prefix>: Prefix used for naming output files\n"
-   "   -b <basline>.nii: Baseline T1-weighted 3D structural MRI (NIFTI format of type short)\n"
+   "   -b <basline>.nii: Baseline T1-weighted 3D structural MRI (must be NIFTI format of type short)\n"
    "\nOptions:\n"
    "   -v : Enables verbose mode\n"
    "   -V or -version : Prints program version\n"
    "   -png : Outputs images in PNG format in addition to PPM\n"
-   "   -f <follow-up>.nii: Follow-up T1-weighted 3D structural MRI (NIFTI format of type short)\n"
+   "   -f <follow-up>.nii: Follow-up T1-weighted 3D structural MRI (must NIFTI format of type short)\n"
    "   -blm <filename>: Manually specifies AC/PC/RP landmarks at baseline\n"
    "   -flm <filename>: Manually specifies AC/PC/RP landmarks at follow-up\n"
-   "   -a or -alpha <alpha>: Specifies to alpha parameter\n"
+//   "   -a or -alpha <alpha>: Specifies to alpha parameter\n"
    "\n");
 
    exit(0);
@@ -1241,6 +1245,7 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
 
 float8 compute_hi(char *imfile, char *roifile)
 {
+   int binw; // histogram bin width
    int gm_pk_srch_strt;
    int roisize; // number of non-zero voxels in roi
    int2 *roi;
@@ -1250,14 +1255,18 @@ float8 compute_hi(char *imfile, char *roifile)
    float4 dx, dy, dz;
    int I_alpha;
    int nbin;
+   char roifileprefix[1024]=""; //baseline image prefix
+   char filename[1024]=""; //baseline image prefix
+
+   if( niftiFilename(roifileprefix, roifile)==0 ) exit(1);
 
    if(opt_v)
    {
-      printf("Computing HI ...\n");
+      printf("Computing HPF ...\n");
       printf("Image file: %s\n", imfile);
       printf("ROI file: %s\n", roifile);
    }
-   fprintf(logfp,"Computing HI ...\n");
+   fprintf(logfp,"Computing HPF ...\n");
    fprintf(logfp,"Image file: %s\n", imfile);
    fprintf(logfp,"ROI file: %s\n", roifile);
 
@@ -1276,7 +1285,7 @@ float8 compute_hi(char *imfile, char *roifile)
 
    fprintf(logfp,"Alpha parameter = %f\n", alpha_param);
 
-//   if(opt_v) printf("I_alpha = %d\n",I_alpha);
+   if(opt_v) printf("I_alpha = %d\n",I_alpha);
    fprintf(logfp,"I_alpha = %d\n",I_alpha);
 
    for(int i=0; i<nv; i++)
@@ -1322,10 +1331,12 @@ float8 compute_hi(char *imfile, char *roifile)
       }
    }
 
-//   if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
+   if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
    fprintf(logfp,"Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
 
-   nbin = im_max-im_min+1;
+   if(im_max<NBIN) {nbin=im_max+1; binw=1; }
+   else { nbin = NBIN; binw = im_max/nbin + 1; }
+
    hist = (float8 *)calloc(nbin, sizeof(float8));
    fit = (float8 *)calloc(nbin, sizeof(float8));
    label = (int2 *)calloc(nbin, sizeof(int2));
@@ -1338,14 +1349,18 @@ float8 compute_hi(char *imfile, char *roifile)
    {
       if( roi[i] > 0)
       {
-         hist[im[i]-im_min]++;
+         hist[im[i]/binw]++;
       }
    }
+
+   while( hist[nbin-1] == 0 ) nbin--;
+   if(opt_v) printf("Number of histogram bins = %d\n",nbin);
+   if(opt_v) printf("Histogram bin width = %d\n",binw);
 
    // normalize hist
    for(int i=0; i<nbin; i++) hist[i]/=roisize;
 
-   gm_pk_srch_strt = (I_alpha * MXFRAC - im_min);
+   gm_pk_srch_strt = (MXFRAC*I_alpha/binw);
    if( gm_pk_srch_strt < 0) gm_pk_srch_strt=0;
 
    int nclass=5;
@@ -1411,16 +1426,23 @@ float8 compute_hi(char *imfile, char *roifile)
    }
 #endif
 
-   I_gm += im_min;
+   // Al's GOLDEN method for finding the I_csf
+   I_csf = (int)(I_gm - BETA_PARAM*I_alpha/binw + 0.5);
 
-   // Al's method for finding the I_csf
-   I_csf = (int)(I_gm - I_alpha*BETA_PARAM + 0.5);
+   // New method that only relies on I_gm
+   // The jury is still out whether this is better than the above method
+   //I_csf =(int)(0.67*I_gm + 0.5);
 
-//   if(opt_v)
-//   {
-//      printf("A histogram peak detected at: %d\n",I_gm);
-//      printf("Image intensity threshold: %d\n",I_csf);
-//   }
+   //float K;
+   //K = (BETA_PARAM*I_alpha/binw)/I_gm;
+   /////////////////////////////////////////
+   
+   if(opt_v)
+   {
+      printf("A histogram peak detected at: %d\n",I_gm);
+      printf("Image intensity threshold: %d\n",I_csf);
+      //printf("K=%f\n",K);
+   }
    fprintf(logfp,"I_gm = %d\n",I_gm);
    fprintf(logfp,"I_csf = %d\n",I_csf);
 
@@ -1428,10 +1450,6 @@ float8 compute_hi(char *imfile, char *roifile)
       int n=nbin;
       float *data1, *data2;
       int *bin;
-      char roifileprefix[1024]=""; //baseline image prefix
-      char filename[1024]=""; //baseline image prefix
-
-      if( niftiFilename(roifileprefix, roifile)==0 ) exit(1);
 
       data1 = (float *)calloc(n, sizeof(float));
       data2 = (float *)calloc(n, sizeof(float));
@@ -1441,7 +1459,7 @@ float8 compute_hi(char *imfile, char *roifile)
       {
          data1[i] = (float)hist[i];
          data2[i] = (float)fit[i];
-         bin[i] = i+im_min;
+         bin[i] = i;
       }
 
       sprintf(filename,"%s_hist",roifileprefix);
@@ -1451,15 +1469,25 @@ float8 compute_hi(char *imfile, char *roifile)
       free(data2);
    }
 
+   /////////////////////////////////////////////////////////////
+   
    float8 csfvol=0.0;
 
-   for(int i=0; i<(I_csf-im_min); i++)
+   for(int i=0; i<I_csf; i++)
    {
       csfvol += hist[i];
    }
 
+   csfvol += 0.5*hist[I_csf];
+
    free(hist); free(fit); free(label);
    /////////////////////////////////////////////////////////////
+
+   if(opt_v)
+   {
+      printf("HPF = %6.4f\n",1.0-csfvol);
+   }
+   fprintf(logfp,"HPF = %6.4f\n",1.0-csfvol);
 
    return(1.0-csfvol);
 }
@@ -1503,7 +1531,7 @@ int main(int argc, char **argv)
       switch (opt) 
       {
          case 'V':
-            printf("KAIBA Version 2.0 released August 16, 2016.\n");
+            printf("KAIBA Version 3.0 released July 6, 2017.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
          case 'F':
@@ -1590,7 +1618,7 @@ int main(int argc, char **argv)
    sprintf(filename,"%s.csv",opprefix);
    fp = fopen(filename,"w");
    if(fp==NULL) file_open_error(filename);
-   fprintf(fp,"Image,Side,HVI\n");
+   fprintf(fp,"Image,Side,HPF\n");
 
    // for longitudinal case
    if( bfile[0]!='\0' && ffile[0]!='\0')

@@ -25,13 +25,13 @@ void transform_P(float *P, int nl, float *T)
 
 // This function makes a ppm file from the MSP and displays 'nl' detected landmarks.
 //im: the input image 
-//lmx and lmy: are a pointer to a nl size arrays including the (x,y) for the nl landmarks
+//lmx and lmy: are pointers to nl size arrays including the (x,y) for the nl landmarks
 //ppmfile: the output file name
 void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
 {
-   int yellowflag;
-//   unsigned char yellow[3]={0xFF,0xFF,0x00};
-   unsigned char yellow[3]={0x00,0xFF,0x00};
+   int colourflag;
+//   unsigned char colour[3]={0xFF,0xFF,0x00};
+   unsigned char colour[3]={0x00,0xFF,0x00};
    unsigned char *imgTemp;
    FILE *fp;
 
@@ -45,7 +45,7 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
    imgTemp=(unsigned char *)calloc(im.nv,sizeof(unsigned char));
 
    int low, high;
-   setLowHigh(im.v, im.nv, &low, &high);
+   setLowHigh(im.v+kk*im.np, im.nx*im.ny, &low, &high, 1.0);
 
    for(int i=0;i<im.nv;i++)
    {
@@ -69,20 +69,28 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
       {
          for(int m=0;m<nl;m++)
          {
+            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; } 
+            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; } 
+            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; } 
+            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; } 
+            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; } 
+            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; } 
+            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; } 
+            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; } 
             
             if( (i==ii[m] && jj[m]-d<j && j<jj[m]+d) || (j==jj[m] && ii[m]-d<i && i<ii[m]+d) )
             {
-               fwrite(yellow,1,3,fp);
-               yellowflag=1;
+               fwrite(colour,1,3,fp);
+               colourflag=1;
             }
          }
-         if(yellowflag==0) 
+         if(colourflag==0) 
          {
             fwrite(imgTemp+im.np*kk+im.nx*j+i,1,1,fp);
             fwrite(imgTemp+im.np*kk+im.nx*j+i,1,1,fp);
             fwrite(imgTemp+im.np*kk+im.nx*j+i,1,1,fp);
          }
-         yellowflag=0;
+         colourflag=0;
       }
    }
 
@@ -216,13 +224,13 @@ void point_match(float *x1, float *y1, float *x2, float *y2, int N, float *T)
 // (i2, j2, k2) are the coordinates of the PC, and
 // (i3, j3, k3) are the coordinates of the RP.
 // subfile (subject file) - 3D T1W volume of type short in NIFTI format
-// T - output 4x4 rigid-body transformation matrix that would transform
+// TPIL - output 4x4 rigid-body transformation matrix that would transform
 // subfile into a standardized PIL orientation
-void new_PIL_transform(const char *subfile, const char *lmfile, float *T)
+void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
 {
-   int nl;
-   float *P;  // (3 x nl) matrix 
-   float *CM;
+   float TPIL0[16]; // transforms the original image to MSP/AC-PC aligned PIL orientation
+   int n; // number of landmarks
+   float *LM;  // (3 x n) matrix of detected landmarks
    float *invT;
    char filename[1024];
    SHORTIM subimPIL; 
@@ -235,8 +243,8 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *T)
 
    getARTHOME();
 
-   // initial T using old PIL transformation
-   standard_PIL_transformation(subfile, lmfile, 0, T);
+   // initial TPIL0 using old PIL transformation
+   standard_PIL_transformation(subfile, lmfile, 0, TPIL0);
 
    /////////////////////////////////////////////////////////
    // Read input volume from subfile
@@ -260,252 +268,194 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *T)
    PILbraincloud_hdr=read_NIFTI_hdr(filename);
 
    set_dim(subimPIL, PILbraincloud_hdr);
-   invT = inv4(T);
+   invT = inv4(TPIL0);
    resliceImage(subim, subimPIL, invT, LIN);
    free(invT);
 
    // Detect 8 landmarks on the MSP on the subimPIL volume
    sprintf(modelfile,"%s/ali8.mdl",ARTHOME);
-   sprintf(filename,"%s_PIL.nii",subfile_prefix);
-   P=detect_landmarks(subimPIL, modelfile, nl);
 
-   convert_to_xyz(P, nl, subimPIL);
+   LM=detect_landmarks(subimPIL, modelfile, n);
+
+   convert_to_xyz(LM, n, subimPIL);
  
+   float *P;
+   float *Q; // Image using Q insted of P' in Eq. (1) of Arun et al. 1987
+   float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
+   float Qavg[3]; // average of rows of Q
+   float Pavg[3]; // average of rows of P
+   float TLMnew[16];
+   float TLMold[16];
+   Q =  (float *)calloc(3*n,sizeof(float));
+
+   P =  (float *)calloc(3*n,sizeof(float));
+   for(int i=0; i<3*n; i++) P[i]=LM[i];
+
+   Pavg[0] = (float)removeVectorMean(P, n);
+   Pavg[1] = (float)removeVectorMean(P+n, n);
+   Pavg[2] = (float)removeVectorMean(P+2*n, n);
+
    delete subimPIL.v;
    /////////////////////////////////////////////////////////
 
-   {
-      float avgLM[3];
-      float *ST;
-      float *S;
-      float SST[9];
-      double R[6];
-      double lamda[3];
-      double UT[9];
-      float nrml[3]; // unit normal
-      float d;
-
-      ST = (float *)calloc(nl*3,sizeof(float));
-      S =  (float *)calloc(3*nl,sizeof(float));
-
-      transpose_matrix(P,3,nl,ST);
-
-      avgRow(ST, nl, 3, avgLM);
-      centerMatrixRow(ST, nl, 3, avgLM);
-
-      transpose_matrix(ST,nl,3,S);
-
-      multi(S,3,nl,ST,nl,3,SST);
-      s3mat_to_vec(SST,R);
-
-      s3eigenval(R,lamda);
-      s3eigenvec(R, lamda, UT);
-      
-      if( UT[8] < 0.0 )
-      {
-         UT[6]*=-1.0; 
-         UT[7]*=-1.0; 
-         UT[8]*=-1.0; 
-      }
-
-      // set the unit normal equal to the eigen-vector associated
-      // with the smallest eigen-value
-      nrml[0]=UT[6]; 
-      nrml[1]=UT[7]; 
-      nrml[2]=UT[8]; 
-
-      // compute the distance between the plane and the origin
-      d=dot(nrml,avgLM,3);
-
-      // IMPORTANT
-      if(d<0.0)
-      {
-         nrml[0]*=-1.0; 
-         nrml[1]*=-1.0; 
-         nrml[2]*=-1.0; 
-         d*=-1.0;
-      }
-
-      free(ST);
-      free(S);
-      /////////////////////////////////////////////////////////
-      // project the landmarks on the plane nrml[0]*x+nrml[1]*y+nrml[2]*z=d
-      float dum[4];
-      float dd;
-      for(int i=0; i<nl; i++)
-      {
-         dum[0]=P[0*nl + i]; 
-         dum[1]=P[1*nl + i]; 
-         dum[2]=P[2*nl + i];
-
-         // distance between lanmark i and the place
-         dd=dot(nrml,dum,3)-d;
-
-         P[0*nl + i]=dum[0] - dd*nrml[0]; 
-         P[1*nl + i]=dum[1] - dd*nrml[1]; 
-         P[2*nl + i]=dum[2] - dd*nrml[2];
-      }
-
-      /////////////////////////////////////////////////////////
-
-      {
-         float theta;
-         float c;
-         float T2[16];
-         float T1[16];
-         float T21[16];
-      
-         set_to_I(T1,4);
-         T1[3]=-d*nrml[0];
-         T1[7]=-d*nrml[1];
-         T1[11]=-d*nrml[2];
-
-         if( nrml[2] > 0 )
-         {
-            c = nrml[2];
-            if( c>1.0 ) c=1.0; // to prevent acos from getting into trouble
-            if( c<0.0 ) c=0.0; // to prevent acos from getting into trouble
-            theta = acosf(c);
-
-            rotate(T2, theta, nrml[1], -nrml[0], 0.0);
-         }
-         else
-         {
-            c = -nrml[2];
-            if( c>1.0 ) c=1.0; // to prevent acos from getting into trouble
-            if( c<0.0 ) c=0.0; // to prevent acos from getting into trouble
-            theta = acosf(c);
-
-            rotate(T2, theta, -nrml[1], nrml[0], 0.0);
-         }
-
-         multi(T2,4,4,T1,4,4,T21);
-
-         // update P, all landmarks will be on the x-y plane
-         transform_P(P, nl, T21);
-
-         // update T 
-         multi(T21,4,4,T,4,4,T);
-      }
-   }
-
-   // read CM
+   // read Q
    {
       FILE *fp;
-      int nl, r, R;
+      int r, r2;
       int cm[3];
 
       fp=fopen(modelfile, "r");
 
-      fread(&nl, sizeof(int), 1, fp);
+      fread(&n, sizeof(int), 1, fp);
       fread(&r, sizeof(int), 1, fp);
-      fread(&R, sizeof(int), 1, fp);
+      fread(&r2, sizeof(int), 1, fp);
       SPH refsph(r);
 
-      CM = (float *)calloc(3*nl, sizeof(float));
-
-      for(int i=0; i<nl; i++)
+      for(int i=0; i<n; i++)
       {
          fread(cm, sizeof(int), 3, fp);
          fread(refsph.v, sizeof(float), refsph.n, fp);
-         CM[0*nl + i]=cm[0];
-         CM[1*nl + i]=cm[1];
-         CM[2*nl + i]=cm[2];
+         Q[0*n + i]=cm[0];
+         Q[1*n + i]=cm[1];
+         Q[2*n + i]=cm[2];
       }
 
       fclose(fp);
 
-      convert_to_xyz(CM, nl, subimPIL);
+      convert_to_xyz(Q, n, subimPIL);
+
+      Qavg[0] = (float)removeVectorMean(Q, n);
+      Qavg[1] = (float)removeVectorMean(Q+n, n);
+      Qavg[2] = (float)removeVectorMean(Q+2*n, n);
    }
 
    {
-      float *x1,*x2,*y1,*y2;
-      float T3[16];
-      float sum;
+      float Ut[9], V[9], I[9];
+      float T[3]; // 3x1 translation vector
+      float R[9]; // 3x3 rotation matrix 
+      float S[3]; // 3x1 vector of singular values
 
-      x1=(float *)calloc(nl,sizeof(float));
-      y1=(float *)calloc(nl,sizeof(float));
-      x2=(float *)calloc(nl,sizeof(float));
-      y2=(float *)calloc(nl,sizeof(float));
+      mat_mat_trans(Q,3,n,P,3,Ht);
 
-      sum=0.0;
-      for(int i=0; i<nl; i++) 
+      svd(Ht, 3, 3, Ut, V, S);
+
+      multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+      if(opt_v) printf("det(R) = %f\n", det3(R));
+
+      if( det3(R) < 0.0 ) 
+      {  
+         if(opt_v) printf("Negative determinant (reflection) detected\n");
+         V[2] *= -1.0; 
+         V[5] *= -1.0; 
+         V[8] *= -1.0; 
+         multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+         if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
+      }
+
+      multi(R,3,3,Pavg,3,1,T);
+      for(int i=0; i<3; i++) T[i] = Qavg[i]-T[i];  // Eq. (10) Arun et al. 1987
+
+      if(opt_v) printMatrix(T,3,1,"Translation:",NULL);
+
+      set_to_I(TLMnew,4);
+
+      TLMnew[0] = R[0];
+      TLMnew[1] = R[1];
+      TLMnew[2] = R[2];
+      TLMnew[3] = T[0];
+
+      TLMnew[4] = R[3];
+      TLMnew[5] = R[4];
+      TLMnew[6] = R[5];
+      TLMnew[7] = T[1];
+
+      TLMnew[8] = R[6];
+      TLMnew[9] = R[7];
+      TLMnew[10] = R[8];
+      TLMnew[11] = T[2];
+
+      multi(TLMnew,4,4,TPIL0,4,4,TPIL);
+
+      // save the PIL transformation in <subfile_prefix>_PIL.mrx
       {
-         x1[i]=CM[0*nl + i];
-         y1[i]=CM[1*nl + i];
-
-         x2[i]=P[0*nl + i];
-         y2[i]=P[1*nl + i];
-
-         sum += (x1[i]-x2[i])*(x1[i]-x2[i]);
-         sum += (y1[i]-y2[i])*(y1[i]-y2[i]);
+         FILE *fp;
+         sprintf(filename,"%s_PIL.mrx",subfile_prefix);
+         fp=fopen(filename,"w");
+         printMatrix(TPIL,4,4,"",fp);
+         fclose(fp);
       }
-      //printf("%f\n",sum);
-
-      point_match(x1, y1, x2, y2, nl, T3);
-
-      // final T
-      multi(T3,4,4,T,4,4,T);
-
-      // update P, landmarks will be near their expected positions
-      transform_P(P, nl, T3);
-
-      //sum=0.0;
-      //for(int i=0; i<nl; i++) 
-      //{
-      //   x1[i]=CM[0*nl + i];
-      //   y1[i]=CM[1*nl + i];
-
-      //   x2[i]=P[0*nl + i];
-      //   y2[i]=P[1*nl + i];
-
-      //   sum += (x1[i]-x2[i])*(x1[i]-x2[i]);
-      //   sum += (y1[i]-y2[i])*(y1[i]-y2[i]);
-      //}
-      //printf("%f\n",sum);
-
-      free(x1); free(x2); free(y1), free(y2);
-   }
-
-   // save the PIL transformation in <subfile_prefix>_PIL.mrx
-   {
-      FILE *fp;
-      sprintf(filename,"%s_PIL.mrx",subfile_prefix);
-      fp=fopen(filename,"w");
-      printMatrix(T,4,4,"",fp);
-      fclose(fp);
    }
 
    // create the *LM.ppm image
    {
       int *lmx, *lmy;
+      float lm[4]; 
 
-      invT = inv4(T);
+      invT = inv4(TPIL);
       resliceImage(subim, subimPIL, invT, LIN);
       free(invT);
 
-      //sprintf(filename,"%s_PIL2.nii",subfile_prefix);
-      //save_nifti_image(filename, subimPIL.v, &PILbraincloud_hdr);
+      lmx = (int *)calloc(n,sizeof(int));
+      lmy = (int *)calloc(n,sizeof(int));
 
-      lmx = (int *)calloc(nl,sizeof(int));
-      lmy = (int *)calloc(nl,sizeof(int));
-      convert_to_ijk(P, nl, subimPIL);
-      for(int i=0; i<nl; i++)
+      for(int i=0; i<n; i++)
       {
-         lmx[i]=(int)( P[0*nl + i] + 0.5 );
-         lmy[i]=(int)( P[1*nl + i] + 0.5 );
+         lm[0] = P[i] + Pavg[0];
+         lm[1] = P[n+i] + Pavg[1];
+         lm[2] = P[2*n+i] + Pavg[2];
+         lm[3] = 1.0;
+
+         multi(TLMnew,4,4,lm,4,1,lm);
+
+         convert_to_ijk(lm, 1, subimPIL);
+
+         lmx[i]=(int)( lm[0] + 0.5 );
+         lmy[i]=(int)( lm[1] + 0.5 );
       }
-      convert_to_xyz(P, nl, subimPIL);
 
       sprintf(filename,"%s_LM.ppm",subfile_prefix);
-      mspPPM(subimPIL, lmx, lmy, nl, filename);
+      mspPPM(subimPIL, lmx, lmy, n, filename);
 
       delete lmx;
       delete lmy;
       delete subimPIL.v;
    }
 
+   {
+      float ssd1=0.0;
+      float ssd3=0.0;
+      float x[4], y[4];
+      
+      x[3]=y[3]=1.0;
+
+      for(int i=0; i<n; i++)
+      {
+         x[0] = Q[i] + Qavg[0];
+         x[1] = Q[i+n] + Qavg[1];
+         x[2] = Q[i+2*n] + Qavg[2];
+
+         y[0] = P[i]+Pavg[0];
+         y[1] = P[i+n]+Pavg[1];
+         y[2] = P[i+2*n]+Pavg[2];
+
+         ssd1 += (x[0]-y[0])*(x[0]-y[0]); 
+         ssd1 += (x[1]-y[1])*(x[1]-y[1]); 
+         ssd1 += (x[2]-y[2])*(x[2]-y[2]); 
+
+         multi(TLMnew,4,4,y,4,1,y);
+         ssd3 += (x[0]-y[0])*(x[0]-y[0]); 
+         ssd3 += (x[1]-y[1])*(x[1]-y[1]); 
+         ssd3 += (x[2]-y[2])*(x[2]-y[2]); 
+      }
+      if(opt_v) printf("SSD (MSP + AC/PC transformation) = %f\n",ssd1);
+      if(opt_v) printf("SSD (MSP + AC/PC + LM transformation) = %f\n",ssd3);
+   }
+
    delete subim.v;
+   free(P);
+   free(Q);
 }
 
 void standard_PIL_transformation(const char *imfile, const char *lmfile, int verbose, float *TPIL)
@@ -566,12 +516,16 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
    return;
 }
 
+// Matrices of type T are called "signed permutation matrices"
+// A permutation matrix is one in which there is exactly one 1 in 
+// each row and column.  In a signed permutation matrix the non-zero
+// entries can be 1 or -1.
 void PILtransform(const char *inputOrientCode, float *T)
 {
    char c;
 
    // Initialize T
-   for(int i=0; i<16; i++) T[i]=0.0;
+   for(int i=0; i<15; i++) T[i]=0.0;
    T[15]=1.0;
 
    for(int j=0; j<3; j++)

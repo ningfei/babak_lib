@@ -1203,6 +1203,7 @@ static double *trans(double *A, int N,  int M)
    return(transA);
 }
 
+// Note: A is preserved
 float *inv4(float *A)
 {
    int i;

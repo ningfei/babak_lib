@@ -3,7 +3,7 @@ CC = g++
 #INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
 INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
 #LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
-LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
+LIBS =  -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -L /lib64 -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
 all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform
 
