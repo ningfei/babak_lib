@@ -215,6 +215,128 @@ void point_match(float *x1, float *y1, float *x2, float *y2, int N, float *T)
    return;
 }
 
+void Procrustes(float *Q, float *Qavg, int n, float *P, float *Pavg, float *TLM)
+{
+   float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
+   float Ut[9], V[9], I[9];
+   float T[3]; // 3x1 translation vector
+   float R[9]; // 3x3 rotation matrix 
+   float S[3]; // 3x1 vector of singular values
+
+   Pavg[0] = (float)removeVectorMean(P, n);
+   Pavg[1] = (float)removeVectorMean(P+n, n);
+   Pavg[2] = (float)removeVectorMean(P+2*n, n);
+
+   Qavg[0] = (float)removeVectorMean(Q, n);
+   Qavg[1] = (float)removeVectorMean(Q+n, n);
+   Qavg[2] = (float)removeVectorMean(Q+2*n, n);
+
+   mat_mat_trans(Q,3,n,P,3,Ht);
+
+      svd(Ht, 3, 3, Ut, V, S);
+
+      multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+      // if(opt_v) printf("det(R) = %f\n", det3(R));
+
+      if( det3(R) < 0.0 ) 
+      {  
+         // if(opt_v) printf("Negative determinant (reflection) detected\n");
+         V[2] *= -1.0; 
+         V[5] *= -1.0; 
+         V[8] *= -1.0; 
+         multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+         // if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
+      }
+
+   multi(R,3,3,Pavg,3,1,T);
+   for(int i=0; i<3; i++) T[i] = Qavg[i]-T[i];  // Eq. (10) Arun et al. 1987
+
+   // if(opt_v) printMatrix(T,3,1,"Translation:",NULL);
+
+   set_to_I(TLM,4);
+
+   TLM[0] = R[0];
+   TLM[1] = R[1];
+   TLM[2] = R[2];
+   TLM[3] = T[0];
+
+   TLM[4] = R[3];
+   TLM[5] = R[4];
+   TLM[6] = R[5];
+   TLM[7] = T[1];
+
+   TLM[8] = R[6];
+   TLM[9] = R[7];
+   TLM[10] = R[8];
+   TLM[11] = T[2];
+
+   return;
+}
+
+void Procrustes(float *Q, int n, float *P, float *TLM)
+{
+   float Pavg[3];
+   float Qavg[3];
+   float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
+   float Ut[9], V[9], I[9];
+   float T[3]; // 3x1 translation vector
+   float R[9]; // 3x3 rotation matrix 
+   float S[3]; // 3x1 vector of singular values
+
+   Pavg[0] = (float)removeVectorMean(P, n);
+   Pavg[1] = (float)removeVectorMean(P+n, n);
+   Pavg[2] = (float)removeVectorMean(P+2*n, n);
+
+   Qavg[0] = (float)removeVectorMean(Q, n);
+   Qavg[1] = (float)removeVectorMean(Q+n, n);
+   Qavg[2] = (float)removeVectorMean(Q+2*n, n);
+
+   mat_mat_trans(Q,3,n,P,3,Ht);
+
+      svd(Ht, 3, 3, Ut, V, S);
+
+      multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+      //if(opt_v) printf("det(R) = %f\n", det3(R));
+
+      if( det3(R) < 0.0 ) 
+      {  
+         //if(opt_v) printf("Negative determinant (reflection) detected\n");
+         V[2] *= -1.0; 
+         V[5] *= -1.0; 
+         V[8] *= -1.0; 
+         multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
+
+         //if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
+      }
+
+      multi(R,3,3,Pavg,3,1,T);
+      for(int i=0; i<3; i++) T[i] = Qavg[i]-T[i];  // Eq. (10) Arun et al. 1987
+
+      //if(opt_v) printMatrix(T,3,1,"Translation:",NULL);
+
+   set_to_I(TLM,4);
+
+   TLM[0] = R[0];
+   TLM[1] = R[1];
+   TLM[2] = R[2];
+   TLM[3] = T[0];
+
+   TLM[4] = R[3];
+   TLM[5] = R[4];
+   TLM[6] = R[5];
+   TLM[7] = T[1];
+
+   TLM[8] = R[6];
+   TLM[9] = R[7];
+   TLM[10] = R[8];
+   TLM[11] = T[2];
+
+   return;
+}
+
 // lmfile (landmarks file) - This is a text file with format:
 // i1 j1 k1
 // i2 j2 k2
@@ -228,6 +350,8 @@ void point_match(float *x1, float *y1, float *x2, float *y2, int N, float *T)
 // subfile into a standardized PIL orientation
 void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
 {
+   float Qavg[3]; // average of rows of Q
+   float Pavg[3]; // average of rows of P
    float TPIL0[16]; // transforms the original image to MSP/AC-PC aligned PIL orientation
    int n; // number of landmarks
    float *LM;  // (3 x n) matrix of detected landmarks
@@ -281,19 +405,11 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
  
    float *P;
    float *Q; // Image using Q insted of P' in Eq. (1) of Arun et al. 1987
-   float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
-   float Qavg[3]; // average of rows of Q
-   float Pavg[3]; // average of rows of P
-   float TLMnew[16];
-   float TLMold[16];
-   Q =  (float *)calloc(3*n,sizeof(float));
+   float TLM[16];
 
+   Q =  (float *)calloc(3*n,sizeof(float));
    P =  (float *)calloc(3*n,sizeof(float));
    for(int i=0; i<3*n; i++) P[i]=LM[i];
-
-   Pavg[0] = (float)removeVectorMean(P, n);
-   Pavg[1] = (float)removeVectorMean(P+n, n);
-   Pavg[2] = (float)removeVectorMean(P+2*n, n);
 
    delete subimPIL.v;
    /////////////////////////////////////////////////////////
@@ -323,69 +439,19 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
       fclose(fp);
 
       convert_to_xyz(Q, n, subimPIL);
-
-      Qavg[0] = (float)removeVectorMean(Q, n);
-      Qavg[1] = (float)removeVectorMean(Q+n, n);
-      Qavg[2] = (float)removeVectorMean(Q+2*n, n);
    }
 
+   Procrustes(Q, Qavg, n, P, Pavg, TLM);
+
+   multi(TLM,4,4,TPIL0,4,4,TPIL);
+
+   // save the PIL transformation in <subfile_prefix>_PIL.mrx
    {
-      float Ut[9], V[9], I[9];
-      float T[3]; // 3x1 translation vector
-      float R[9]; // 3x3 rotation matrix 
-      float S[3]; // 3x1 vector of singular values
-
-      mat_mat_trans(Q,3,n,P,3,Ht);
-
-      svd(Ht, 3, 3, Ut, V, S);
-
-      multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
-
-      if(opt_v) printf("det(R) = %f\n", det3(R));
-
-      if( det3(R) < 0.0 ) 
-      {  
-         if(opt_v) printf("Negative determinant (reflection) detected\n");
-         V[2] *= -1.0; 
-         V[5] *= -1.0; 
-         V[8] *= -1.0; 
-         multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
-
-         if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
-      }
-
-      multi(R,3,3,Pavg,3,1,T);
-      for(int i=0; i<3; i++) T[i] = Qavg[i]-T[i];  // Eq. (10) Arun et al. 1987
-
-      if(opt_v) printMatrix(T,3,1,"Translation:",NULL);
-
-      set_to_I(TLMnew,4);
-
-      TLMnew[0] = R[0];
-      TLMnew[1] = R[1];
-      TLMnew[2] = R[2];
-      TLMnew[3] = T[0];
-
-      TLMnew[4] = R[3];
-      TLMnew[5] = R[4];
-      TLMnew[6] = R[5];
-      TLMnew[7] = T[1];
-
-      TLMnew[8] = R[6];
-      TLMnew[9] = R[7];
-      TLMnew[10] = R[8];
-      TLMnew[11] = T[2];
-
-      multi(TLMnew,4,4,TPIL0,4,4,TPIL);
-
-      // save the PIL transformation in <subfile_prefix>_PIL.mrx
-      {
-         FILE *fp;
-         sprintf(filename,"%s_PIL.mrx",subfile_prefix);
-         fp=fopen(filename,"w");
-         printMatrix(TPIL,4,4,"",fp);
-         fclose(fp);
-      }
+      FILE *fp;
+      sprintf(filename,"%s_PIL.mrx",subfile_prefix);
+      fp=fopen(filename,"w");
+      printMatrix(TPIL,4,4,"",fp);
+      fclose(fp);
    }
 
    // create the *LM.ppm image
@@ -407,7 +473,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
          lm[2] = P[2*n+i] + Pavg[2];
          lm[3] = 1.0;
 
-         multi(TLMnew,4,4,lm,4,1,lm);
+         multi(TLM,4,4,lm,4,1,lm);
 
          convert_to_ijk(lm, 1, subimPIL);
 
@@ -444,13 +510,13 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
          ssd1 += (x[1]-y[1])*(x[1]-y[1]); 
          ssd1 += (x[2]-y[2])*(x[2]-y[2]); 
 
-         multi(TLMnew,4,4,y,4,1,y);
+         multi(TLM,4,4,y,4,1,y);
          ssd3 += (x[0]-y[0])*(x[0]-y[0]); 
          ssd3 += (x[1]-y[1])*(x[1]-y[1]); 
          ssd3 += (x[2]-y[2])*(x[2]-y[2]); 
       }
-      if(opt_v) printf("SSD (MSP + AC/PC transformation) = %f\n",ssd1);
-      if(opt_v) printf("SSD (MSP + AC/PC + LM transformation) = %f\n",ssd3);
+      //if(opt_v) printf("SSD (MSP + AC/PC transformation) = %f\n",ssd1);
+      //if(opt_v) printf("SSD (MSP + AC/PC + LM transformation) = %f\n",ssd3);
    }
 
    delete subim.v;

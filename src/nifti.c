@@ -94,6 +94,38 @@ int not_magical_nifti(const char *imagefilename)
    return(0);
 }
 
+int not_magical_nifti(const char *imagefilename, int verbose)
+{
+   FILE *fp;
+   nifti_1_header hdr;
+
+   fp = fopen(imagefilename,"r");
+   
+   if(fp == NULL)
+   {
+      if(verbose) printf("not_magical_nifti(): could not open file %s\n", imagefilename);
+      return(1);
+   }
+
+   if( fread(&hdr, sizeof(hdr), 1, fp)!=1 )
+   {
+      if(verbose) printf("not_magical_nifti(): could not read the NIFTI header from %s\n", imagefilename);
+      fclose(fp);
+      return(1);
+   }
+
+   fclose(fp);
+
+   if( hdr.magic[0]!='n' || (hdr.magic[1]!='+' && hdr.magic[1]!='i') || hdr.magic[2]!='1' )
+   {
+      if(verbose) printf("hdr.magic = %s\n", hdr.magic);
+      if(verbose) printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n"); 
+      return(1);
+   }
+
+   return(0);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 // returns 1 if filename has a .hdr or .nii extnension, 0 otherwise

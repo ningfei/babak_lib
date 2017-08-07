@@ -233,6 +233,9 @@ void swap_model_file_hdr(model_file_hdr *hdr);
 void swap_model_file_tail(model_file_tail *tail);
 void new_PIL_transform(const char *subfile, const char *lmfile, float4 *T);
 void standard_PIL_transformation(const char *imfile, const char *lmfile, int4 verbose, float4 *TPIL);
+void convert_to_xyz(float *P, int n, SHORTIM im);
+void Procrustes(float *Q, float *Qavg, int n, float *P, float *Pavg, float *TLM);
+void Procrustes(float *Q, int n, float *P, float *TLM);
 void PILtransform(const char *orientCode, float4 *orientMat);
 void inversePILtransform(const char *orientCode, float4 *orientMat);
 int2 *reorientVolume(int2 *v1, int4 nx1, int4 ny1, int4 nz1, float4 dx1, float4 dy1, float4 dz1, float4 *orientMat,
@@ -785,6 +788,7 @@ extern void mat_trans_mat(float8 *A, int4 Ar, int4 Ac, float8 *B, int4 Bc, float
 ///////////////////////////////////////////////////////////////
 // The following functions are defined in nifti.cxx
 int4 not_magical_nifti(const char *imagefilename);
+int4 not_magical_nifti(const char *imagefilename, int verbose);
 char *read_nifti_image(const char *filename, nifti_1_header *hdr);
 int4 same_nifti_image_size(int4 N, char **imagefile, int4 *nx, int4 *ny, int4 *nz, float4 *dx, float4 *dy, float4 *dz);
 void read_nifti_image(const char *filename, uchar **im, nifti_1_header *hdr);
