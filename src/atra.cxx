@@ -105,16 +105,24 @@ int opt;
 
 static struct option options[] =
 {
-        {"-v", 0, 'v'},
-        {"-imlist", 1, 'i'},
-        {"-i", 1, 'i'},
-        {"-maxiter", 1, 'm'},
-        {"-threshold", 1, 't'},
-        {"-r", 1, 'r'},
-        {"-R", 1, 'R'},
-        {"-h", 0, 'h'},
-        {"-help", 0, 'h'},
-        {0, 0, 0}
+   {"-orient",1,'O'},
+   {"-nx",1,'x'},
+   {"-ny",1,'y'},
+   {"-nz",1,'z'},
+   {"-dx",1,'X'},
+   {"-dy",1,'Y'},
+   {"-dz",1,'Z'},
+
+   {"-v", 0, 'v'},
+   {"-imlist", 1, 'i'},
+   {"-i", 1, 'i'},
+   {"-maxiter", 1, 'm'},
+   {"-threshold", 1, 't'},
+   {"-r", 1, 'r'},
+   {"-R", 1, 'R'},
+   {"-h", 0, 'h'},
+   {"-help", 0, 'h'},
+   {0, 0, 0}
 };
 
 void print_help_and_exit()
@@ -288,7 +296,7 @@ SPH &searchsph, SPH &testsph, int lm_out[][3])
    return(d);
 }
 
-void atra(const char *imagelistfile)
+void atra(const char *imagelistfile, DIM output_dim, const char *output_orientation)
 {
    FILE *fp;
    int nim=0; // number of image files in imagelistfile
@@ -300,9 +308,9 @@ void atra(const char *imagelistfile)
    nifti_1_header PILbraincloud_hdr; 
    DIM PILbraincloud_dim;
 
-   float **TPIL; // An n-array of 4x4 transformation matrices which transform each of
+   float **TPIL; // nim-array of 4x4 transformation matrices which transform each of
                  // the nim images into the standardized PIL system
-   float **TLM;
+   float **TGPA; // nim-array of 4x4 transformation matrices obtained from Generalized Procrustes Analysis 
    SHORTIM PILim[MAXIM];
    SHORTIM im[MAXIM];
    nifti_1_header imhdr;
@@ -327,6 +335,20 @@ void atra(const char *imagelistfile)
    int cbd; //city block distance 
    char loomsk[MAXIM];
    int lmcm[3]; // landmarks center of mass
+   float PIL2OUT[16];
+   float OUT2PIL[16];
+   float OUT2RAS[16];
+   float PIL2RAS[16];
+   float T_ijk2xyz[16];
+   float TOUT[16];
+
+   // PIL2OUT takes points from PIL space to output space
+   inversePILtransform(output_orientation, PIL2OUT);
+   PILtransform(output_orientation, OUT2PIL);
+   inversePILtransform("RAS", PIL2RAS);
+   multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, OUT2RAS);
+   ijk2xyz(T_ijk2xyz,output_dim.nx,output_dim.ny,output_dim.nz,output_dim.dx,output_dim.dy,output_dim.dz);
+   multi(OUT2RAS, 4, 4,  T_ijk2xyz, 4,  4, OUT2RAS);
 
    // find nim
    fp=fopen(imagelistfile,"r");
@@ -350,7 +372,7 @@ void atra(const char *imagelistfile)
    landmarksfile = (char **)calloc(nim, sizeof(char *));
    imagefileprefix = (char **)calloc(nim, sizeof(char *));
    TPIL = (float **)calloc(nim, sizeof(float *));
-   TLM = (float **)calloc(nim, sizeof(float *));
+   TGPA = (float **)calloc(nim, sizeof(float *));
    for(int i=0; i<nim; i++)
    {
       imagefile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
@@ -363,7 +385,7 @@ void atra(const char *imagelistfile)
       sprintf(imagefileprefix[i],"");
 
       TPIL[i] = (float *)calloc(16, sizeof(float));
-      TLM[i] = (float *)calloc(16, sizeof(float));
+      TGPA[i] = (float *)calloc(16, sizeof(float));
    }
 
    ////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,6 +435,23 @@ void atra(const char *imagelistfile)
          exit(1);
    }
    /////////////////////////////////////////////////////////////////////////////////////////////
+
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   // check output_dim
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   if( output_dim.dx <= 0.0) output_dim.dx=PILbraincloud_dim.dx;
+   if( output_dim.dy <= 0.0) output_dim.dy=PILbraincloud_dim.dy;
+   if( output_dim.dz <= 0.0) output_dim.dz=PILbraincloud_dim.dz;
+   if( output_dim.nx <= 0 || output_dim.nx > 1024) output_dim.nx=PILbraincloud_dim.nx;
+   if( output_dim.ny <= 0 || output_dim.ny > 1024) output_dim.ny=PILbraincloud_dim.ny;
+   if( output_dim.nz <= 0 || output_dim.nz > 1024) output_dim.nz=PILbraincloud_dim.nz;
+   output_dim.np = output_dim.nx*output_dim.ny;
+   output_dim.nv = output_dim.np*output_dim.nz;
+   if(opt_v)
+   {
+      printf("Output matrix size: %d x %d x %d\n", output_dim.nx, output_dim.ny, output_dim.nz);
+      printf("Output voxel size: %7.5f x %7.5f x %7.5f mm^3\n", output_dim.dx, output_dim.dy, output_dim.dz);
+   }
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // file TPIL
@@ -580,9 +619,7 @@ void atra(const char *imagelistfile)
             {
                for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[i][k]; Qtmp[k]=Q[k]; }
    
-               Procrustes(Qtmp, nlm, Ptmp, TLM[i]);
-   
-   //            printMatrix(TLM[i],4,4,"",NULL);
+               Procrustes(Qtmp, nlm, Ptmp, TGPA[i]);
             }
    
             // update Q: find a new Q as the average of transformed P[m]
@@ -595,9 +632,9 @@ void atra(const char *imagelistfile)
                   dum[1] = P[i][nlm + k];
                   dum[2] = P[i][2*nlm + k];
    
-                  Q[k]         += dum[0]*TLM[i][0] + dum[1]*TLM[i][1] + dum[2]*TLM[i][2]  + TLM[i][3];
-                  Q[nlm + k]   += dum[0]*TLM[i][4] + dum[1]*TLM[i][5] + dum[2]*TLM[i][6]  + TLM[i][7];
-                  Q[2*nlm + k] += dum[0]*TLM[i][8] + dum[1]*TLM[i][9] + dum[2]*TLM[i][10] + TLM[i][11];
+                  Q[k]         += dum[0]*TGPA[i][0] + dum[1]*TGPA[i][1] + dum[2]*TGPA[i][2]  + TGPA[i][3];
+                  Q[nlm + k]   += dum[0]*TGPA[i][4] + dum[1]*TGPA[i][5] + dum[2]*TGPA[i][6]  + TGPA[i][7];
+                  Q[2*nlm + k] += dum[0]*TGPA[i][8] + dum[1]*TGPA[i][9] + dum[2]*TGPA[i][10] + TGPA[i][11];
                }
                Q[k]       /= nim;
                Q[k+nlm]   /= nim;
@@ -612,7 +649,7 @@ void atra(const char *imagelistfile)
       // update TPIL 
       for(int i=0; i<nim; i++)
       {
-         multi(TLM[i],4,4,TPIL[i],4,4,TPIL[i]);
+         multi(TGPA[i],4,4,TPIL[i],4,4,TPIL[i]);
       }
 
       // update PILim
@@ -628,21 +665,43 @@ void atra(const char *imagelistfile)
    // end of iterations
    //////////////////////////////////////////////////////////
 
+
    //////////////////////////////////////////////////////////
    // save outputs
    //////////////////////////////////////////////////////////
    for(int i=0; i<nim; i++)
    {
+      short *tmp;
+      nifti_1_header tmp_hdr; 
+      DIM input_dim;
+
+      tmp_hdr = read_NIFTI_hdr(imagefile[i]);
+      set_dim(input_dim, tmp_hdr);
+
+      multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
+      invT = inv4(TOUT);
+      tmp = resliceImage(im[i].v,input_dim,output_dim,invT,LIN);
+      free(invT);
+
+      set_dim(tmp_hdr, output_dim);
+      tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
+      sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
       sprintf(dummystring,"A%s.nii",imagefileprefix[i]);
-      save_nifti_image(dummystring, PILim[i].v, &PILbraincloud_hdr);
+      save_nifti_image(dummystring, tmp, &tmp_hdr);
+
+      opt_qform=opt_sform=YES;
+      update_qsform(dummystring, OUT2RAS);
+
+      free(tmp);
    }
 
    // save transformation matrix
    for(int i=0; i<nim; i++)
    {
-      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
+      multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
+      sprintf(dummystring,"A%s.mrx",imagefileprefix[i]);
       fp=fopen(dummystring,"w");
-      printMatrix(TPIL[i],4,4,"",fp);
+      printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
    }
    //////////////////////////////////////////////////////////
@@ -654,7 +713,7 @@ void atra(const char *imagelistfile)
       free(landmarksfile[i]);
       free(imagefileprefix[i]);
       free(TPIL[i]);
-      free(TLM[i]);
+      free(TGPA[i]);
       free(PILim[i].v);
       free(im[i].v);
       free(Pt[i]);
@@ -663,7 +722,7 @@ void atra(const char *imagelistfile)
    free(landmarksfile);
    free(imagefileprefix);
    free(TPIL);
-   free(TLM);
+   free(TGPA);
    free(PILbraincloud);
    free(seedi);
    free(seedj);
@@ -682,20 +741,37 @@ int main(int argc, char **argv)
 
    time(&time_start);
 
-   FILE *fp;
+   char output_orientation[4]="PIL";
+
+   DIM output_dim;
+   output_dim.nx=output_dim.ny=output_dim.nz=0;
+   output_dim.dx=output_dim.dy=output_dim.dz=0.0;
 
    // filename where the list of images to be registered are input 
    char imagelistfile[DEFAULT_STRING_LENGTH]=""; 
-
-   int nim=0; // number of images in imagelistfile
-
-   // temporary filename used for reading or writing specific files
-   char filename[DEFAULT_STRING_LENGTH];
 
    while( (opt=getoption(argc, argv, options)) != -1)
    {
       switch (opt) 
       {
+         case 'X':
+            output_dim.dx = atof(optarg);
+            break;
+         case 'Y':
+            output_dim.dy = atof(optarg);
+            break;
+         case 'Z':
+            output_dim.dz = atof(optarg);
+            break;
+         case 'x':
+            output_dim.nx = atoi(optarg);
+            break;
+         case 'y':
+            output_dim.ny = atoi(optarg);
+            break;
+         case 'z':
+            output_dim.nz = atoi(optarg);
+            break;
          case 'm':
             maxiter = atoi(optarg);
             if(maxiter<10 || maxiter>100) maxiter=MAXITER;
@@ -705,6 +781,9 @@ int main(int argc, char **argv)
             break;
          case 'v':
             opt_v=YES;
+            break;
+         case 'O':
+            sprintf(output_orientation,"%s",optarg);
             break;
          case 'r':
             patch_radius = atoi(optarg);
@@ -736,7 +815,15 @@ int main(int argc, char **argv)
       exit(0);
    }
 
-   atra(imagelistfile);
+   if( isOrientationCodeValid(output_orientation)==0 )
+   {
+      printf("Sorry, %s is not a valid orientation code.\n",output_orientation);
+      exit(0);
+   }
+
+   if(opt_v) printf("Output orientation: %s\n",output_orientation);
+
+   atra(imagelistfile, output_dim, output_orientation);
 
 #if 0
    ///////////////////////////////////////////////////////////////////////////////////////////////////

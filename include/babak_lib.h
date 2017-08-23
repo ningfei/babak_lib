@@ -16,6 +16,13 @@ typedef double float8;
 #define NO 0
 #define ESMALL 1e-10
 
+#ifndef _update_qsform
+void update_qsform( const char *imagefilename , float *matrix);
+void update_qsform( const char *imagefile1, const char *imagefile2);
+extern int opt_sform;
+extern int opt_qform;
+#endif
+
 #ifndef _getARTHOME
 extern char *ARTHOME;
 extern void getARTHOME();
