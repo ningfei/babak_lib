@@ -84,13 +84,6 @@
 #define YES 1
 #define NO 0
 
-#define SNX 255
-#define SNY 255
-#define SNZ 189
-#define SDX 1.0
-#define SDY 1.0
-#define SDZ 1.0
-
 #define MAXIM 256 // maximum number of images allowed 
 
 #define DEFAULT_SEARCH_RADIUS 5
@@ -99,11 +92,14 @@
 #define MAXITER 25  // default maxiter
 #define DEFAULT_STRING_LENGTH 512
 
-int delx=20;
-int dely=20;
-int delz=20;
-
+/////////////////////////////////////
+// Global variables required by ATRA
+int PILcloudthreshold=50;
+int del=20;
+int patch_radius=DEFAULT_PATCh_RADIUS;
+int search_radius=DEFAULT_SEARCH_RADIUS;
 int maxiter=MAXITER;
+/////////////////////////////////////
 
 int opt;
 
@@ -116,14 +112,10 @@ static struct option options[] =
         {"-threshold", 1, 't'},
         {"-r", 1, 'r'},
         {"-R", 1, 'R'},
-        {"-o", 1, 'o'},
         {"-h", 0, 'h'},
         {"-help", 0, 'h'},
         {0, 0, 0}
 };
-
-int opt_o=NO;
-int opt_b=NO;
 
 void print_help_and_exit()
 {
@@ -168,44 +160,6 @@ int checkDimension_avgImage(int N, char **imagefile, int *nx, int *ny, int *nz, 
    }
 
    return(1);
-}
-
-void set_hdr(nifti_1_header &hdr)
-{
-      float T[16];
-      float T_ijk2xyz[16];
-      mat44 R;
-
-      hdr.dim[1]=SNX;
-      hdr.dim[2]=SNY;
-      hdr.dim[3]=SNZ;
-      hdr.pixdim[1]=SDX;
-      hdr.pixdim[2]=SDY;
-      hdr.pixdim[3]=SDZ;
-
-      // T will take points from PIL to RAS space
-      inversePILtransform("RAS", T);
-
-      ijk2xyz(T_ijk2xyz, SNX, SNY, SNZ, SDX, SDY, SDZ);
-
-      // Takes points from (i,j,k) to RAS
-      multi(T, 4, 4,  T_ijk2xyz, 4,  4, T);
-
-      hdr.sform_code = 3;
-      hdr.srow_x[0]=T[0]; hdr.srow_x[1]=T[1]; hdr.srow_x[2]=T[2]; hdr.srow_x[3]=T[3];
-      hdr.srow_y[0]=T[4]; hdr.srow_y[1]=T[5]; hdr.srow_y[2]=T[6]; hdr.srow_y[3]=T[7];
-      hdr.srow_z[0]=T[8]; hdr.srow_z[1]=T[9]; hdr.srow_z[2]=T[10]; hdr.srow_z[3]=T[11];
-
-      hdr.qform_code = 3;
-      hdr.qform_code = 3;
-      R.m[0][0]=T[0];  R.m[0][1]=T[1];  R.m[0][2]=T[2];  R.m[0][3]=T[3];
-      R.m[1][0]=T[4];  R.m[1][1]=T[5];  R.m[1][2]=T[6];  R.m[1][3]=T[7];
-      R.m[2][0]=T[8];  R.m[2][1]=T[9];  R.m[2][2]=T[10]; R.m[2][3]=T[11];
-      R.m[3][0]=T[12]; R.m[3][1]=T[13]; R.m[3][2]=T[14]; R.m[3][3]=T[15];
-
-      nifti_mat44_to_quatern( R,  &(hdr.quatern_b), &(hdr.quatern_c), &(hdr.quatern_d),
-      &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z), 
-      &(hdr.pixdim[1]), &(hdr.pixdim[2]), &(hdr.pixdim[3]), &(hdr.pixdim[0]));
 }
 
 void compute_landmark_cm(int nim, int lm_in[][3], int lmcm[], char loomsk[])
@@ -334,109 +288,52 @@ SPH &searchsph, SPH &testsph, int lm_out[][3])
    return(d);
 }
 
-int main(int argc, char **argv)
+void atra(const char *imagelistfile)
 {
-   time_t time_start, time_end;
-
-   time(&time_start);
-
-   nifti_1_header imhdr;
-   float *invT;
-
-   char dums[DEFAULT_STRING_LENGTH];
    FILE *fp;
-   char outputfile[DEFAULT_STRING_LENGTH];
+   int nim=0; // number of image files in imagelistfile
+   char dummystring[DEFAULT_STRING_LENGTH];
+   char **imagefile; // the nim image files
+   char **landmarksfile; // the (potential) nim landmarks files
+   char **imagefileprefix;
+   short *PILbraincloud;
+   nifti_1_header PILbraincloud_hdr; 
+   DIM PILbraincloud_dim;
 
-   int cbd; //city block distance 
-
-   // filename where the list of images to be registered are input 
-   char imlist[DEFAULT_STRING_LENGTH]=""; 
-
-   int nim=0; // number of images in imlist
-
-   // An n-array of 4x4 transformation matrices which transform each of
-   // the n images into the standardized PIL system
-   float **TPIL;
+   float **TPIL; // An n-array of 4x4 transformation matrices which transform each of
+                 // the nim images into the standardized PIL system
    float **TLM;
-
-   // An n-array of strings where the n filenames in imlist are saved
-   char **imfile;
-   char **lmfile;
-   char **prefix;
-
-   // temporary filename used for reading or writing specific files
-   char filename[DEFAULT_STRING_LENGTH];
-
-   int threshold=50;
-
-   int patch_radius=DEFAULT_PATCh_RADIUS;
-   int search_radius=DEFAULT_SEARCH_RADIUS;
-
    SHORTIM PILim[MAXIM];
    SHORTIM im[MAXIM];
+   nifti_1_header imhdr;
+   float *invT;
+   int *seedi, *seedj, *seedk;
+   int nseeds=0;
 
-   int lm_in[MAXIM][3]; // (i,j,k) coordinates of the input landmarks
-   int lm_out[MAXIM][3];
-   int lmcm[3]; // landmarks center of mass
+   SPH refsph(patch_radius);
+   SPH testsph(patch_radius);
+   SPH searchsph(search_radius);
+   float **Pt;
+   float **P;
+   int nlm;
+   int nlm_nonconvergent;
+   int nlm_aligned;
+   int nlm_aligned_old=0;
    float *ssd;
    float *A; // (NxM) matrix where N=n; M=sph.n
-
+   int sameflag;
+   int lm_in[MAXIM][3]; // (i,j,k) coordinates of the input landmarks
+   int lm_out[MAXIM][3];
+   int cbd; //city block distance 
    char loomsk[MAXIM];
-
-   while( (opt=getoption(argc, argv, options)) != -1)
-   {
-      switch (opt) 
-      {
-         case 'm':
-            maxiter = atoi(optarg);
-            if(maxiter<10 || maxiter>100) maxiter=MAXITER;
-            break;
-         case 'i':
-            sprintf(imlist,"%s",optarg);
-            break;
-         case 'v':
-            opt_v=YES;
-            break;
-         case 'r':
-            patch_radius = atoi(optarg);
-            if(patch_radius<=0 || patch_radius>MAX_RADIUS) patch_radius=DEFAULT_PATCh_RADIUS;
-            break;
-         case 'R':
-            search_radius = atoi(optarg);
-            if(search_radius<=0 || search_radius>MAX_RADIUS) search_radius=DEFAULT_SEARCH_RADIUS;
-            break;
-         case 't':
-            threshold = atoi(optarg);
-            if(threshold<0 || threshold>100) threshold=50;
-            break;
-         case 'o':
-            sprintf(outputfile,"%s",optarg);
-            opt_o=YES;
-            break;
-         case 'h':
-            print_help_and_exit();
-            break;
-         case '?':
-            print_help_and_exit();
-      }
-   }
-
-   getARTHOME();
-
-   if(argc==1) print_help_and_exit();
-
-   if(imlist[0]=='\0')
-   {
-      printf("Please specify an image list using the -imlist argument\n");
-      exit(0);
-   }
+   int lmcm[3]; // landmarks center of mass
 
    // find nim
-   fp=fopen(imlist,"r");
+   fp=fopen(imagelistfile,"r");
    nim=0;
-   while(fscanf(fp,"%s",dums) != EOF ) 
+   while(fscanf(fp,"%s",dummystring) != EOF ) 
    {
-         if( not_magical_nifti(dums,0)==0 ) nim++;
+         if( not_magical_nifti(dummystring,0)==0 ) nim++;
    }
    fclose(fp);
 
@@ -444,40 +341,48 @@ int main(int argc, char **argv)
 
    if(nim<=1) 
    {
-      printf("At least two 3D T1W NIFTI images of type 'short' must be specified in %s.\n", imlist);
+      printf("At least two 3D T1W NIFTI images of type 'short' must be specified in %s.\n", imagelistfile);
       exit(0);
    }
 
-   // allocate memory for image filenames and read them into imfile
-   imfile = (char **)calloc(nim, sizeof(char *));
-   lmfile = (char **)calloc(nim, sizeof(char *));
-   prefix = (char **)calloc(nim, sizeof(char *));
+   // allocate memory for various arrays
+   imagefile = (char **)calloc(nim, sizeof(char *));
+   landmarksfile = (char **)calloc(nim, sizeof(char *));
+   imagefileprefix = (char **)calloc(nim, sizeof(char *));
    TPIL = (float **)calloc(nim, sizeof(float *));
    TLM = (float **)calloc(nim, sizeof(float *));
    for(int i=0; i<nim; i++)
    {
-      imfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
-      sprintf(imfile[i],"");
-      lmfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
-      prefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      imagefile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagefile[i],"");
+
+      landmarksfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(landmarksfile[i],"");
+
+      imagefileprefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagefileprefix[i],"");
+
       TPIL[i] = (float *)calloc(16, sizeof(float));
       TLM[i] = (float *)calloc(16, sizeof(float));
    }
 
-   fp=fopen(imlist,"r");
+   ////////////////////////////////////////////////////////////////////////////////////////////
+   // fill imagefile, landmarksfile and imagefileprefix arrays
+   ////////////////////////////////////////////////////////////////////////////////////////////
+   fp=fopen(imagelistfile,"r");
    nim=0;
-   while(fscanf(fp,"%s",dums) != EOF ) 
+   while(fscanf(fp,"%s",dummystring) != EOF ) 
    {
-         if( not_magical_nifti(dums,0)==0 ) 
+         if( not_magical_nifti(dummystring,0)==0 ) 
          {
-            strcpy(imfile[nim], dums);
-            if( niftiFilename(prefix[nim], imfile[nim])==0 ) { exit(0); }
+            strcpy(imagefile[nim], dummystring);
+            if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
             nim++;
          }
          else
          {
             // ensure nim>0 in case the put a lm file first
-            if(nim>0) strcpy(lmfile[nim-1], dums);
+            if(nim>0) strcpy(landmarksfile[nim-1], dummystring);
          }
    }
    fclose(fp);
@@ -487,41 +392,44 @@ int main(int argc, char **argv)
       printf("Input image list:\n");
       for(int i=0; i<nim; i++) 
       {
-         printf("Image %d = %s\n",i+1,imfile[i]);
-         if(lmfile[i][0]!='\0') printf("Image %d landmarks file = %s\n",i+1,lmfile[i]);
+         printf("Image %d: %s\n",i+1,imagefile[i]);
+         if(landmarksfile[i][0]!='\0') printf("Image %d landmarks: %s\n",i+1,landmarksfile[i]);
       }
-      
    }
+   ////////////////////////////////////////////////////////////////////////////////////////////
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // read PILbraincloud.nii from the $ARTHOME directory
    /////////////////////////////////////////////////////////////////////////////////////////////
-   short *PILbraincloud;
-   nifti_1_header PILbraincloud_hdr; 
+   sprintf(dummystring,"%s/PILbrain.nii",ARTHOME);
 
-   sprintf(filename,"%s/PILbrain.nii",ARTHOME);
+   PILbraincloud = (short  *)read_nifti_image(dummystring, &PILbraincloud_hdr);
 
-   PILbraincloud = (short  *)read_nifti_image(filename, &PILbraincloud_hdr);
+   set_dim(PILbraincloud_dim, PILbraincloud_hdr);
 
    if(PILbraincloud==NULL)
    {
-         printf("Error reading %s, aborting ...\n", filename);
+         printf("Error reading %s, aborting ...\n", dummystring);
          exit(1);
    }
    /////////////////////////////////////////////////////////////////////////////////////////////
- 
+
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   // file TPIL
+   /////////////////////////////////////////////////////////////////////////////////////////////
    if(opt_v) printf("PIL transformation:\n");
    for(int i=0; i<nim; i++)
    {
-      if(opt_v) printf("Processing %s ...\n",imfile[i]);
-      new_PIL_transform(imfile[i],lmfile[i],TPIL[i]);
+      if(opt_v) printf("Processing %s ...\n",imagefile[i]);
+      new_PIL_transform(imagefile[i],landmarksfile[i],TPIL[i]);
    }
+   /////////////////////////////////////////////////////////////////////////////////////////////
 
    for(int i=0; i<nim; i++)
    {
       set_dim(PILim[i], PILbraincloud_hdr);
 
-      im[i].v = (short *)read_nifti_image(imfile[i], &imhdr);
+      im[i].v = (short *)read_nifti_image(imagefile[i], &imhdr);
       set_dim(im[i], imhdr);
 
       invT = inv4(TPIL[i]);
@@ -529,24 +437,17 @@ int main(int argc, char **argv)
       PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
       free(invT);
 
-      sprintf(filename,"%s_PIL0.nii",prefix[i]);
-      save_nifti_image(filename, PILim[i].v, &PILbraincloud_hdr);
+      //sprintf(dummystring,"%s_PIL0.nii",imagefileprefix[i]);
+      //save_nifti_image(dummystring, PILim[i].v, &PILbraincloud_hdr);
    }
-
-   SPH refsph(patch_radius);
-   SPH testsph(patch_radius);
-   SPH searchsph(search_radius);
-   ssd = (float *)calloc(refsph.n,sizeof(float));
-   A = (float *)calloc(nim*refsph.n,sizeof(float));
 
    //////////////////////////////////////////////////////////
    // Compute the number of seeds
-   int nseeds=0;
-   int *seedi, *seedj, *seedk;
-   for(int i=0; i<SNX; i += delx)
-   for(int j=0; j<SNY; j += dely)
-   for(int k=14; k<SNZ; k += delz)
-   if ( PILbraincloud[k*SNX*SNY + j*SNX + i] > threshold )
+   nseeds=0;
+   for(int i=0; i<PILbraincloud_dim.nx; i += del)
+   for(int j=0; j<PILbraincloud_dim.ny; j += del)
+   for(int k=14; k<PILbraincloud_dim.nz; k += del)
+   if ( PILbraincloud[k*PILbraincloud_dim.np + j*PILbraincloud_dim.nx + i] > PILcloudthreshold )
    {
       nseeds++;
    }
@@ -556,10 +457,10 @@ int main(int argc, char **argv)
    seedk = (int *)calloc(nseeds, sizeof(int));
 
    nseeds=0;
-   for(int i=0; i<SNX; i += delx)
-   for(int j=0; j<SNY; j += dely)
-   for(int k=14; k<SNZ; k += delz)
-   if ( PILbraincloud[k*SNX*SNY + j*SNX + i] > threshold )
+   for(int i=0; i<PILbraincloud_dim.nx; i += del)
+   for(int j=0; j<PILbraincloud_dim.ny; j += del)
+   for(int k=14; k<PILbraincloud_dim.nz; k += del)
+   if ( PILbraincloud[k*PILbraincloud_dim.np + j*PILbraincloud_dim.nx + i] > PILcloudthreshold )
    {
       seedi[nseeds]=i;
       seedj[nseeds]=j;
@@ -567,22 +468,18 @@ int main(int argc, char **argv)
       nseeds++;
    }
    //////////////////////////////////////////////////////////
-  
-   float **Pt;
-   float **P;
-   int nlm;
-   int nlm_nonconvergent;
-   int nlm_aligned;
-   int nlm_aligned_old=0;
 
+   //////////////////////////////////////////////////////////
+   // LOOC landmark detection
+   //////////////////////////////////////////////////////////
+   ssd = (float *)calloc(refsph.n,sizeof(float));
+   A = (float *)calloc(nim*refsph.n,sizeof(float));
    Pt = (float **)calloc(nim, sizeof(float *) );
    P = (float **)calloc(nim, sizeof(float *) );
 
-   // the Pt[m] are actually nlm*3 matrices but we allocate more rows (nseeds rows)
+   // the Pt[i] are actually nlm*3 matrices but we allocate more rows (nseeds rows)
    // since at this time we only know that nlm<=nseeds
-   for(int m=0;m<nim;m++) Pt[m] = (float *)calloc(nseeds*3, sizeof(float) );
-
-   int sameflag;
+   for(int i=0;i<nim;i++) Pt[i] = (float *)calloc(nseeds*3, sizeof(float) );
 
    if(opt_v) printf("LOOC landmark detection ...\n");
    if(opt_v && maxiter!=MAXITER) printf("Maximum number of allowed iterations per seed = %d\n",maxiter);
@@ -595,11 +492,12 @@ int main(int argc, char **argv)
 
       for(int s=0; s<nseeds; s++)
       {
-         for(int m=0; m<nim; m++)
+         // initialize the landmark location for all images to be the same
+         for(int i=0; i<nim; i++)
          {
-            lm_in[m][0]=seedi[s];
-            lm_in[m][1]=seedj[s];
-               lm_in[m][2]=seedk[s];
+            lm_in[i][0]=seedi[s];
+            lm_in[i][1]=seedj[s];
+            lm_in[i][2]=seedk[s];
          }
    
          cbd = seek_lm(nim, refsph, PILim, lm_in, A, ssd, loomsk, lmcm, searchsph, testsph, lm_out);
@@ -607,29 +505,28 @@ int main(int argc, char **argv)
          if(cbd>0) { nlm_nonconvergent++; continue; }
    
          /////////////////////////////////////////////////////////////////////////////////////////////////////
-         // this seemed to improve things in registering 941_S_4255_B0.nii and 941_S_4255_F1.nii
+         // check to see if the LOOC converged to the same location in all images
          /////////////////////////////////////////////////////////////////////////////////////////////////////
          sameflag=1;
-         for(int m=1; m<nim; m++)
+         for(int i=1; i<nim; i++)
          {
-            if(lm_out[m][0] != lm_out[0][0] || lm_out[m][1] != lm_out[0][1] || lm_out[m][2] != lm_out[0][2] )
+            if(lm_out[i][0] != lm_out[0][0] || lm_out[i][1] != lm_out[0][1] || lm_out[i][2] != lm_out[0][2] )
             { sameflag=0; break; }
          }
    
-         //if(sameflag) { nlm_aligned++; continue;}
          if(sameflag) { nlm_aligned++;}
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          //printf("\nLM %d\n",nlm);
    
-         for(int m=0; m<nim; m++)
+         for(int i=0; i<nim; i++)
          {
    
-         Pt[m][nlm*3 + 0] = lm_out[m][0]; 
-         Pt[m][nlm*3 + 1] = lm_out[m][1]; 
-         Pt[m][nlm*3 + 2] = lm_out[m][2]; 
+         Pt[i][nlm*3 + 0] = lm_out[i][0]; 
+         Pt[i][nlm*3 + 1] = lm_out[i][1]; 
+         Pt[i][nlm*3 + 2] = lm_out[i][2]; 
 
-            //printf("%s %d %d %d\n",imfile[m],lm_out[m][0],lm_out[m][1],lm_out[m][2]);
+            //printf("%s %d %d %d\n",imagefile[i],lm_out[i][0],lm_out[i][1],lm_out[i][2]);
          }
    
          nlm++;
@@ -640,9 +537,9 @@ int main(int argc, char **argv)
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
       //if(opt_v) printf("Number of seeds = %d\n", nseeds);
-      if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
+      //if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
       if(opt_v) printf("Number of aligned landmarks = %d\n",nlm_aligned);
-      if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-nlm_aligned);
+      //if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-nlm_aligned);
 
       if(nlm<6)
       {
@@ -658,11 +555,11 @@ int main(int argc, char **argv)
    
          if(opt_v) printf("Generalized Procrustes anlaysis ...\n");
    
-         for(int m=0; m<nim; m++)
+         for(int i=0; i<nim; i++)
          {
-            P[m] = (float *)calloc(3*nlm, sizeof(float) );
-            transpose_matrix(Pt[m], nlm,  3, P[m]);
-            convert_to_xyz(P[m], nlm, PILim[m]);
+            P[i] = (float *)calloc(3*nlm, sizeof(float) );
+            transpose_matrix(Pt[i], nlm,  3, P[i]);
+            convert_to_xyz(P[i], nlm, PILim[i]);
          }
    
          Q = (float *)calloc(3*nlm, sizeof(float) );
@@ -673,34 +570,34 @@ int main(int argc, char **argv)
          for(int k=0; k<3*nlm; k++)
          {
                Q[k]=0.0;
-               for(int m=0; m<nim; m++) Q[k] += P[m][k];
+               for(int i=0; i<nim; i++) Q[k] += P[i][k];
                Q[k]/=nim;
          }
    
-         for(int i=0; i<100; i++)
+         for(int GPiter=0; GPiter<100; GPiter++)
          {
-            for(int m=0; m<nim; m++) 
+            for(int i=0; i<nim; i++) 
             {
-               for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[m][k]; Qtmp[k]=Q[k]; }
+               for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[i][k]; Qtmp[k]=Q[k]; }
    
-               Procrustes(Qtmp, nlm, Ptmp, TLM[m]);
+               Procrustes(Qtmp, nlm, Ptmp, TLM[i]);
    
-   //            printMatrix(TLM[m],4,4,"",NULL);
+   //            printMatrix(TLM[i],4,4,"",NULL);
             }
    
             // update Q: find a new Q as the average of transformed P[m]
             for(int k=0; k<nlm; k++) 
             {
                Q[k]=Q[k+nlm]=Q[k+nlm*2]=0.0;
-               for(int m=0; m<nim; m++) 
+               for(int i=0; i<nim; i++) 
                {
-                  dum[0] = P[m][k];
-                  dum[1] = P[m][nlm + k];
-                  dum[2] = P[m][2*nlm + k];
+                  dum[0] = P[i][k];
+                  dum[1] = P[i][nlm + k];
+                  dum[2] = P[i][2*nlm + k];
    
-                  Q[k]         += dum[0]*TLM[m][0] + dum[1]*TLM[m][1] + dum[2]*TLM[m][2]  + TLM[m][3];
-                  Q[nlm + k]   += dum[0]*TLM[m][4] + dum[1]*TLM[m][5] + dum[2]*TLM[m][6]  + TLM[m][7];
-                  Q[2*nlm + k] += dum[0]*TLM[m][8] + dum[1]*TLM[m][9] + dum[2]*TLM[m][10] + TLM[m][11];
+                  Q[k]         += dum[0]*TLM[i][0] + dum[1]*TLM[i][1] + dum[2]*TLM[i][2]  + TLM[i][3];
+                  Q[nlm + k]   += dum[0]*TLM[i][4] + dum[1]*TLM[i][5] + dum[2]*TLM[i][6]  + TLM[i][7];
+                  Q[2*nlm + k] += dum[0]*TLM[i][8] + dum[1]*TLM[i][9] + dum[2]*TLM[i][10] + TLM[i][11];
                }
                Q[k]       /= nim;
                Q[k+nlm]   /= nim;
@@ -729,7 +626,118 @@ int main(int argc, char **argv)
       }
    }
    // end of iterations
-   
+   //////////////////////////////////////////////////////////
+
+   //////////////////////////////////////////////////////////
+   // save outputs
+   //////////////////////////////////////////////////////////
+   for(int i=0; i<nim; i++)
+   {
+      sprintf(dummystring,"A%s.nii",imagefileprefix[i]);
+      save_nifti_image(dummystring, PILim[i].v, &PILbraincloud_hdr);
+   }
+
+   // save transformation matrix
+   for(int i=0; i<nim; i++)
+   {
+      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
+      fp=fopen(dummystring,"w");
+      printMatrix(TPIL[i],4,4,"",fp);
+      fclose(fp);
+   }
+   //////////////////////////////////////////////////////////
+
+   // free memory
+   for(int i=0; i<nim; i++)
+   {
+      free(imagefile[i]);
+      free(landmarksfile[i]);
+      free(imagefileprefix[i]);
+      free(TPIL[i]);
+      free(TLM[i]);
+      free(PILim[i].v);
+      free(im[i].v);
+      free(Pt[i]);
+   }
+   free(imagefile);
+   free(landmarksfile);
+   free(imagefileprefix);
+   free(TPIL);
+   free(TLM);
+   free(PILbraincloud);
+   free(seedi);
+   free(seedj);
+   free(seedk);
+   free(ssd);
+   free(A);
+   free(Pt);
+   free(P);
+
+   return;
+}
+
+int main(int argc, char **argv)
+{
+   time_t time_start, time_end;
+
+   time(&time_start);
+
+   FILE *fp;
+
+   // filename where the list of images to be registered are input 
+   char imagelistfile[DEFAULT_STRING_LENGTH]=""; 
+
+   int nim=0; // number of images in imagelistfile
+
+   // temporary filename used for reading or writing specific files
+   char filename[DEFAULT_STRING_LENGTH];
+
+   while( (opt=getoption(argc, argv, options)) != -1)
+   {
+      switch (opt) 
+      {
+         case 'm':
+            maxiter = atoi(optarg);
+            if(maxiter<10 || maxiter>100) maxiter=MAXITER;
+            break;
+         case 'i':
+            sprintf(imagelistfile,"%s",optarg);
+            break;
+         case 'v':
+            opt_v=YES;
+            break;
+         case 'r':
+            patch_radius = atoi(optarg);
+            if(patch_radius<=0 || patch_radius>MAX_RADIUS) patch_radius=DEFAULT_PATCh_RADIUS;
+            break;
+         case 'R':
+            search_radius = atoi(optarg);
+            if(search_radius<=0 || search_radius>MAX_RADIUS) search_radius=DEFAULT_SEARCH_RADIUS;
+            break;
+         case 't':
+            PILcloudthreshold = atoi(optarg);
+            if(PILcloudthreshold<0 || PILcloudthreshold>100) PILcloudthreshold=50;
+            break;
+         case 'h':
+            print_help_and_exit();
+            break;
+         case '?':
+            print_help_and_exit();
+      }
+   }
+
+   getARTHOME();
+
+   if(argc==1) print_help_and_exit();
+
+   if(imagelistfile[0]=='\0')
+   {
+      printf("Please specify an image list using the -imlist argument\n");
+      exit(0);
+   }
+
+   atra(imagelistfile);
+
 #if 0
    ///////////////////////////////////////////////////////////////////////////////////////////////////
    fp=fopen("secret","w");
@@ -809,34 +817,6 @@ int main(int argc, char **argv)
    fclose(fp);
    ///////////////////////////////////////////////////////////////////////////////////////////////////
 #endif
-
-   // save PIL images
-   for(int i=0; i<nim; i++)
-   {
-      sprintf(filename,"%s_PIL.nii",prefix[i]);
-      save_nifti_image(filename, PILim[i].v, &PILbraincloud_hdr);
-   }
-
-   // save transformation matrix
-   for(int i=0; i<nim; i++)
-   {
-      sprintf(filename,"%s_PIL.mrx",prefix[i]);
-      fp=fopen(filename,"w");
-      printMatrix(TPIL[i],4,4,"",fp);
-      fclose(fp);
-   }
-
-   // free memory
-   for(int i=0; i<nim; i++)
-   {
-      free(imfile[i]);
-      free(prefix[i]);
-      free(TPIL[i]);
-      free(TLM[i]);
-      free(PILim[i].v);
-   }
-   free(ssd);
-   free(PILbraincloud);
 
    time(&time_end);
    if(opt_v) printf("Execution time = %d minutes and %d seconds\n",(time_end-time_start)/60,
