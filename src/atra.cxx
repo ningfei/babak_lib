@@ -1,4 +1,7 @@
 //////////////////////////////////////////////
+// Examle VSPS detection failure
+// 141_S_4438_??.nii
+//
 // Example of failed AC detection
 // 053_S_2396_B0.nii
 //
@@ -93,7 +96,8 @@
 #define DEFAULT_SEARCH_RADIUS 5
 #define DEFAULT_PATCh_RADIUS 7
 #define MAX_RADIUS 100
-#define MAXITER 50;
+#define MAXITER 25  // default maxiter
+#define DEFAULT_STRING_LENGTH 512
 
 int delx=20;
 int dely=20;
@@ -124,6 +128,7 @@ int opt_b=NO;
 void print_help_and_exit()
 {
    printf("\nUsage: atra [-h -help -v -threshold <threshold>] -i <image list file>...>\n"
+   "-v Enables verbose mode\n" 
    "-h or -help: Prints help message\n" 
    "-o <output image name>: Specifies the filename for the outputted average image\n\n"
    "-threshold <threshold>: Binarizes the average images using <threhsold> level\n\n"
@@ -335,18 +340,17 @@ int main(int argc, char **argv)
 
    time(&time_start);
 
-   SHORTIM im;
    nifti_1_header imhdr;
    float *invT;
 
-   char dums[512];
+   char dums[DEFAULT_STRING_LENGTH];
    FILE *fp;
-   char outputfile[512];
+   char outputfile[DEFAULT_STRING_LENGTH];
 
    int cbd; //city block distance 
 
    // filename where the list of images to be registered are input 
-   char imlist[512]=""; 
+   char imlist[DEFAULT_STRING_LENGTH]=""; 
 
    int nim=0; // number of images in imlist
 
@@ -361,7 +365,7 @@ int main(int argc, char **argv)
    char **prefix;
 
    // temporary filename used for reading or writing specific files
-   char filename[512];
+   char filename[DEFAULT_STRING_LENGTH];
 
    int threshold=50;
 
@@ -369,6 +373,7 @@ int main(int argc, char **argv)
    int search_radius=DEFAULT_SEARCH_RADIUS;
 
    SHORTIM PILim[MAXIM];
+   SHORTIM im[MAXIM];
 
    int lm_in[MAXIM][3]; // (i,j,k) coordinates of the input landmarks
    int lm_out[MAXIM][3];
@@ -451,10 +456,10 @@ int main(int argc, char **argv)
    TLM = (float **)calloc(nim, sizeof(float *));
    for(int i=0; i<nim; i++)
    {
-      imfile[i] = (char *)calloc(512, sizeof(char));
+      imfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(imfile[i],"");
-      lmfile[i] = (char *)calloc(512, sizeof(char));
-      prefix[i] = (char *)calloc(512, sizeof(char));
+      lmfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      prefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       TPIL[i] = (float *)calloc(16, sizeof(float));
       TLM[i] = (float *)calloc(16, sizeof(float));
    }
@@ -514,19 +519,18 @@ int main(int argc, char **argv)
 
    for(int i=0; i<nim; i++)
    {
-         set_dim(PILim[i], PILbraincloud_hdr);
+      set_dim(PILim[i], PILbraincloud_hdr);
 
-         im.v = (short *)read_nifti_image(imfile[i], &imhdr);
-         set_dim(im, imhdr);
+      im[i].v = (short *)read_nifti_image(imfile[i], &imhdr);
+      set_dim(im[i], imhdr);
 
-         invT = inv4(TPIL[i]);
-         PILim[i].v = resliceImage(im.v, im.nx, im.ny, im.nz, im.dx, im.dy, im.dz,
-         PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
-         free(invT);
+      invT = inv4(TPIL[i]);
+      PILim[i].v = resliceImage(im[i].v, im[i].nx, im[i].ny, im[i].nz, im[i].dx, im[i].dy, im[i].dz,
+      PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
+      free(invT);
 
-         set_hdr(imhdr);
-
-         free(im.v);
+      sprintf(filename,"%s_PIL0.nii",prefix[i]);
+      save_nifti_image(filename, PILim[i].v, &PILbraincloud_hdr);
    }
 
    SPH refsph(patch_radius);
@@ -568,7 +572,8 @@ int main(int argc, char **argv)
    float **P;
    int nlm;
    int nlm_nonconvergent;
-   int nlm_noninformative;
+   int nlm_aligned;
+   int nlm_aligned_old=0;
 
    Pt = (float **)calloc(nim, sizeof(float *) );
    P = (float **)calloc(nim, sizeof(float *) );
@@ -580,151 +585,245 @@ int main(int argc, char **argv)
    int sameflag;
 
    if(opt_v) printf("LOOC landmark detection ...\n");
-   if(opt_v) printf("Maximum number of allowed iterations per seed = %d\n",maxiter);
-   nlm=0;
-   nlm_nonconvergent=0;
-   nlm_noninformative=0;
-   for(int s=0; s<nseeds; s++)
+   if(opt_v && maxiter!=MAXITER) printf("Maximum number of allowed iterations per seed = %d\n",maxiter);
+
+   for(int iteration=0; iteration<maxiter; iteration++)
    {
-      for(int m=0; m<nim; m++)
+      nlm=0;
+      nlm_nonconvergent=0;
+      nlm_aligned=0;
+
+      for(int s=0; s<nseeds; s++)
       {
-         lm_in[m][0]=seedi[s];
-         lm_in[m][1]=seedj[s];
-         lm_in[m][2]=seedk[s];
-      }
+         for(int m=0; m<nim; m++)
+         {
+            lm_in[m][0]=seedi[s];
+            lm_in[m][1]=seedj[s];
+               lm_in[m][2]=seedk[s];
+         }
+   
+         cbd = seek_lm(nim, refsph, PILim, lm_in, A, ssd, loomsk, lmcm, searchsph, testsph, lm_out);
+   
+         if(cbd>0) { nlm_nonconvergent++; continue; }
+   
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+         // this seemed to improve things in registering 941_S_4255_B0.nii and 941_S_4255_F1.nii
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+         sameflag=1;
+         for(int m=1; m<nim; m++)
+         {
+            if(lm_out[m][0] != lm_out[0][0] || lm_out[m][1] != lm_out[0][1] || lm_out[m][2] != lm_out[0][2] )
+            { sameflag=0; break; }
+         }
+   
+         //if(sameflag) { nlm_aligned++; continue;}
+         if(sameflag) { nlm_aligned++;}
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      cbd = seek_lm(nim, refsph, PILim, lm_in, A, ssd, loomsk, lmcm, searchsph, testsph, lm_out);
-
-      if(cbd>0) { nlm_nonconvergent++; continue; }
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      // this seemed to improve things in registering 941_S_4255_B0.nii and 941_S_4255_F1.nii
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      sameflag=1;
-      for(int m=1; m<nim; m++)
-      {
-         if(lm_out[m][0] != lm_out[0][0] || lm_out[m][1] != lm_out[0][1] || lm_out[m][2] != lm_out[0][2] )
-         { sameflag=0; break; }
-      }
-
-      if(sameflag) { nlm_noninformative++; continue; }
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      //printf("\nLM %d\n",nlm);
-
-      for(int m=0; m<nim; m++)
-      {
-
+         //printf("\nLM %d\n",nlm);
+   
+         for(int m=0; m<nim; m++)
+         {
+   
          Pt[m][nlm*3 + 0] = lm_out[m][0]; 
          Pt[m][nlm*3 + 1] = lm_out[m][1]; 
          Pt[m][nlm*3 + 2] = lm_out[m][2]; 
 
-         //printf("%s %d %d %d\n",imfile[m],lm_out[m][0],lm_out[m][1],lm_out[m][2]);
+            //printf("%s %d %d %d\n",imfile[m],lm_out[m][0],lm_out[m][1],lm_out[m][2]);
+         }
+   
+         nlm++;
       }
 
-      nlm++;
+      if(nlm_aligned <= nlm_aligned_old && iteration>0) break;
+      else nlm_aligned_old=nlm_aligned;
+
+      if(opt_v) printf("Iteration %d ...\n", iteration+1);
+      //if(opt_v) printf("Number of seeds = %d\n", nseeds);
+      if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
+      if(opt_v) printf("Number of aligned landmarks = %d\n",nlm_aligned);
+      if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-nlm_aligned);
+
+      if(nlm<6)
+      {
+         printf("Warning: insufficient LOOC detected. Skipping the generalized Procrustes anlaysis ...\n");
+         break;
+      }
+      else
+      {
+         float *Q;
+         float dum[3];
+         float *Ptmp;
+         float *Qtmp;
+   
+         if(opt_v) printf("Generalized Procrustes anlaysis ...\n");
+   
+         for(int m=0; m<nim; m++)
+         {
+            P[m] = (float *)calloc(3*nlm, sizeof(float) );
+            transpose_matrix(Pt[m], nlm,  3, P[m]);
+            convert_to_xyz(P[m], nlm, PILim[m]);
+         }
+   
+         Q = (float *)calloc(3*nlm, sizeof(float) );
+         Qtmp = (float *)calloc(3*nlm, sizeof(float) );
+         Ptmp = (float *)calloc(3*nlm, sizeof(float) );
+   
+         // compute initial Q
+         for(int k=0; k<3*nlm; k++)
+         {
+               Q[k]=0.0;
+               for(int m=0; m<nim; m++) Q[k] += P[m][k];
+               Q[k]/=nim;
+         }
+   
+         for(int i=0; i<100; i++)
+         {
+            for(int m=0; m<nim; m++) 
+            {
+               for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[m][k]; Qtmp[k]=Q[k]; }
+   
+               Procrustes(Qtmp, nlm, Ptmp, TLM[m]);
+   
+   //            printMatrix(TLM[m],4,4,"",NULL);
+            }
+   
+            // update Q: find a new Q as the average of transformed P[m]
+            for(int k=0; k<nlm; k++) 
+            {
+               Q[k]=Q[k+nlm]=Q[k+nlm*2]=0.0;
+               for(int m=0; m<nim; m++) 
+               {
+                  dum[0] = P[m][k];
+                  dum[1] = P[m][nlm + k];
+                  dum[2] = P[m][2*nlm + k];
+   
+                  Q[k]         += dum[0]*TLM[m][0] + dum[1]*TLM[m][1] + dum[2]*TLM[m][2]  + TLM[m][3];
+                  Q[nlm + k]   += dum[0]*TLM[m][4] + dum[1]*TLM[m][5] + dum[2]*TLM[m][6]  + TLM[m][7];
+                  Q[2*nlm + k] += dum[0]*TLM[m][8] + dum[1]*TLM[m][9] + dum[2]*TLM[m][10] + TLM[m][11];
+               }
+               Q[k]       /= nim;
+               Q[k+nlm]   /= nim;
+               Q[k+2*nlm] /= nim;
+            }
+         }
+         free(Q);
+         free(Ptmp);
+         free(Qtmp);
+      }
+   
+      // update TPIL 
+      for(int i=0; i<nim; i++)
+      {
+         multi(TLM[i],4,4,TPIL[i],4,4,TPIL[i]);
+      }
+
+      // update PILim
+      for(int i=0; i<nim; i++)
+      {
+         free(PILim[i].v);
+         invT = inv4(TPIL[i]);
+         PILim[i].v = resliceImage(im[i].v, im[i].nx, im[i].ny, im[i].nz, im[i].dx, im[i].dy, im[i].dz,
+         PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
+         free(invT);
+      }
    }
-
-   if(opt_v) printf("Number of seeds = %d\n", nseeds);
-   if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
-   if(opt_v) printf("Number of noninformative seeds = %d\n",nlm_noninformative);
-   if(opt_v) printf("Number of LOOC landmarks detected = %d\n",nlm);
-
-   if(nlm<6)
+   // end of iterations
+   
+#if 0
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+   fp=fopen("secret","w");
+   srand48(time(NULL));
+   double random_number;
+   float random_mat[16];
+   random_number=drand48();
+   fprintf(fp,"random_number 1 = %lf\n",random_number);
+   set_to_I(random_mat,4);
+   if(random_number<=(1./6.)) 
    {
-      printf("Warning: insufficient LOOC detected. Skipping the generalized Procrustes anlaysis ...\n");
-
-      for(int i=0; i<nim; i++) set_to_I(TLM[i],4);
+      random_mat[3]=0.5;
+   }
+   else if(random_number<=(2./6.)) 
+   {
+      random_mat[7]=0.5;
+   }
+   else if(random_number<=(3./6.)) 
+   {
+      random_mat[11]=0.5;
+   }
+   else if(random_number<=(4./6.)) 
+   {
+      rotate(random_mat, .5*3.14159/180., 1.0, 0.0, 0.0);
+   }
+   else if(random_number<=(5./6.)) 
+   {
+      rotate(random_mat, .5*3.14159/180., 0.0, 1.0, 0.0);
    }
    else
    {
-      float *Q;
-      float dum[3];
-      float *Ptmp;
-      float *Qtmp;
-
-      if(opt_v) printf("Generalized Procrustes anlaysis ...\n");
-
-      for(int m=0; m<nim; m++)
-      {
-         P[m] = (float *)calloc(3*nlm, sizeof(float) );
-         transpose_matrix(Pt[m], nlm,  3, P[m]);
-         convert_to_xyz(P[m], nlm, PILim[m]);
-      }
-
-      Q = (float *)calloc(3*nlm, sizeof(float) );
-      Qtmp = (float *)calloc(3*nlm, sizeof(float) );
-      Ptmp = (float *)calloc(3*nlm, sizeof(float) );
-
-      // compute initial Q
-      for(int k=0; k<3*nlm; k++)
-      {
-            Q[k]=0.0;
-            for(int m=0; m<nim; m++) Q[k] += P[m][k];
-            Q[k]/=nim;
-      }
-
-      for(int i=0; i<100; i++)
-      {
-         for(int m=0; m<nim; m++) 
-         {
-            for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[m][k]; Qtmp[k]=Q[k]; }
-
-            Procrustes(Qtmp, nlm, Ptmp, TLM[m]);
-
-//            printMatrix(TLM[m],4,4,"",NULL);
-         }
-
-         // update Q: find a new Q as the average of transformed P[m]
-         for(int k=0; k<nlm; k++) 
-         {
-            Q[k]=Q[k+nlm]=Q[k+nlm*2]=0.0;
-            for(int m=0; m<nim; m++) 
-            {
-               dum[0] = P[m][k];
-               dum[1] = P[m][nlm + k];
-               dum[2] = P[m][2*nlm + k];
-
-               Q[k]         += dum[0]*TLM[m][0] + dum[1]*TLM[m][1] + dum[2]*TLM[m][2]  + TLM[m][3];
-               Q[nlm + k]   += dum[0]*TLM[m][4] + dum[1]*TLM[m][5] + dum[2]*TLM[m][6]  + TLM[m][7];
-               Q[2*nlm + k] += dum[0]*TLM[m][8] + dum[1]*TLM[m][9] + dum[2]*TLM[m][10] + TLM[m][11];
-            }
-            Q[k]       /= nim;
-            Q[k+nlm]   /= nim;
-            Q[k+2*nlm] /= nim;
-         }
-      }
+      rotate(random_mat, .5*3.14159/180., 0.0, 0.0, 1.0);
    }
 
-   // compute and save final TPIL transformation
-   for(int i=0; i<nim; i++)
+   random_number=drand48();
+   fprintf(fp,"random_number 2 = %lf\n",random_number);
+   if(random_number<=0.25)
    {
-      multi(TLM[i],4,4,TPIL[i],4,4,TPIL[i]);
-
-      sprintf(filename,"%s_PIL.mrx",prefix[i]);
-      fp=fopen(filename,"w");
-      printMatrix(TPIL[i],4,4,"",fp);
-      fclose(fp);
+      multi(random_mat,4,4,TPIL[2],4,4,TPIL[2]);
+      free(PILim[2].v);
+      invT = inv4(TPIL[2]);
+      PILim[2].v = resliceImage(im[2].v, im[2].nx, im[2].ny, im[2].nz, im[2].dx, im[2].dy, im[2].dz,
+      PILim[2].nx, PILim[2].ny, PILim[2].nz, PILim[2].dx, PILim[2].dy, PILim[2].dz, invT, LIN);
+      free(invT);
+      fprintf(fp,"F0\n");
    }
+   else if(random_number<=0.50)
+   {
+      multi(random_mat,4,4,TPIL[3],4,4,TPIL[3]);
+      free(PILim[3].v);
+      invT = inv4(TPIL[3]);
+      PILim[3].v = resliceImage(im[3].v, im[3].nx, im[3].ny, im[3].nz, im[3].dx, im[3].dy, im[3].dz,
+      PILim[3].nx, PILim[3].ny, PILim[3].nz, PILim[3].dx, PILim[3].dy, PILim[3].dz, invT, LIN);
+      free(invT);
+      fprintf(fp,"F1\n");
+   }
+   else if(random_number<=0.75)
+   {
+      multi(random_mat,4,4,TPIL[1],4,4,TPIL[1]);
+      free(PILim[1].v);
+      invT = inv4(TPIL[1]);
+      PILim[1].v = resliceImage(im[1].v, im[1].nx, im[1].ny, im[1].nz, im[1].dx, im[1].dy, im[1].dz,
+      PILim[1].nx, PILim[1].ny, PILim[1].nz, PILim[1].dx, PILim[1].dy, PILim[1].dz, invT, LIN);
+      free(invT);
+      fprintf(fp,"B1\n");
+   }
+   else
+   {
+      multi(random_mat,4,4,TPIL[0],4,4,TPIL[0]);
+      free(PILim[0].v);
+      invT = inv4(TPIL[0]);
+      PILim[0].v = resliceImage(im[0].v, im[0].nx, im[0].ny, im[0].nz, im[0].dx, im[0].dy, im[0].dz,
+      PILim[0].nx, PILim[0].ny, PILim[0].nz, PILim[0].dx, PILim[0].dy, PILim[0].dz, invT, LIN);
+      free(invT);
+      fprintf(fp,"B0\n");
+   }
+   fclose(fp);
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
 
    // save PIL images
    for(int i=0; i<nim; i++)
    {
-         im.v = (short *)read_nifti_image(imfile[i], &imhdr);
-         set_dim(im, imhdr);
+      sprintf(filename,"%s_PIL.nii",prefix[i]);
+      save_nifti_image(filename, PILim[i].v, &PILbraincloud_hdr);
+   }
 
-         free(PILim[i].v);
-         invT = inv4(TPIL[i]);
-         PILim[i].v = resliceImage(im.v, im.nx, im.ny, im.nz, im.dx, im.dy, im.dz,
-         PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
-         free(invT);
-
-         set_hdr(imhdr);
-
-         sprintf(filename,"%s_PIL.nii",prefix[i]);
-         save_nifti_image(filename, PILim[i].v, &imhdr);
-
-         free(im.v);
+   // save transformation matrix
+   for(int i=0; i<nim; i++)
+   {
+      sprintf(filename,"%s_PIL.mrx",prefix[i]);
+      fp=fopen(filename,"w");
+      printMatrix(TPIL[i],4,4,"",fp);
+      fclose(fp);
    }
 
    // free memory
