@@ -336,19 +336,17 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    char loomsk[MAXIM];
    int lmcm[3]; // landmarks center of mass
    float PIL2OUT[16];
-   float OUT2PIL[16];
-   float OUT2RAS[16];
-   float PIL2RAS[16];
-   float T_ijk2xyz[16];
    float TOUT[16];
+   float OUT2PIL[16];
+   float PIL2RAS[16];
+   float OUT2RAS[16];
+   float T_ijk2xyz[16];
 
-   // PIL2OUT takes points from PIL space to output space
+   //PIL2OUT takes points from PIL space to output space
    inversePILtransform(output_orientation, PIL2OUT);
-   PILtransform(output_orientation, OUT2PIL);
-   inversePILtransform("RAS", PIL2RAS);
-   multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, OUT2RAS);
-   ijk2xyz(T_ijk2xyz,output_dim.nx,output_dim.ny,output_dim.nz,output_dim.dx,output_dim.dy,output_dim.dz);
-   multi(OUT2RAS, 4, 4,  T_ijk2xyz, 4,  4, OUT2RAS);
+
+   opt_qform=YES;
+   opt_sform=YES;
 
    // find nim
    fp=fopen(imagelistfile,"r");
@@ -689,7 +687,11 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       sprintf(dummystring,"A%s.nii",imagefileprefix[i]);
       save_nifti_image(dummystring, tmp, &tmp_hdr);
 
-      opt_qform=opt_sform=YES;
+      PILtransform(output_orientation, OUT2PIL);
+      inversePILtransform("RAS", PIL2RAS);
+      ijk2xyz(T_ijk2xyz, output_dim.nx, output_dim.ny, output_dim.nz, output_dim.dx, output_dim.dy, output_dim.dz);
+      multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, OUT2RAS);
+      multi(OUT2RAS, 4, 4,  T_ijk2xyz, 4,  4, OUT2RAS);
       update_qsform(dummystring, OUT2RAS);
 
       free(tmp);

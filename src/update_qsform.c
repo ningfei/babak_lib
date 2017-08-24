@@ -16,7 +16,7 @@
 int opt_sform=NO;
 int opt_qform=NO;
 
-void update_qsform( const char *imagefilename , float *matrix)
+void update_qsform(const char *imagefilename , float *matrix)
 {
    FILE *fp;
    nifti_1_header hdr; // 348 bytes
