@@ -80,17 +80,15 @@
 #include "../include/babak_lib.h"
 #include "../include/sph.h"
 #include "../include/landmarks.h"
+#include <ctype.h>
 
 #define YES 1
 #define NO 0
-
-#define MAXIM 256 // maximum number of images allowed 
 
 #define DEFAULT_SEARCH_RADIUS 5
 #define DEFAULT_PATCh_RADIUS 7
 #define MAX_RADIUS 100
 #define MAXITER 25  // default maxiter
-#define DEFAULT_STRING_LENGTH 512
 
 /////////////////////////////////////
 // Global variables required by ATRA
@@ -684,7 +682,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       set_dim(tmp_hdr, output_dim);
       tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
       sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
-      sprintf(dummystring,"A%s.nii",imagefileprefix[i]);
+      sprintf(dummystring,"%s_%s.nii",imagefileprefix[i],output_orientation);
       save_nifti_image(dummystring, tmp, &tmp_hdr);
 
       PILtransform(output_orientation, OUT2PIL);
@@ -701,7 +699,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    for(int i=0; i<nim; i++)
    {
       multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
-      sprintf(dummystring,"A%s.mrx",imagefileprefix[i]);
+      sprintf(dummystring,"%s_%s_atra.mrx",imagefileprefix[i],output_orientation);
       fp=fopen(dummystring,"w");
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
@@ -806,6 +804,9 @@ int main(int argc, char **argv)
             print_help_and_exit();
       }
    }
+
+   for(int c=0; c<4; c++)
+      output_orientation[c]=toupper(output_orientation[c]);
 
    getARTHOME();
 

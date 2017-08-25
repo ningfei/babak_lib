@@ -58,7 +58,6 @@ int opt;
 int opt_png=NO; // flag for outputing PNG images
 char opt_flip=YES;
 char flipped; // Takes YES or NO
-FILE *logfp=NULL;
 float alpha_param;
 
 /////////////////////////////////////////////////////////////////////////
@@ -75,7 +74,6 @@ static struct option options[] =
    {"-o",1,'p'},   // output prefix
    {"-b",1,'b'},   // baseline image
    {"-i",1,'b'},   // baseline image
-   {"-f",1,'f'},   // follow-up image
    {"-blm",1,'l'},  // baseline landmark 
    {"-flm",1,'m'},  // folow-up landmark 
    {"-alpha",1,'a'}, 
@@ -1095,16 +1093,6 @@ void compute_lm_transformation(char *lmfile, SHORTIM im, float4 *A)
    LM = (float4 *)calloc(4*NLM, sizeof(float4));
    CM = (float4 *)calloc(4*NLM, sizeof(float4));
 
-   if(opt_v)
-   {
-      printf("\nLandmark detection ...\n");
-//      printf("Landmarks file: %s\n", lmfile);
-//      printf("Number of landmarks sought = %d\n", NLM);
-   }
-   fprintf(logfp,"\nLandmark detection ...\n");
-   fprintf(logfp,"Landmarks file: %s\n", lmfile);
-   fprintf(logfp,"Number of landmarks sought = %d\n", NLM);
-
    for(int n=0; n<NLM; n++)
    {
       fread(&cm[0], sizeof(int), 1, fp);
@@ -1135,7 +1123,7 @@ void compute_lm_transformation(char *lmfile, SHORTIM im, float4 *A)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char *side, const char *prefix)
+void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char *side, const char *prefix, float *Tlm)
 {
    DIM subdim;
 
@@ -1157,17 +1145,15 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
    // readied for hippocampus segmentation.
    SHORTIM hcim; 
   
+   // hcT is an affine transformation from subim to hcim
+   float4 hcT[16];
+
    // hcim matrix and voxel dimensions are set to a starndard size
    set_dim(hcim, pilim);
 
    stndrd_roi = (int2 *)calloc(hcim.nv, sizeof(int2));
 
-   // hcT is an affine transformation from subim to hcim
-   float4 hcT[16];
-
-   sprintf(filename,"%s/%s.mdl",ARTHOME,side);
-   compute_lm_transformation(filename, pilim, hcT);
-   multi(hcT,4,4, pilT, 4,4, hcT);
+   multi(Tlm,4,4, pilT, 4,4, hcT);
 
    //sprintf(filename,"%s_%s.mrx",prefix,side);
    //fp=fopen(filename,"w");
@@ -1266,9 +1252,6 @@ float8 compute_hi(char *imfile, char *roifile)
       printf("Image file: %s\n", imfile);
       printf("ROI file: %s\n", roifile);
    }
-   fprintf(logfp,"Computing HPF ...\n");
-   fprintf(logfp,"Image file: %s\n", imfile);
-   fprintf(logfp,"ROI file: %s\n", roifile);
 
    roi = (int2 *)read_nifti_image(roifile, &hdr);
    nx = hdr.dim[1];
@@ -1283,10 +1266,7 @@ float8 compute_hi(char *imfile, char *roifile)
    im = (int2 *)read_nifti_image(imfile, &hdr);
    setMX(im, roi, nv, I_alpha, alpha_param);
 
-   fprintf(logfp,"Alpha parameter = %f\n", alpha_param);
-
    if(opt_v) printf("I_alpha = %d\n",I_alpha);
-   fprintf(logfp,"I_alpha = %d\n",I_alpha);
 
    for(int i=0; i<nv; i++)
       if( im[i] > I_alpha ) roi[i]=0;
@@ -1298,7 +1278,6 @@ float8 compute_hi(char *imfile, char *roifile)
    }
 
 //   if(opt_v) printf("ROI size = %d voxels\n", roisize);
-   fprintf(logfp,"ROI size = %d voxels\n", roisize);
 
    /////////////////////////////////////////////////////////////
    int im_min, im_max;
@@ -1332,7 +1311,6 @@ float8 compute_hi(char *imfile, char *roifile)
    }
 
    if(opt_v) printf("Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
-   fprintf(logfp,"Image intensity range within ROI: min=%d max=%d\n",im_min,im_max);
 
    if(im_max<NBIN) {nbin=im_max+1; binw=1; }
    else { nbin = NBIN; binw = im_max/nbin + 1; }
@@ -1443,8 +1421,6 @@ float8 compute_hi(char *imfile, char *roifile)
       printf("Image intensity threshold: %d\n",I_csf);
       //printf("K=%f\n",K);
    }
-   fprintf(logfp,"I_gm = %d\n",I_gm);
-   fprintf(logfp,"I_csf = %d\n",I_csf);
 
    {
       int n=nbin;
@@ -1487,7 +1463,6 @@ float8 compute_hi(char *imfile, char *roifile)
    {
       printf("HPF = %6.4f\n",1.0-csfvol);
    }
-   fprintf(logfp,"HPF = %6.4f\n",1.0-csfvol);
 
    return(1.0-csfvol);
 }
@@ -1496,10 +1471,23 @@ float8 compute_hi(char *imfile, char *roifile)
 
 int main(int argc, char **argv)
 {
+   float Tleft0[16], Tleft1[16], Tright0[16], Tright1[16];
+   float4 *invT;
+   SHORTIM aimpil; // average of input images after transformation to standard PIL space
+   SHORTIM im[MAXIM];
+   DIM im_dim[MAXIM];
+   nifti_1_header im_hdr[MAXIM];
+   DIM PILbraincloud_dim;
+   float TPIL[MAXIM][16];
+   float4 RHI0[MAXIM], RHI1[MAXIM], LHI0[MAXIM], LHI1[MAXIM];
+
+   int nim; // number of input images
+   char **imagefile; // the nim input image files
+   char **mrxfile; // the nim input image files
+   char **imagefileprefix; 
+   char dummystring[DEFAULT_STRING_LENGTH];
+
    short *tmp;
-   float4 RHI0, RHI1, LHI0, LHI1;
-   float4 bRHI0, bRHI1, bLHI0, bLHI1;
-   float4 fRHI0, fRHI1, fLHI0, fLHI1;
    char cmnd[1024]=""; // stores the command to run with system
    opt_ppm=YES;
    opt_txt=NO;
@@ -1511,16 +1499,12 @@ int main(int argc, char **argv)
 
    opt_txt=NO; // avoids saving *ACPC.txt files
 
-   char bprefix[1024]=""; //baseline image prefix
-   char fprefix[1024]=""; //follow-up image prefix
-
    char roifile[1024]="";
 
    char blmfile[1024]="";
    char flmfile[1024]="";
 
    char bfile[1024]=""; // baseline image filename
-   char ffile[1024]=""; // follow-up image filename
 
    if(argc==1) print_help_and_exit();
 
@@ -1555,9 +1539,6 @@ int main(int argc, char **argv)
          case 'b':
             sprintf(bfile,"%s",optarg);
             break;
-         case 'f':
-            sprintf(ffile,"%s",optarg);
-            break;
          case 'a':
             alpha_param = atof(optarg); 
             break;
@@ -1568,6 +1549,105 @@ int main(int argc, char **argv)
 
    getARTHOME();
 
+   /////////////////////////////////////////////////////////////////////////////////////
+   // input image file names and transformation file names
+   /////////////////////////////////////////////////////////////////////////////////////
+   // Ensure that a baseline image has been specified at the command line.
+   if( bfile[0]=='\0' )
+   {
+      printf("Please specify an image or an image list using -i argument. As in:\n");
+      printf("$ kaiba -i <image>.nii\nor\n");
+      printf("$ kaiba -i <imagelist>\n");
+      exit(0);
+   }
+
+   if( not_magical_nifti(bfile,0)==0 )  // a single image was specified using -i <image>.nii
+   {
+      nim=1;
+   }
+   else // an image list was specified using -i <imagelistfile>
+   {
+      fp=fopen(bfile,"r");
+      nim=0;
+      while(fscanf(fp,"%s",dummystring) != EOF ) 
+      {
+         if( not_magical_nifti(dummystring,0)==0 ) nim++;
+      }
+      fclose(fp);
+   }
+
+   if(opt_v) printf("Number of input images = %d\n\n", nim);
+   if(nim<1) exit(0);
+
+   imagefile = (char **)calloc(nim, sizeof(char *));
+   mrxfile = (char **)calloc(nim, sizeof(char *));
+   imagefileprefix = (char **)calloc(nim, sizeof(char *));
+
+   for(int i=0; i<nim; i++)
+   {
+      imagefile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagefile[i],"");
+
+      mrxfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(mrxfile[i],"");
+
+      imagefileprefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagefileprefix[i],"");
+   }
+
+   if( not_magical_nifti(bfile,0)==0 )  // a single image was specified using -i <image>.nii
+   {
+      strcpy(imagefile[0], bfile);
+      if( niftiFilename(imagefileprefix[0], imagefile[0])==0 ) { exit(0); }
+   }
+   else
+   {
+      //////////////////////////////////////////////////////////////////////////////////
+      // fill imagefile mrxfile arrays
+      //////////////////////////////////////////////////////////////////////////////////
+      fp=fopen(bfile,"r");
+      nim=0;
+      while(fscanf(fp,"%s",dummystring) != EOF ) 
+      {
+         if( not_magical_nifti(dummystring,0)==0 ) 
+         {
+            strcpy(imagefile[nim], dummystring);
+            if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
+            nim++;
+         }
+      }
+      fclose(fp);
+
+      fp=fopen(bfile,"r");
+      int c=0;
+      while(fscanf(fp,"%s",dummystring) != EOF && c<nim) 
+      {
+         if( not_magical_nifti(dummystring,0)==1 ) 
+         {
+            strcpy(mrxfile[c], dummystring);
+            c++;
+         }
+      }
+      fclose(fp);
+
+      if(c!=nim && nim>1) 
+      {
+         printf("Number of images is not the same as the number of transformations.\n");
+         exit(0);
+      }
+   }
+
+   if(opt_v)
+   {
+      for(int i=0; i<nim; i++)
+      {
+         printf("Input image %d: %s\n",i+1, imagefile[i]);
+         if(nim>1) printf("Corresponding transformation: %s\n\n",mrxfile[i]);
+      }
+   }
+   /////////////////////////////////////////////////////////////////////////////////////
+   /////////////////////////////////////////////////////////////////////////////////////
+
    // Ensure that an output prefix has been specified at the command line.
    if( opprefix[0]=='\0' )
    {
@@ -1575,30 +1655,26 @@ int main(int argc, char **argv)
       exit(0);
    }
 
-   sprintf(filename,"%s.log",opprefix);
-   logfp = fopen(filename,"w");
-
-   //////////////////////////////////////////////////////////////////////////////////
-   // Receive input image filenames and deteremine their prefix
-   //////////////////////////////////////////////////////////////////////////////////
-
-   // Ensure that a baseline image has been specified at the command line.
-   if( bfile[0]=='\0' )
+   /////////////////////////////////////////////////////////////////////////////////////
+   // read input images
+   /////////////////////////////////////////////////////////////////////////////////////
+   for(int i=0; i<nim; i++)
    {
-      printf("Please specify a baseline image using -b argument.\n");
-      exit(0);
+      im[i].v = (int2 *)read_nifti_image(imagefile[i], &im_hdr[i]);
+      if(im[i].v==NULL)
+      {
+         printf("Error reading %s, aborting ...\n", imagefile[i]);
+         exit(1);
+      }
+      set_dim(im_dim[i], im_hdr[i]);
    }
-
-   float4 pilT[16];
-   float4 bpilT[16];
-   float4 fpilT[16];
+   /////////////////////////////////////////////////////////////////////////////////////
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // read PILbraincloud.nii from the $ARTHOME directory
    // The only reason this is done is to read dimensions of PILbrain.nii
    /////////////////////////////////////////////////////////////////////////////////////////////
    int2 *PILbraincloud;
-   DIM PILbraincloud_dim;
    nifti_1_header PILbraincloud_hdr; 
 
    sprintf(filename,"%s/PILbrain.nii",ARTHOME);
@@ -1612,217 +1688,125 @@ int main(int argc, char **argv)
    }
 
    set_dim(PILbraincloud_dim, PILbraincloud_hdr);
+   set_dim(aimpil, PILbraincloud_dim); 
    delete PILbraincloud;
    /////////////////////////////////////////////////////////////////////////////////////////////
-      
+
+   /////////////////////////////////////////////////////////////////////////////////////
+   // average input images after PIL transformation and store in aimpil
+   /////////////////////////////////////////////////////////////////////////////////////
+   if(nim>1)
+   {
+      float *sum;
+      short *tmp;
+
+      aimpil.v = (short *)calloc(aimpil.nv, sizeof(short));
+      sum = (float *)calloc(aimpil.nv, sizeof(float));
+      for(int v=0; v<aimpil.nv; v++) sum[v]=0.0;
+
+      for(int i=0; i<nim; i++)
+      {
+         loadTransformation(mrxfile[i], TPIL[i]);
+         invT = inv4(TPIL[i]);
+         tmp = resliceImage(im[i].v, im_dim[i], PILbraincloud_dim, invT, LIN);
+
+         for(int v=0; v<aimpil.nv; v++) sum[v] += tmp[v];
+
+         free(invT);
+         free(tmp);
+      }
+
+      for(int v=0; v<aimpil.nv; v++) aimpil.v[v] = (short)(sum[v]/nim + 0.5);
+      free(sum);
+   } 
+   else if (nim==1) 
+   {
+      if(opt_v) printf("Computing PIL transformation ...\n");
+      new_PIL_transform(imagefile[0],blmfile,TPIL[0]);
+
+      if(opt_png)
+      {
+         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
+      }
+
+      invT = inv4(TPIL[0]);
+      aimpil.v = resliceImage(im[0].v, im_dim[0], PILbraincloud_dim, invT, LIN);
+      free(invT);
+   } 
+   /////////////////////////////////////////////////////////////////////////////////////
+   
+   /////////////////////////////////////////////////////////////////////////////////////
+   
    sprintf(filename,"%s.csv",opprefix);
    fp = fopen(filename,"w");
    if(fp==NULL) file_open_error(filename);
    fprintf(fp,"Image,Side,HPF\n");
 
-   // for longitudinal case
-   if( bfile[0]!='\0' && ffile[0]!='\0')
+   if(opt_v) printf("\nLandmark detection ...\n");
+   sprintf(filename,"%s/%s.mdl",ARTHOME,"rhc3");
+   compute_lm_transformation(filename, aimpil, Tright0);
+   sprintf(filename,"%s/%s.mdl",ARTHOME,"lhc3");
+   compute_lm_transformation(filename, aimpil, Tleft0);
+
+   flipped=NO;
+   for(int i=0; i<nim; i++)
    {
-      SHORTIM aimpil; // average of baseline and follow-up images after transformation to standard PIL space
+      find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i], Tright0);
+      sprintf(roifile,"%s_RHROI1.nii",imagefileprefix[i]);
+      RHI0[i]=compute_hi(imagefile[i], roifile);
 
-      if( niftiFilename(bprefix, bfile)==0 ) exit(1);
-      if( niftiFilename(fprefix, ffile)==0 ) exit(1);
-
-      symmetric_registration(aimpil, bfile, ffile, blmfile, flmfile, opt_v);
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      SHORTIM bim; // baseline image
-      nifti_1_header bim_hdr;  // baseline image NIFTI header
-      SHORTIM fim; // followup image
-      nifti_1_header fim_hdr;  // followup image NIFTI header
-
-      bim.v = (int2 *)read_nifti_image(bfile, &bim_hdr);
-      if(bim.v==NULL)
-      {
-         printf("Error reading %s, aborting ...\n", bfile);
-         exit(1);
-      }
-      free(bim.v);
-
-      fim.v = (int2 *)read_nifti_image(ffile, &fim_hdr);
-      if(fim.v==NULL)
-      {
-         printf("Error reading %s, aborting ...\n", ffile);
-         exit(1);
-      }
-      free(fim.v);
-
-      sprintf(filename,"%s_PIL.mrx",bprefix);
-      loadTransformation(filename, bpilT);
-
-      sprintf(filename,"%s_PIL.mrx",fprefix);
-      loadTransformation(filename, fpilT);
-
-      { 
-         flipped=NO;
-         find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI1.nii",bprefix);
-         bRHI0=compute_hi(bfile, roifile);
-
-         find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI1.nii",bprefix);
-         bLHI0=compute_hi(bfile, roifile);
-
-         find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_RHROI1.nii",fprefix);
-         fRHI0=compute_hi(ffile, roifile);
-      
-         find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_LHROI1.nii",fprefix);
-         fLHI0=compute_hi(ffile, roifile);
-      }
-
-      // if aimpil is PIR, then use 'lhc3' to find the RHROI
-      // and 'rhc3' to find the LHROI
-      if(opt_flip) 
-      { 
-         float I[16];
-
-         set_to_I(I,4);
-         I[10]=-1.0;
-         tmp = resliceImage(aimpil.v, PILbraincloud_dim, PILbraincloud_dim, I, LIN);
-         free(aimpil.v);
-         aimpil.v=tmp;
-
-         bpilT[8]*=-1.0; bpilT[9]*=-1.0; bpilT[10]*=-1.0; bpilT[11]*=-1.0; 
-         fpilT[8]*=-1.0; fpilT[9]*=-1.0; fpilT[10]*=-1.0; fpilT[11]*=-1.0; 
-
-         flipped=YES;
-         find_roi(&bim_hdr, aimpil, bpilT, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROI2.nii",bprefix);
-         bRHI1=compute_hi(bfile, roifile);
-
-         find_roi(&bim_hdr, aimpil, bpilT, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROI2.nii",bprefix);
-         bLHI1=compute_hi(bfile, roifile);
-
-         find_roi(&fim_hdr, aimpil, fpilT, "lhc3", fprefix);
-         sprintf(roifile,"%s_RHROI2.nii",fprefix);
-         fRHI1=compute_hi(ffile, roifile);
-      
-         find_roi(&fim_hdr, aimpil, fpilT, "rhc3", fprefix);
-         sprintf(roifile,"%s_LHROI2.nii",fprefix);
-         fLHI1=compute_hi(ffile, roifile);
-      }
-      else
-      {
-         bRHI1=bRHI0; bLHI1=bLHI0;
-         fRHI1=fRHI0; fLHI1=fLHI0;
-      }
-
-      fprintf(fp,"%s,Right,%lf\n",bfile,(bRHI1+bRHI0)/2.0);
-      fprintf(fp,"%s,Left,%lf\n",bfile,(bLHI1+bLHI0)/2.0);
-      fprintf(fp,"%s,Right,%lf\n",ffile,(fRHI1+fRHI0)/2.0);
-      fprintf(fp,"%s,Left,%lf\n",ffile,(fLHI1+fLHI0)/2.0);
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      delete aimpil.v;
+      find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i], Tleft0);
+      sprintf(roifile,"%s_LHROI1.nii",imagefileprefix[i]);
+      LHI0[i]=compute_hi(imagefile[i], roifile);
    }
-   else // for cross-sectional case
+
+   if(opt_flip) 
+   { 
+      flipped=YES;
+      float I[16];
+
+      set_to_I(I,4);
+      I[10]=-1.0;
+      tmp = resliceImage(aimpil.v, PILbraincloud_dim, PILbraincloud_dim, I, LIN);
+      free(aimpil.v);
+      aimpil.v=tmp;
+
+      if(opt_v) printf("\nLandmark detection ...\n");
+      sprintf(filename,"%s/%s.mdl",ARTHOME,"lhc3");
+      compute_lm_transformation(filename, aimpil, Tright1);
+      sprintf(filename,"%s/%s.mdl",ARTHOME,"rhc3");
+      compute_lm_transformation(filename, aimpil, Tleft1);
+
+      for(int i=0; i<nim; i++)
+      {
+         TPIL[i][8]*=-1.0; TPIL[i][9]*=-1.0; TPIL[i][10]*=-1.0; TPIL[i][11]*=-1.0; 
+
+         find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i],Tright1);
+         sprintf(roifile,"%s_RHROI2.nii",imagefileprefix[i]);
+         RHI1[i]=compute_hi(imagefile[i], roifile);
+
+         find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i],Tleft1);
+         sprintf(roifile,"%s_LHROI2.nii",imagefileprefix[i]);
+         LHI1[i]=compute_hi(imagefile[i], roifile);
+      }
+   }
+   else
    {
-      SHORTIM bimpil; // baseline image after transformation to standard PIL space
-
-      // find baseline image prefix bprefix
-      // Note: niftiFilename does a few extra checks to ensure that the file has either
-      // .hdr or .nii extension, the magic field in the header is set correctly, 
-      // the file can be opened and a header can be read.
-      if( niftiFilename(bprefix, bfile)==0 ) exit(1);
-
-      if(opt_v) printf("Baseline image prefix: %s\n",bprefix);
-      fprintf(logfp,"Baseline image prefix: %s\n",bprefix);
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      // Read baseline image
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      SHORTIM bim; // baseline image
-      nifti_1_header bhdr;  // baseline image NIFTI header
-      DIM dimb; // baseline image dimensions structure
-
-      bim.v = (int2 *)read_nifti_image(bfile, &bhdr);
-
-      if(bim.v==NULL)
+      for(int i=0; i<nim; i++)
       {
-         printf("Error reading %s, aborting ...\n", bfile);
-         exit(1);
+         RHI1[i]=RHI0[i]; LHI1[i]=LHI0[i];
       }
-
-      // because some functions used dimb and some use bim
-      set_dim(dimb, bhdr); // copies dimensions from bhder to dimb
-      set_dim(bim, dimb); // copies dimensions from dimb to bim 
-      ///////////////////////////////////////////////////////////////////////////////////////////////
-      
-      float4 bTPIL[16]; // rigid-body transformation takes the baseline image to standard PIL orientation 
-      float4 *invT;
-
-      if(opt_v) printf("Computing baseline image PIL transformation ...\n");
-      fprintf(logfp,"Computing baseline image PIL transformation ...\n");
-
-      new_PIL_transform(bfile,blmfile,bTPIL);
-      if(opt_png)
-      {
-         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
-      }
-
-      // create bimpil image (baseline image in PIL orientation)
-      invT = inv4(bTPIL);
-      bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
-      set_dim(bimpil, PILbraincloud_dim);
-      free(invT);
-
-      // save bimpil image
-      sprintf(PILbraincloud_hdr.descrip,"Created by ART's KAIBA module");
-      sprintf(filename,"%s_PIL.nii",bprefix);
-      save_nifti_image(filename, bimpil.v, &PILbraincloud_hdr);
-
-      {
-         flipped=NO;
-         find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_RHROI1.nii",bprefix);
-         RHI0=compute_hi(bfile, roifile);
-
-         find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_LHROI1.nii",bprefix);
-         LHI0=compute_hi(bfile, roifile);
-      }
-
-      if(opt_flip) 
-      { 
-         flipped=YES;
-         delete bimpil.v;
-         bTPIL[8]*=-1.0; bTPIL[9]*=-1.0; bTPIL[10]*=-1.0; bTPIL[11]*=-1.0; 
-         invT = inv4(bTPIL);
-         bimpil.v = resliceImage(bim.v, dimb, PILbraincloud_dim, invT, LIN);
-         free(invT);
-
-         // since bimpil is PIR, use 'lhc3' to find the RHROI
-         // and 'rhc3' to find the LHROI
-         find_roi(&bhdr, bimpil, bTPIL, "lhc3", bprefix);
-         sprintf(roifile,"%s_RHROI2.nii",bprefix);
-         RHI1=compute_hi(bfile, roifile);
-
-         find_roi(&bhdr, bimpil, bTPIL, "rhc3", bprefix);
-         sprintf(roifile,"%s_LHROI2.nii",bprefix);
-         LHI1=compute_hi(bfile, roifile);
-      }
-      else
-      {
-         RHI1=RHI0; LHI1=LHI0;
-      }
-
-      delete bimpil.v;
-
-      fprintf(fp,"%s,Right,%lf\n",bfile,(RHI1+RHI0)/2.0);
-      fprintf(fp,"%s,Left,%lf\n",bfile,(LHI1+LHI0)/2.0);
    }
+
+   for(int i=0; i<nim; i++)
+   {
+      fprintf(fp,"%s,Right,%lf\n",imagefile[i],(RHI1[i]+RHI0[i])/2.0);
+      fprintf(fp,"%s,Left,%lf\n",imagefile[i],(LHI1[i]+LHI0[i])/2.0);
+   }
+
+   delete aimpil.v;
 
    fclose(fp);
-
-   if(logfp != NULL) fclose(logfp);
 }
