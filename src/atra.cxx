@@ -80,6 +80,7 @@
 #include "../include/babak_lib.h"
 #include "../include/sph.h"
 #include "../include/landmarks.h"
+#include "../include/minmax.h"
 #include <ctype.h>
 
 #define YES 1
@@ -104,6 +105,8 @@ int opt;
 static struct option options[] =
 {
    {"-orient",1,'O'},
+   {"-k",1,'k'},
+   {"-kaiba",1,'k'},
    {"-nx",1,'x'},
    {"-ny",1,'y'},
    {"-nz",1,'z'},
@@ -294,7 +297,7 @@ SPH &searchsph, SPH &testsph, int lm_out[][3])
    return(d);
 }
 
-void atra(const char *imagelistfile, DIM output_dim, const char *output_orientation)
+void atra(const char *imagelistfile, DIM output_dim, const char *output_orientation, const char *kaibafile)
 {
    FILE *fp;
    int nim=0; // number of image files in imagelistfile
@@ -319,15 +322,16 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    SPH refsph(patch_radius);
    SPH testsph(patch_radius);
    SPH searchsph(search_radius);
+   int *alignedLM;
    float **Pt;
    float **P;
    int nlm;
    int nlm_nonconvergent;
-   int nlm_aligned;
-   int nlm_aligned_old=0;
+   int current_nlm_aligned;
+   int final_nlm_aligned=0;
    float *ssd;
    float *A; // (NxM) matrix where N=n; M=sph.n
-   int sameflag;
+   char *sameflag;
    int lm_in[MAXIM][3]; // (i,j,k) coordinates of the input landmarks
    int lm_out[MAXIM][3];
    int cbd; //city block distance 
@@ -490,6 +494,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    seedi = (int *)calloc(nseeds, sizeof(int));
    seedj = (int *)calloc(nseeds, sizeof(int));
    seedk = (int *)calloc(nseeds, sizeof(int));
+   sameflag = (char *)calloc(nseeds, sizeof(char));
+   alignedLM = (int *)calloc(nseeds*3, sizeof(int));
 
    nseeds=0;
    for(int i=0; i<PILbraincloud_dim.nx; i += del)
@@ -523,10 +529,12 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    {
       nlm=0;
       nlm_nonconvergent=0;
-      nlm_aligned=0;
+      current_nlm_aligned=0;
 
       for(int s=0; s<nseeds; s++)
       {
+         sameflag[s]=0;
+
          // initialize the landmark location for all images to be the same
          for(int i=0; i<nim; i++)
          {
@@ -542,14 +550,14 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
          /////////////////////////////////////////////////////////////////////////////////////////////////////
          // check to see if the LOOC converged to the same location in all images
          /////////////////////////////////////////////////////////////////////////////////////////////////////
-         sameflag=1;
+         sameflag[s]=1;
          for(int i=1; i<nim; i++)
          {
             if(lm_out[i][0] != lm_out[0][0] || lm_out[i][1] != lm_out[0][1] || lm_out[i][2] != lm_out[0][2] )
-            { sameflag=0; break; }
+            { sameflag[s]=0; break; }
          }
    
-         if(sameflag) { nlm_aligned++;}
+         if(sameflag[s]) { current_nlm_aligned++;}
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          //printf("\nLM %d\n",nlm);
@@ -557,9 +565,9 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
          for(int i=0; i<nim; i++)
          {
    
-         Pt[i][nlm*3 + 0] = lm_out[i][0]; 
-         Pt[i][nlm*3 + 1] = lm_out[i][1]; 
-         Pt[i][nlm*3 + 2] = lm_out[i][2]; 
+            Pt[i][nlm*3 + 0] = lm_out[i][0]; 
+            Pt[i][nlm*3 + 1] = lm_out[i][1]; 
+            Pt[i][nlm*3 + 2] = lm_out[i][2]; 
 
             //printf("%s %d %d %d\n",imagefile[i],lm_out[i][0],lm_out[i][1],lm_out[i][2]);
          }
@@ -567,14 +575,36 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
          nlm++;
       }
 
-      if(nlm_aligned <= nlm_aligned_old && iteration>0) break;
-      else nlm_aligned_old=nlm_aligned;
+      if(current_nlm_aligned <= final_nlm_aligned && iteration>0) break;
+      else  //final_nlm_aligned does not get update, nor is alignedLM
+      {
+         int incrementflg;
+
+         final_nlm_aligned=0;
+         for(int lm=0; lm<nlm; lm++)
+         {
+            incrementflg=1;
+            for(int i=1; i<nim; i++)
+            {
+               if(Pt[i][lm*3+0] != Pt[0][lm*3+0] || Pt[i][lm*3+1] != Pt[0][lm*3+1] || Pt[i][lm*3+2] != Pt[0][lm*3+2] ) 
+               { incrementflg=0; break; }
+            }
+
+            if(incrementflg)
+            {
+               alignedLM[3*final_nlm_aligned+0]=Pt[0][lm*3+0];
+               alignedLM[3*final_nlm_aligned+1]=Pt[0][lm*3+1];
+               alignedLM[3*final_nlm_aligned+2]=Pt[0][lm*3+2];
+               final_nlm_aligned++;
+            }
+         }
+      }
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
       //if(opt_v) printf("Number of seeds = %d\n", nseeds);
       //if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
-      if(opt_v) printf("Number of aligned landmarks = %d\n",nlm_aligned);
-      //if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-nlm_aligned);
+      if(opt_v) printf("Number of aligned landmarks = %d\n",current_nlm_aligned);
+      //if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
 
       if(nlm<6)
       {
@@ -661,6 +691,48 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    // end of iterations
    //////////////////////////////////////////////////////////
 
+   float *mean, *scale_factor;
+   float min, max;
+   int ii,jj,kk,np,ny,nv;
+
+   fp = fopen(kaibafile,"w");
+   fprintf(fp,"%d\n",nim);
+   mean = (float *)calloc(nim, sizeof(float));
+   scale_factor = (float *)calloc(nim, sizeof(float));
+
+   for(int i=0; i<nim; i++) mean[i]=0.0;
+
+   for(int lm=0; lm<final_nlm_aligned; lm++)
+   {
+      ii=alignedLM[3*lm+0];
+      jj=alignedLM[3*lm+1];
+      kk=alignedLM[3*lm+2];
+      for(int i=0; i<nim; i++)
+      {
+         np = PILim[i].np;
+         ny = PILim[i].ny;
+         mean[i] += PILim[i].v[kk*np + jj*ny + ii];
+      }
+   }
+
+   for(int i=0; i<nim; i++) 
+   {
+      mean[i]/=final_nlm_aligned;
+   }
+
+   minmax(mean,nim,min,max);
+
+   for(int i=0; i<nim; i++) 
+   {
+      scale_factor[i] = min/mean[i];
+      fprintf(fp,"%s %f\n",imagefile[i],scale_factor[i]);
+      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
+      fprintf(fp,"%s\n",dummystring);
+   }
+   fclose(fp);
+
+   free(mean);
+   free(scale_factor);
 
    //////////////////////////////////////////////////////////
    // save outputs
@@ -698,8 +770,11 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    // save transformation matrix
    for(int i=0; i<nim; i++)
    {
+      sprintf(dummystring,"%s_PIL.mrx",imagefileprefix[i]);
+      remove(dummystring);
+
       multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
-      sprintf(dummystring,"%s_%s_atra.mrx",imagefileprefix[i],output_orientation);
+      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
       fp=fopen(dummystring,"w");
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
@@ -727,6 +802,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    free(seedi);
    free(seedj);
    free(seedk);
+   free(sameflag);
+   free(alignedLM);
    free(ssd);
    free(A);
    free(Pt);
@@ -749,6 +826,8 @@ int main(int argc, char **argv)
 
    // filename where the list of images to be registered are input 
    char imagelistfile[DEFAULT_STRING_LENGTH]=""; 
+
+   char kaibafile[DEFAULT_STRING_LENGTH]="kaiba.txt";
 
    while( (opt=getoption(argc, argv, options)) != -1)
    {
@@ -775,6 +854,9 @@ int main(int argc, char **argv)
          case 'm':
             maxiter = atoi(optarg);
             if(maxiter<10 || maxiter>100) maxiter=MAXITER;
+            break;
+         case 'k':
+            sprintf(kaibafile,"%s",optarg);
             break;
          case 'i':
             sprintf(imagelistfile,"%s",optarg);
@@ -826,7 +908,7 @@ int main(int argc, char **argv)
 
    if(opt_v) printf("Output orientation: %s\n",output_orientation);
 
-   atra(imagelistfile, output_dim, output_orientation);
+   atra(imagelistfile, output_dim, output_orientation, kaibafile);
 
 #if 0
    ///////////////////////////////////////////////////////////////////////////////////////////////////

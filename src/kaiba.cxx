@@ -74,8 +74,7 @@ static struct option options[] =
    {"-o",1,'p'},   // output prefix
    {"-b",1,'b'},   // baseline image
    {"-i",1,'b'},   // baseline image
-   {"-blm",1,'l'},  // baseline landmark 
-   {"-flm",1,'m'},  // folow-up landmark 
+   {"-lm",1,'l'},  // landmark  file
    {"-alpha",1,'a'}, 
    {"-a",1,'a'}, 
    {0,0,0}
@@ -1485,6 +1484,7 @@ int main(int argc, char **argv)
    char **imagefile; // the nim input image files
    char **mrxfile; // the nim input image files
    char **imagefileprefix; 
+   float *scalefactor;
    char dummystring[DEFAULT_STRING_LENGTH];
 
    short *tmp;
@@ -1501,8 +1501,7 @@ int main(int argc, char **argv)
 
    char roifile[1024]="";
 
-   char blmfile[1024]="";
-   char flmfile[1024]="";
+   char lmfile[1024]="";
 
    char bfile[1024]=""; // baseline image filename
 
@@ -1531,10 +1530,7 @@ int main(int argc, char **argv)
             sprintf(opprefix,"%s",optarg);
             break;
          case 'l':
-            sprintf(blmfile,"%s",optarg);
-            break;
-         case 'm':
-            sprintf(flmfile,"%s",optarg);
+            sprintf(lmfile,"%s",optarg);
             break;
          case 'b':
             sprintf(bfile,"%s",optarg);
@@ -1568,11 +1564,7 @@ int main(int argc, char **argv)
    else // an image list was specified using -i <imagelistfile>
    {
       fp=fopen(bfile,"r");
-      nim=0;
-      while(fscanf(fp,"%s",dummystring) != EOF ) 
-      {
-         if( not_magical_nifti(dummystring,0)==0 ) nim++;
-      }
+      fscanf(fp,"%d",&nim);
       fclose(fp);
    }
 
@@ -1582,6 +1574,7 @@ int main(int argc, char **argv)
    imagefile = (char **)calloc(nim, sizeof(char *));
    mrxfile = (char **)calloc(nim, sizeof(char *));
    imagefileprefix = (char **)calloc(nim, sizeof(char *));
+   scalefactor = (float *)calloc(nim, sizeof(float));
 
    for(int i=0; i<nim; i++)
    {
@@ -1599,6 +1592,7 @@ int main(int argc, char **argv)
    {
       strcpy(imagefile[0], bfile);
       if( niftiFilename(imagefileprefix[0], imagefile[0])==0 ) { exit(0); }
+      scalefactor[0]=1.0;
    }
    else
    {
@@ -1606,35 +1600,15 @@ int main(int argc, char **argv)
       // fill imagefile mrxfile arrays
       //////////////////////////////////////////////////////////////////////////////////
       fp=fopen(bfile,"r");
-      nim=0;
-      while(fscanf(fp,"%s",dummystring) != EOF ) 
+      fscanf(fp,"%d",&nim);
+      for(int i=0; i<nim; i++)
       {
-         if( not_magical_nifti(dummystring,0)==0 ) 
-         {
-            strcpy(imagefile[nim], dummystring);
-            if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
-            nim++;
-         }
+         fscanf(fp,"%s",imagefile[i]);
+         fscanf(fp,"%f",&scalefactor[i]);
+         fscanf(fp,"%s",mrxfile[i]);
+         if( niftiFilename(imagefileprefix[i], imagefile[i])==0 ) { exit(0); }
       }
       fclose(fp);
-
-      fp=fopen(bfile,"r");
-      int c=0;
-      while(fscanf(fp,"%s",dummystring) != EOF && c<nim) 
-      {
-         if( not_magical_nifti(dummystring,0)==1 ) 
-         {
-            strcpy(mrxfile[c], dummystring);
-            c++;
-         }
-      }
-      fclose(fp);
-
-      if(c!=nim && nim>1) 
-      {
-         printf("Number of images is not the same as the number of transformations.\n");
-         exit(0);
-      }
    }
 
    if(opt_v)
@@ -1642,7 +1616,8 @@ int main(int argc, char **argv)
       for(int i=0; i<nim; i++)
       {
          printf("Input image %d: %s\n",i+1, imagefile[i]);
-         if(nim>1) printf("Corresponding transformation: %s\n\n",mrxfile[i]);
+         if(nim>1) printf("Transformation matrix: %s\n",mrxfile[i]);
+         if(nim>1) printf("Scale factor: %f\n\n",scalefactor[i]);
       }
    }
    /////////////////////////////////////////////////////////////////////////////////////
@@ -1710,7 +1685,7 @@ int main(int argc, char **argv)
          invT = inv4(TPIL[i]);
          tmp = resliceImage(im[i].v, im_dim[i], PILbraincloud_dim, invT, LIN);
 
-         for(int v=0; v<aimpil.nv; v++) sum[v] += tmp[v];
+         for(int v=0; v<aimpil.nv; v++) sum[v] += tmp[v]*scalefactor[i];
 
          free(invT);
          free(tmp);
@@ -1722,7 +1697,7 @@ int main(int argc, char **argv)
    else if (nim==1) 
    {
       if(opt_v) printf("Computing PIL transformation ...\n");
-      new_PIL_transform(imagefile[0],blmfile,TPIL[0]);
+      new_PIL_transform(imagefile[0],lmfile,TPIL[0]);
 
       if(opt_png)
       {
@@ -1800,11 +1775,8 @@ int main(int argc, char **argv)
       }
    }
 
-   for(int i=0; i<nim; i++)
-   {
-      fprintf(fp,"%s,Right,%lf\n",imagefile[i],(RHI1[i]+RHI0[i])/2.0);
-      fprintf(fp,"%s,Left,%lf\n",imagefile[i],(LHI1[i]+LHI0[i])/2.0);
-   }
+   for(int i=0; i<nim; i++) fprintf(fp,"%s,Right,%lf\n",imagefile[i],(RHI1[i]+RHI0[i])/2.0);
+   for(int i=0; i<nim; i++) fprintf(fp,"%s,Left,%lf\n",imagefile[i],(LHI1[i]+LHI0[i])/2.0);
 
    delete aimpil.v;
 
