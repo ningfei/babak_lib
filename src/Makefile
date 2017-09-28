@@ -5,7 +5,7 @@ INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
 #LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 LIBS =  -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -L /lib64 -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
-all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra
+all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -237,3 +237,11 @@ oi: libbabak_lib_linux.a oi.cxx
 atra: libbabak_lib_linux.a atra.cxx
 	$(CC) $(CFLAGS) -o atra atra.cxx $(INC) $(LIBS)
 	mv atra ../bin
+
+art2fsl: libbabak_lib_linux.a art2fsl.cxx
+	$(CC) $(CFLAGS) -o art2fsl art2fsl.cxx $(INC) $(LIBS)
+	mv art2fsl ../bin
+
+fsl2art: libbabak_lib_linux.a fsl2art.cxx
+	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
+	mv fsl2art ../bin
