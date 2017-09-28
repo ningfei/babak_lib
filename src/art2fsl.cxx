@@ -44,15 +44,18 @@ static struct option options[] =
 
 void print_help_and_exit()
 {
-   printf("\nUsage: art2fsl [-v -h] -i <ART matrix> -o <FSL matrix>\n"
-   "-Tnx <n> -Tny <n> -Tnz <n> -Tdx <f> -Tdy <f> -Tdz <f>\n"
-   "-Snx <n> -Sny <n> -Snz <n> -Sdx <f> -Sdy <f> -Sdz <f>\n"
-   "Required:\n"
-   "\t-i <image list file>: A text file containing the list of NIFTI images to be registered\n"
-   "\t-nx <int> -ny <int> -nz <int>: Output matrix size (default: 255x255x189)\n\n"
-   "\t-dx <float> -dy <float> -dz <float>: Output voxel size (default: 1.0x1.0x1.0 mm^3)\n\n"
-   "Options:\n"
-   "\t-v Enables verbose mode\n\n" 
+   printf("\nUsage: art2fsl [-v] -i <ART matrix> -o <FSL matrix> "
+   "-Tnx <int> -Tny <int> -Tnz <int> -Tdx <float> -Tdy <float> -Tdz <float> "
+   "-Snx <int> -Sny <int> -Snz <int> -Sdx <float> -Sdy <float> -Sdz <float>\n"
+   "\nRequired:\n"
+   "\t-i <ART matrix file>: Input FSL matrix file usually 'something'.mrx\n"
+   "\t-o <FSL matrix file>: Output ART matrix file usually 'something'.mat\n"
+   "\t-Tnx <int> -Tny <int> -Tnz <int>: 'Target' (aka 'reference') image matrix dimensions\n"
+   "\t-Tdx <float> -Tdy <float> -Tdz <float>: 'Target' (aka 'reference') image voxel dimensions (mm)\n"
+   "\t-Snx <int> -Sny <int> -Snz <int>: 'Subject' (aka 'moving' or FSL's 'input') image matrix dimensions\n"
+   "\t-Sdx <float> -Sdy <float> -Sdz <float>: 'Subject' (aka 'moving' or FSL's 'input') image voxel dimensions (mm)\n"
+   "\nOptions:\n"
+   "\t-v Enables verbose mode\n" 
    );
 
    exit(0);
@@ -66,6 +69,8 @@ int main(int argc, char **argv)
    float Mfsl[16];
    DIM sub_dim, trg_dim;
    FILE *fp;
+
+   if(argc==1) print_help_and_exit();
 
    while( (opt=getoption(argc, argv, options)) != -1)
    {

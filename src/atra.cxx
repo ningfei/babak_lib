@@ -344,7 +344,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    char loomsk[MAXIM];
    int lmcm[3]; // landmarks center of mass
    float PIL2OUT[16];
-   float TOUT[16];
+   float TOUT[16], TOUT_FSL[16];
    float OUT2PIL[16];
    float PIL2RAS[16];
    float OUT2RAS[16];
@@ -771,11 +771,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       update_qsform(dummystring, OUT2RAS);
 
       free(tmp);
-   }
 
-   // save transformation matrix
-   for(int i=0; i<nim; i++)
-   {
+      // save transformation matrix
       sprintf(dummystring,"%s_PIL.mrx",imagefileprefix[i]);
       remove(dummystring);
 
@@ -783,6 +780,12 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
       fp=fopen(dummystring,"w");
       printMatrix(TOUT,4,4,"",fp);
+      fclose(fp);
+
+      art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
+      sprintf(dummystring,"%s_FSL.mat",imagefileprefix[i]);
+      fp=fopen(dummystring,"w");
+      printMatrix(TOUT_FSL,4,4,"",fp);
       fclose(fp);
    }
    //////////////////////////////////////////////////////////
