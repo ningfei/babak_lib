@@ -823,6 +823,9 @@ int2 *readNiftiImage(const char *filename, DIM *dim, int4 flg);
 
 #ifndef _utils
 
+extern void art_to_fsl(float *Mart, float *Mfsl, DIM sub_dim, DIM trg_dim);
+extern void fsl_to_art(float *Mfsl, float *Mart, DIM sub_dim, DIM trg_dim);
+
 // Set the nxn matrix A equal to the identity matrix
 extern void set_to_I( float4 *A, int4 n);
 

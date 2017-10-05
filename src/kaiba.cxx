@@ -1693,6 +1693,9 @@ int main(int argc, char **argv)
 
       for(int v=0; v<aimpil.nv; v++) aimpil.v[v] = (short)(sum[v]/nim + 0.5);
       free(sum);
+
+      sprintf(filename,"%s_avg_PIL.nii",opprefix);
+      save_nifti_image(filename, aimpil.v, &PILbraincloud_hdr);
    } 
    else if (nim==1) 
    {
