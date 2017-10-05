@@ -1,3 +1,6 @@
+# for makhmal
+MPICC = /usr/local/openmpi/bin/mpic++ -Wall
+
 CFLAGS = -funroll-all-loops -O3
 CC = g++
 #INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
@@ -5,7 +8,7 @@ INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
 #LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
 LIBS =  -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -L /lib64 -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
 
-all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art
+all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
 
 # because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
 
@@ -245,3 +248,7 @@ art2fsl: libbabak_lib_linux.a art2fsl.cxx
 fsl2art: libbabak_lib_linux.a fsl2art.cxx
 	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
 	mv fsl2art ../bin
+
+yuki: libbabak_lib_linux.a yuki.cxx
+	$(MPICC) $(CFLAGS) -o yuki yuki.cxx $(INC) $(LIBS)
+	mv yuki ../bin
