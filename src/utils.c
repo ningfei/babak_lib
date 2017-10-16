@@ -8,10 +8,10 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
-#include "../include/spm_analyze.h"
-#include "../include/niftiimage.h"
-#include "../include/babak_lib.h"
-#include "../include/smooth.h"
+#include <spm_analyze.h>
+#include <niftiimage.h>
+#include <babak_lib.h>
+#include <smooth.h>
 
 void art_to_fsl(float *Mart, float *Mfsl, DIM sub_dim, DIM trg_dim);
 void fsl_to_art(float *Mfsl, float *Mart, DIM sub_dim, DIM trg_dim);

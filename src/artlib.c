@@ -3,10 +3,10 @@
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
-#include "../include/babak_lib.h"
-#include "../include/minmax.h"
-#include "../include/stats.h"
-#include "../include/interpolator.h"
+#include <babak_lib.h>
+#include <minmax.h>
+#include <stats.h>
+#include <interpolator.h>
 
 #define _artlib
 

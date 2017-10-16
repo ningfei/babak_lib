@@ -1,6 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 void SE3_to_se3(float4 *M, float4 *w, float4 *v, float4 &theta)
 {

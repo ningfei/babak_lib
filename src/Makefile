@@ -3,14 +3,12 @@ MPICC = /usr/local/openmpi/bin/mpic++ -Wall
 
 CFLAGS = -funroll-all-loops -O3
 CC = g++
-#INC = -I$(HOME)/include -I/usr/local/dmp/nifti/include
-INC= -I$(HOME)/include -I/usr/local/dmp/include -I/usr/local/dmp/nifti/include
-#LIBS = -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -lbabak_lib_linux -lniftiio -lznz -lm -lz -lc
-LIBS =  -L$(HOME)/lib -L/usr/local/dmp/nifti/lib -L ../lib -lbabak_lib_linux -lniftiio -lznz -lm -L /lib64 -lz -lc -L/usr/local/dmp/lib -ldcdf -llevmar -llapack -lblas -lf2c
+INC= -I../include
+LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -ldcdf -llevmar -llapack -lblas
 
-all: libbabak_lib_linux.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
+all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
 
-# because of functions in matrixops, linking the libbabak_lib will possibly require lapack libs.
+# because of functions in matrixops, linking the libbabak will possibly require lapack libs.
 
 leastSquaresAffineTrans.o: leastSquaresAffineTrans.c
 	$(CC) -O2 -c $(INC) leastSquaresAffineTrans.c
@@ -174,58 +172,58 @@ getARTHOME.o: getARTHOME.c
 update_qsform.o: update_qsform.c
 	$(CC) -O2 -c $(INC) update_qsform.c
 
-libbabak_lib_linux.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
-	ar -ru ../lib/libbabak_lib_linux.a leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
+libbabak.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
+	ar -ru ../lib/libbabak.a leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
 
 clean: 
 	rm -f *.o
 
 # compilation of executables
-PILtransform: libbabak_lib_linux.a PILtransform.cxx
+PILtransform: libbabak.a PILtransform.cxx
 	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(LIBS) $(INC)
 	mv PILtransform ../bin
 
-brainwash: libbabak_lib_linux.a brainwash.cxx
+brainwash: libbabak.a brainwash.cxx
 	$(CC) $(CFLAGS) -o brainwash brainwash.cxx $(LIBS) $(INC)
 	mv brainwash ../bin
 
-3dwarper: libbabak_lib_linux.a 3dwarper.cxx
+3dwarper: libbabak.a 3dwarper.cxx
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.cxx $(LIBS) $(INC)
 	mv 3dwarper ../bin
 
-acpcdetect: libbabak_lib_linux.a acpcdetect.cxx
+acpcdetect: libbabak.a acpcdetect.cxx
 	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.cxx $(LIBS) $(INC)
 	mv acpcdetect ../bin
 
-applywarp3d: libbabak_lib_linux.a applywarp3d.cxx
+applywarp3d: libbabak.a applywarp3d.cxx
 	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LIBS)
 	mv applywarp3d ../bin
 
-scaleImage: libbabak_lib_linux.a scaleImage.cxx
+scaleImage: libbabak.a scaleImage.cxx
 	$(CC) $(CFLAGS) -o scaleImage scaleImage.cxx $(INC) $(LIBS)
 	mv scaleImage ../bin
 
-avgImage: libbabak_lib_linux.a avgImage.cxx
+avgImage: libbabak.a avgImage.cxx
 	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
 	mv avgImage ../bin
 
-ivf: libbabak_lib_linux.a ivf.cxx
+ivf: libbabak.a ivf.cxx
 	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)
 	mv ivf ../bin
 
-unwarp2d: libbabak_lib_linux.a unwarp2d.cxx
+unwarp2d: libbabak.a unwarp2d.cxx
 	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.cxx $(INC) $(LIBS)
 	mv unwarp2d ../bin
 
-cphdr: libbabak_lib_linux.a cphdr.cxx
+cphdr: libbabak.a cphdr.cxx
 	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
 	mv cphdr ../bin
 
-reslice: libbabak_lib_linux.a reslice.cxx
+reslice: libbabak.a reslice.cxx
 	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
 	mv reslice ../bin
 
-kaiba: libbabak_lib_linux.a kaiba.cxx
+kaiba: libbabak.a kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
 	mv kaiba ../bin
 #Example: $(CC) $(CFLAGS) -o kaiba kaiba.cxx -DBETA_PARAM=0.3 $(INC) $(LIBS)
@@ -233,22 +231,22 @@ kaiba: libbabak_lib_linux.a kaiba.cxx
 # having the following statement in kaiba.cxx
 #define BETA_PARAM 0.3
 
-oi: libbabak_lib_linux.a oi.cxx
+oi: libbabak.a oi.cxx
 	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)
 	mv oi ../bin
 
-atra: libbabak_lib_linux.a atra.cxx
+atra: libbabak.a atra.cxx
 	$(CC) $(CFLAGS) -o atra atra.cxx $(INC) $(LIBS)
 	mv atra ../bin
 
-art2fsl: libbabak_lib_linux.a art2fsl.cxx
+art2fsl: libbabak.a art2fsl.cxx
 	$(CC) $(CFLAGS) -o art2fsl art2fsl.cxx $(INC) $(LIBS)
 	mv art2fsl ../bin
 
-fsl2art: libbabak_lib_linux.a fsl2art.cxx
+fsl2art: libbabak.a fsl2art.cxx
 	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
 	mv fsl2art ../bin
 
-yuki: libbabak_lib_linux.a yuki.cxx
+yuki: libbabak.a yuki.cxx
 	$(MPICC) $(CFLAGS) -o yuki yuki.cxx $(INC) $(LIBS)
 	mv yuki ../bin

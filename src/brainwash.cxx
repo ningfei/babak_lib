@@ -12,14 +12,14 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include "../include/volume.h"
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
-#include "../include/sph.h"
-#include "../include/smooth.h"
-#include "../include/minmax.h"
-#include "../include/interpolator.h"
-#include "../include/stats.h"
+#include <volume.h>
+#include <spm_analyze.h>
+#include <babak_lib.h>
+#include <sph.h>
+#include <smooth.h>
+#include <minmax.h>
+#include <interpolator.h>
+#include <stats.h>
 
 #define YES 1
 #define NO 0

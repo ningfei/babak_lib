@@ -3,8 +3,8 @@
 #include <stdlib.h> 
 #include <math.h>
 #include <stdio.h>
-#include "../include/babak_lib.h"
-#include "../include/stats.h"
+#include <babak_lib.h>
+#include <stats.h>
 
 //////////////////////////////////////////////////////////////////
 float imageMean(short *im, short *msk, int nv)

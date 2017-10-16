@@ -1,9 +1,9 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
-#include "../include/minmax.h"
+#include <spm_analyze.h>
+#include <babak_lib.h>
+#include <minmax.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 

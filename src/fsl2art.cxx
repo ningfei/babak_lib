@@ -8,11 +8,11 @@
 #include <time.h>       //      required by time()
 #include <sys/stat.h>   //      required by stat() 
 #include <unistd.h>
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
-#include "../include/sph.h"
-#include "../include/landmarks.h"
-#include "../include/minmax.h"
+#include <spm_analyze.h>
+#include <babak_lib.h>
+#include <sph.h>
+#include <landmarks.h>
+#include <minmax.h>
 #include <ctype.h>
 
 #define YES 1

@@ -1,4 +1,4 @@
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 void leastSquaresAffineTrans(float4 *P, float4 *Q, int4 n, float4 *A)
 {

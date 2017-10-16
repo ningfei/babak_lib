@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <nifti1_io.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 //////////////////////////////////////////////////////////////////
 nifti_1_header read_NIFTI_hdr(const char *filename)

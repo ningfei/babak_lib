@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "../include/nki.h"
-#include "../include/babak_lib.h"
+#include <nki.h>
+#include <babak_lib.h>
 
 // Returns 1 if file can be read and is NKI format, 0 otherwise
 int isNKI(char *file)

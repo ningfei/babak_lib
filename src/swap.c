@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 void swapByteOrder(char *in, int4 N)
 {

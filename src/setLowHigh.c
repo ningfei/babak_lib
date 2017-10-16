@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "../include/minmax.h"
-#include "../include/babak_lib.h"
+#include <minmax.h>
+#include <babak_lib.h>
 
 void setLowHigh(int2 *image, int4 nv, int4 *low, int4 *high)
 {

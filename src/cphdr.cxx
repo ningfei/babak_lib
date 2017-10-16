@@ -9,8 +9,8 @@
 #include <time.h>       //      required by time()
 #include <sys/stat.h>   //      required by stat() 
 #include <unistd.h>
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
+#include <spm_analyze.h>
+#include <babak_lib.h>
 
 #define YES 1
 #define NO 0

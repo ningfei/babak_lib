@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "../include/minmax.h"
+#include <minmax.h>
 
 double *findHistogram(short *im, int nv, int nb, int low, int high, int *bw_return);
 double *findHistogram(short *im1, short *im2, int nv, int nb1, int nb2, int *bw1_r, int *bw2_r, int low1, int high1, int low2, int high2);

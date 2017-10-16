@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 #include <assert.h>
 
 #define _matrixCom

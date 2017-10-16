@@ -4,8 +4,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
+#include <spm_analyze.h>
+#include <babak_lib.h>
 
 
 void Connected_Components( char *im, int nx, int ny, int nz, int *LABEL, int *N, int **Clabel, int **Size);

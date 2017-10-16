@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <nifti1.h>
 #include <nifti1_io.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 void getNiftiImageOrientation(const char *filename, char *orientation)
 {

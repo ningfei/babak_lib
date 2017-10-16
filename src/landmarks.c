@@ -1,6 +1,6 @@
-#include "../include/babak_lib.h"
-#include "../include/sph.h"
-#include "../include/stats.h"
+#include <babak_lib.h>
+#include <sph.h>
+#include <stats.h>
 #include <nifti1.h>
 #include <stdio.h>
 #include <stdlib.h>

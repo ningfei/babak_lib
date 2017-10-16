@@ -1,6 +1,6 @@
-#include "../include/babak_lib.h"
-#include "../include/sph.h"
-#include "../include/minmax.h"
+#include <babak_lib.h>
+#include <sph.h>
+#include <minmax.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 int opt;

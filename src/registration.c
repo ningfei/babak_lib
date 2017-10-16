@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 #define NBIN 256
 #define MCC     2048 /* maximum number of allowed 2D connected components */

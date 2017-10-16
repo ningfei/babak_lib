@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
-#include "../include/babak_lib.h"
+#include <babak_lib.h>
 
 #define NO 0
 #define YES 1

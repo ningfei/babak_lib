@@ -76,11 +76,11 @@
 #include <time.h>       //      required by time()
 #include <sys/stat.h>   //      required by stat() 
 #include <unistd.h>
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
-#include "../include/sph.h"
-#include "../include/landmarks.h"
-#include "../include/minmax.h"
+#include <spm_analyze.h>
+#include <babak_lib.h>
+#include <sph.h>
+#include <landmarks.h>
+#include <minmax.h>
 #include <ctype.h>
 
 #define YES 1
@@ -118,6 +118,7 @@ static struct option options[] =
    {"-imlist", 1, 'i'},
    {"-i", 1, 'i'},
    {"-maxiter", 1, 'm'},
+   {"-del", 1, 'd'},
    {"-threshold", 1, 't'},
    {"-r", 1, 'r'},
    {"-R", 1, 'R'},
@@ -530,6 +531,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
 
    if(opt_v) printf("LOOC landmark detection ...\n");
    if(opt_v && maxiter!=MAXITER) printf("Maximum number of allowed iterations per seed = %d\n",maxiter);
+   if(opt_v && del!=20) printf("Del = %d\n",del);
 
    for(int iteration=0; iteration<maxiter; iteration++)
    {
@@ -607,10 +609,10 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       }
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
-      //if(opt_v) printf("Number of seeds = %d\n", nseeds);
-      //if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
+      if(opt_v) printf("Number of seeds = %d\n", nseeds);
+      if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
       if(opt_v) printf("Number of aligned landmarks = %d\n",current_nlm_aligned);
-      //if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
+      if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
 
       if(nlm<6)
       {
@@ -856,6 +858,9 @@ int main(int argc, char **argv)
             break;
          case 'y':
             output_dim.ny = atoi(optarg);
+            break;
+         case 'd':
+            del = atoi(optarg);
             break;
          case 'z':
             output_dim.nz = atoi(optarg);

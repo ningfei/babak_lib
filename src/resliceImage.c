@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "../include/babak_lib.h"
-#include "../include/interpolator.h"
+#include <babak_lib.h>
+#include <interpolator.h>
 
 char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {

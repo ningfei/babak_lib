@@ -10,13 +10,13 @@
 #include <time.h>       //      required by time()
 #include <sys/stat.h>   //      required by stat() 
 #include <unistd.h>
-#include "volume.h"
-#include "spm_analyze.h"
+#include <volume.h>
+#include <spm_analyze.h>
 #include <nifti1_io.h>
-#include "babak_lib.h"
-#include "stats.h"
-#include "minmax.h"
-#include "smooth.h"
+#include <babak_lib.h>
+#include <stats.h>
+#include <minmax.h>
+#include <smooth.h>
 #include <mpi.h>
 
 #define YES 1
@@ -103,6 +103,7 @@ int opt;
 
 static struct option options[] =
 {
+   {"-A", 1,  'L'},
    {"-version", 0,  'V'},
    {"-h", 0,  'h'},
    {"-help", 0,  'h'},
@@ -2447,6 +2448,7 @@ int main(int argc, char **argv)
    short *atlas_msp_ptr;
    short *atlas_cc_ptr;
 
+   char preselected_atlases[1024]="";
    char selected_atlases_file[1024]="";
    char subjectfile[1024]="";
    char csvfile[1024]="";
@@ -2540,6 +2542,9 @@ int main(int argc, char **argv)
             sprintf(atlasfile,"%s",optarg);
             opt_a=YES;
             break;
+         case 'L':
+            sprintf(preselected_atlases,"%s",optarg);
+            break;
          case 'c':
             sprintf(csvfile,"%s",optarg);
             break;
@@ -2602,6 +2607,22 @@ int main(int argc, char **argv)
             exit(0);
       }
    }
+
+   /////////////////////////////////////////////////////////////////////////////////////////////
+   
+   if(preselected_atlases[0]!='\0') 
+   {
+      int dum;
+      fp = fopen(preselected_atlases,"r");
+      fscanf(fp,"%d\n",&number_of_atlases_used);
+      for(int i=0; i<number_of_atlases_used; i++) fscanf(fp,"%d\n",&dum);
+      fscanf(fp,"%f\n",&max_t);
+      fclose(fp);
+   }
+
+   /////////////////////////////////////////////////////////////////////////////////////////////
+
+   if(max_t<0.0 || max_t>100.0) max_t=0.0;
 
    /////////////////////////////////////////////////////////////////////////////////////////////
    // get the value of the ARTHOME environment variable
@@ -2818,21 +2839,6 @@ int main(int argc, char **argv)
       MPI_Bcast(&vox_offset, 1, MPI_INT, root, MPI_COMM_WORLD);
       bbnp= bbnx*bbny;
 
-      // ensures that the number of atlases used does no exceed the number of atlases available
-      if(number_of_atlases_available < number_of_atlases_used)
-      {
-         number_of_atlases_used = number_of_atlases_available;
-      }
-
-      if(procID==root && opt_v)
-      {
-         //printf("process %d sees:\n",procID);
-         //printf("Atlas matrix size = %d x %d (pixels)\n", bbnx, bbny);
-         //printf("Atlas voxel size = %8.6f x %8.6f x %8.6f (mm3)\n", dx, dy, dz);
-         printf("Number of atlases available = %d\n", number_of_atlases_available);
-         printf("Number of atlases used = %d\n", number_of_atlases_used);
-      }
-
       /////////////////////////////////////////////////////////////////////////////////////////
 
       if(procID==root && atlas_hdr.datatype != DT_SIGNED_SHORT && atlas_hdr.datatype != 512)
@@ -2889,6 +2895,33 @@ int main(int argc, char **argv)
          dumf = (float *)calloc(bbnp, sizeof(float));
       }
 
+      if(preselected_atlases[0]!='\0') 
+      {
+         if(procID==root)
+            printf("Preselected atlases = %s\n", preselected_atlases);
+
+         fp = fopen(preselected_atlases,"r");
+         fscanf(fp,"%d\n",&number_of_atlases_used);
+         fclose(fp);
+      }
+   
+      /////////////////////////////////////////////////////////////////////////////////////////
+      // ensures that the number of atlases used does no exceed the number of atlases available
+      
+      if(number_of_atlases_available < number_of_atlases_used)
+      {
+         number_of_atlases_used = number_of_atlases_available;
+      }
+
+      if(procID==root && opt_v)
+      {
+         //printf("process %d sees:\n",procID);
+         //printf("Atlas matrix size = %d x %d (pixels)\n", bbnx, bbny);
+         //printf("Atlas voxel size = %8.6f x %8.6f x %8.6f (mm3)\n", dx, dy, dz);
+         printf("Number of atlases available = %d\n", number_of_atlases_available);
+         printf("Number of atlases used = %d\n", number_of_atlases_used);
+      }
+
       /////////////////////////////////////////////////////////////////////////////////////////
       // All processes need to allocate memory for these
 
@@ -2941,6 +2974,16 @@ int main(int argc, char **argv)
 
          }
          hpsort(number_of_atlases_available, corr, atlas_indx);
+
+         // if atlases are preselected, read them into last elements of atlas_indx
+         if(preselected_atlases[0]!='\0') 
+         {
+            fp = fopen(preselected_atlases,"r");
+            fscanf(fp,"%d\n",&number_of_atlases_used);
+            for(int i=0; i<number_of_atlases_used; i++)
+               fscanf(fp,"%d\n",&atlas_indx[number_of_atlases_available-1-i]);
+            fclose(fp);
+         }
 
          // saves the selected atlases
          sprintf(selected_atlases_file,"%s_A.txt",prefix);

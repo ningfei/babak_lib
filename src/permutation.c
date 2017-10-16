@@ -1,4 +1,4 @@
-#include "../include/permutation.h"
+#include <permutation.h>
 #include <stdlib.h>		// srand48()
 #include <stdio.h>
 #include <time.h>		// time()

@@ -9,11 +9,11 @@
 #include <time.h>       //      required by time()
 #include <sys/stat.h>   //      required by stat() 
 #include <unistd.h>
-#include "../include/volume.h"
-#include "../include/spm_analyze.h"
-#include "../include/babak_lib.h"
-#include "../include/smooth.h"
-#include "../include/minmax.h"
+#include <volume.h>
+#include <spm_analyze.h>
+#include <babak_lib.h>
+#include <smooth.h>
+#include <minmax.h>
 
 #define YES 1
 #define NO 0

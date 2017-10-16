@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "../include/babak_lib.h"
-#include "../include/resizeX.h"
+#include <babak_lib.h>
+#include <resizeX.h>
 
 int2 *resizeZ(float4 *image1, int4 nx1, int4 ny1, int4 nz1, float4 dz1, int4 nz2, float4 dz2);
 float4 *resizeZ(float4 *image1, int4 nx1, int4 ny1, int4 nz1, float4 dz1, int4 *nz2, float4 *dz2);
