@@ -34,7 +34,7 @@ static float VertexNew[3];
 void getDirectoryName(const char *pathname, char *dirname);
 void orig_ijk_to_pil_xyz(float *Tmsp, DIM orig_dim, float *AC, float *PC);
 void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg);
-void brandImage(char *R, char *G, char *B, int nx, int ny, int sx, int sy, int L1, int L2, char Rvalue, char Gvalue, char Bvalue);
+void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, int ny, int sx, int sy, int L1, int L2, unsigned char Rvalue, unsigned char Gvalue, unsigned char Bvalue);
 void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,  
 float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, int opt_D);
 void compute_MSP_parameters_from_Tmsp(float *Tmsp, float *n, float *d);
@@ -291,7 +291,7 @@ void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg)
    multi(T, 4,4, Tacpc, 4, 4, Tacpc);
 }
 
-void brandImage(char *R, char *G, char *B, int nx, int ny, int sx, int sy, int L1, int L2, char Rvalue, char Gvalue, char Bvalue)
+void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, int ny, int sx, int sy, int L1, int L2, unsigned char Rvalue, unsigned char Gvalue, unsigned char Bvalue)
 {
    if(sy>=0 && sy<ny && sx>=0 && sx<nx)
    {
@@ -321,7 +321,7 @@ void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, c
 float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, int opt_D)
 {
    char filename[1024]; // filename variable for reading/writing data files
-   char *Rchannel, *Gchannel, *Bchannel;
+   unsigned char *Rchannel, *Gchannel, *Bchannel;
    int npHR;
    float TPIL2LPS[16];
    float Tacpc[16], *invT; 
@@ -334,9 +334,9 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
 
    npHR = HR.nx * HR.ny;
 
-   Rchannel = (char *)calloc(npHR, 1);
-   Gchannel = (char *)calloc(npHR, 1);
-   Bchannel = (char *)calloc(npHR, 1);
+   Rchannel = (unsigned char *)calloc(npHR, 1);
+   Gchannel = (unsigned char *)calloc(npHR, 1);
+   Bchannel = (unsigned char *)calloc(npHR, 1);
 
    inversePILtransform("LPS", TPIL2LPS);
 
