@@ -1,3 +1,4 @@
+
 # for makhmal
 MPICC = /usr/local/openmpi/bin/mpic++ -Wall
 
@@ -6,7 +7,11 @@ CC = g++
 INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llevmar -llapack -lblas
 
-all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
+all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
+
+createDir:
+	mkdir -p ../bin
+	mkdir -p ../lib
 
 # because of functions in matrixops, linking the libbabak will possibly require lapack libs.
 
