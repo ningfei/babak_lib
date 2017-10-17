@@ -7,6 +7,7 @@
 #include <minmax.h>
 #include <stats.h>
 #include <interpolator.h>
+#include <nifti1_io.h>
 
 #define _artlib
 

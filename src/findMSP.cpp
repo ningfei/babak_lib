@@ -1,4 +1,5 @@
 #include <babak_lib.h>
+#include <math.h>
 
 // Inputs:
 // filename: NIFTI image filename on which the MSP is to be detected

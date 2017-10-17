@@ -1,7 +1,9 @@
 #ifndef _babak_lib_h
 #define _babak_lib_h
 
-#include <nifti1_io.h>
+#include <nifti1.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef unsigned char uchar;
 typedef unsigned short uint2;
