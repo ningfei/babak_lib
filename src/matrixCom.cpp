@@ -1300,13 +1300,15 @@ float *inv4(float *A)
 
    detA=det4(A);
 
-	if(detA!=0.0);
-	for(i=0;i<16;i++)  
-		invA[i]=transC[i]/detA;
+   if(detA!=0.0)
+   {
+      for(i=0;i<16;i++)  
+        invA[i]=transC[i]/detA;
+   }
 
-	free(transC);
+   free(transC);
 
-   	return(invA);
+   return(invA);
 }
 
 void multi(double *A, int iA, int jA,  float *B, int iB,  int jB,  float *C)
@@ -1449,11 +1451,13 @@ double *inv3(double *A)
 
    detA=det3(A);
 
-	if(detA!=0.0);
-	for(int i=0; i<9; i++)  
-		invA[i]=CT[i]/detA;
+   if(detA!=0.0)
+   {
+      for(int i=0; i<9; i++)  
+         invA[i]=CT[i]/detA;
+   }
 
-   	return(invA);
+   return(invA);
 }
 
 float *inv3(float *A)
@@ -1476,33 +1480,37 @@ float *inv3(float *A)
 
    detA=det3(A);
 
-	if(detA!=0.0);
-	for(int i=0; i<9; i++)  
-		invA[i]=CT[i]/detA;
+   if(detA!=0.0)
+   {
+      for(int i=0; i<9; i++)  
+      invA[i]=CT[i]/detA;
+   }
 
-   	return(invA);
+   return(invA);
 }
 
 void inv3(float *A, float *invA)
 {
-	float CT[9];
-	float detA;
+   float CT[9];
+   float detA;
 
-	CT[0] = A[4]*A[8] - A[5]*A[7];
-	CT[1] = A[2]*A[7] - A[1]*A[8];
-	CT[2] = A[1]*A[5] - A[2]*A[4];
-	CT[3] = A[5]*A[6] - A[3]*A[8];
-	CT[4] = A[0]*A[8] - A[2]*A[6];
-	CT[5] = A[2]*A[3] - A[0]*A[5];
-	CT[6] = A[3]*A[7] - A[4]*A[6];
-	CT[7] = A[1]*A[6] - A[0]*A[7];
-	CT[8] = A[0]*A[4] - A[1]*A[3];
+   CT[0] = A[4]*A[8] - A[5]*A[7];
+   CT[1] = A[2]*A[7] - A[1]*A[8];
+   CT[2] = A[1]*A[5] - A[2]*A[4];
+   CT[3] = A[5]*A[6] - A[3]*A[8];
+   CT[4] = A[0]*A[8] - A[2]*A[6];
+   CT[5] = A[2]*A[3] - A[0]*A[5];
+   CT[6] = A[3]*A[7] - A[4]*A[6];
+   CT[7] = A[1]*A[6] - A[0]*A[7];
+   CT[8] = A[0]*A[4] - A[1]*A[3];
 
-	detA=det3(A);
+   detA=det3(A);
 
-	if(detA!=0.0);
-	for(int i=0; i<9; i++)  
-		invA[i]=CT[i]/detA;
+   if(detA!=0.0)
+   {
+      for(int i=0; i<9; i++)  
+         invA[i]=CT[i]/detA;
+   }
 }
 
 // inverse is computed as the transpose of the cofactors divided by the determinant
@@ -1515,7 +1523,7 @@ float *inv2(float *A)
 
 	detA=A[0]*A[3]-A[1]*A[2];
 
-	if(detA!=0.0);
+	if(detA!=0.0)
 	{
 		invA[0] = A[3]/detA;
 		invA[1] = -A[1]/detA;
@@ -1535,7 +1543,7 @@ double *inv2(double *A)
 
 	detA=A[0]*A[3]-A[1]*A[2];
 
-	if(detA!=0.0);
+	if(detA!=0.0)
 	{
 		invA[0] = A[3]/detA;
 		invA[1] = -A[1]/detA;
@@ -1642,13 +1650,15 @@ double *inv4(double *A)
 
    detA=det4(A);
 
-	if(detA!=0.0);
-	for(i=0;i<16;i++)  
-		invA[i]=transC[i]/detA;
+   if(detA!=0.0)
+   {
+      for(i=0;i<16;i++)  
+         invA[i]=transC[i]/detA;
+   }
 
-	free(transC);
+   free(transC);
 
-   	return(invA);
+   return(invA);
 }
 
 //////////////////////////////////////////////////////////////////

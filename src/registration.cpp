@@ -391,11 +391,19 @@ void cca(short *im, int nx, int ny, int nz)
 	}
 
    for(i=0;i<nv;i++)
-	if(im[i] ) 
-		if( codebook[ im[i] ]==k )
-			im[i] = 1;
-		else
-			im[i] = 0;
+   {
+      if( im[i] ) 
+      {
+         if( codebook[ im[i] ]==k )
+         {
+            im[i] = 1;
+         }
+         else
+         {
+            im[i] = 0;
+         }
+      }
+   }
 
    for(k=0;k<nz;k++)
    {
