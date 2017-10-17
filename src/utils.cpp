@@ -1523,7 +1523,7 @@ void get_temp_filename(char *filename)
 		return;
 	}
 
-	sprintf(filename,"/tmp/DELETEME%dd",getpid(),n);
+	sprintf(filename,"/tmp/DELETEME%d%d",getpid(),n);
 	fp=fopen(filename,"w");
 	if(fp != NULL)
 	{

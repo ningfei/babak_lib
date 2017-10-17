@@ -593,7 +593,7 @@ int *N, int **Clabel, int **Size)
 	// Calculates total number of distinct component
 
 	(*Clabel) = (int *)calloc(NEWLABEL,sizeof(int));
-        for( int i=0; i< NEWLABEL; i++) (*Clabel)[i]==0;
+        for( int i=0; i< NEWLABEL; i++) (*Clabel)[i]=0;
 
 	// Finds the first label number in image 'LABEL' 
 	for( int i=0; i< (nx*ny*nz); i++)

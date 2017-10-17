@@ -1742,6 +1742,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
    delete volumeMSP_HR;
 
    delete mask_HR;
+
+   return(0);
 }
 
 float reflectVertex(int pmax, float fac)

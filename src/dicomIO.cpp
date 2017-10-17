@@ -233,7 +233,7 @@ int readFileMetaInfo(const char *filename, DICOM_file_meta_info *file_meta_info,
          {
             printf("\nTag (%04X,%04X)\n", GN,EN);
             printf("VR = %c%c\n", VR[0], VR[1]);
-            printf("Value Length = %d\n", VL);
+            printf("Value Length = %lu\n", VL);
             printf("Group Length = %d\n", group_length);
          }
       }
@@ -251,7 +251,7 @@ int readFileMetaInfo(const char *filename, DICOM_file_meta_info *file_meta_info,
          {
             printf("\nTag (%04X,%04X)\n", GN,EN);
             printf("VR = %c%c\n", VR[0], VR[1]);
-            printf("Value Length = %d\n", VL);
+            printf("Value Length = %lu\n", VL);
             printf("Media Storage SOP Class UID = %s\n", file_meta_info->media_storage_SOP_class);
          }
       }
@@ -269,7 +269,7 @@ int readFileMetaInfo(const char *filename, DICOM_file_meta_info *file_meta_info,
          {
             printf("\nTag (%04X,%04X)\n", GN,EN);
             printf("VR = %c%c\n", VR[0], VR[1]);
-            printf("Value Length = %d\n", VL);
+            printf("Value Length = %lu\n", VL);
             printf("Transfer Syntax UID = %s\n", file_meta_info->transfer_syntax);
          }
       }
@@ -455,7 +455,7 @@ count++;
          continue;
       }
 
-      printf("Value Length = %d\n", VL);
+      printf("Value Length = %lu\n", VL);
 
       if( GN==0x0008 && EN==0x0008) // Patient ID, VL=LO
       {
@@ -3140,15 +3140,15 @@ unsigned long *oVL, char *oV, long *valueOffset)
 	if(fp==NULL)
 	{
 		printf("\nError: cannot open %s\n\n",file);
-		delete GN, EN, VL2, VL4;
+		delete GN; delete EN; delete VL2; delete VL4;
 		return(1);
 	}
 
 	if( fseek(fp,byteOffset,SEEK_SET)==-1)
 	{
-		printf("\n%d byte fseek() failed for %s\n\n",byteOffset,file);
+		printf("\n%ld byte fseek() failed for %s\n\n",byteOffset,file);
 		fclose(fp);
-		delete GN, EN, VL2, VL4;
+		delete GN; delete EN; delete VL2; delete VL4;
 		return(1);
 	}
 
@@ -3245,7 +3245,7 @@ unsigned long *oVL, char *oV, long *valueOffset)
 	fclose(fp);
 
 
-	delete GN, EN, VL2, VL4;
+	delete GN; delete EN; delete VL2; delete VL4;
 
 	if(errorFlag)
 		return(1);
