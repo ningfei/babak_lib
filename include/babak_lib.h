@@ -331,7 +331,6 @@ extern float4 reflection_cross_correlation(int2 *image, DIM dim, float4 a, float
 extern void findInitialNormalVector(int2 *image, DIM dim, float4 *A, float4 *B,float4 *C);
 extern float4 msp(int2 *im_in, int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *A, float4 *B, float4 *C);
 extern void computeTmsp(char *orientation, int2 *volOrig, DIM dim, float4 *Tmsp);
-extern int4 save_as_ppm(const char *filename, int4 nx, int4 ny, char *R, char *G, char *B);
 extern int4 save_as_ppm(const char *filename, int4 nx, int4 ny, uchar *R, uchar *G, uchar *B);
 extern void combine_warps_and_trans(int4 nx, int4 ny, int4 nz, float4 dx, float4 dy, float4 dz, float4 *Xwarp, float4 *Ywarp, float4 *Zwarp, float4 *T);
 #endif

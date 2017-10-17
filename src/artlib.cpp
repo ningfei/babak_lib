@@ -354,9 +354,9 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
 
    for(int i=0; i<npHR; i++)
    {
-      Rchannel[i] = (char)(im[i]*255.0/max);
-      Gchannel[i] = (char)(im[i]*255.0/max);
-      Bchannel[i] = (char)(im[i]*255.0/max);
+      Rchannel[i] = (unsigned char)(im[i]*255.0/max);
+      Gchannel[i] = (unsigned char)(im[i]*255.0/max);
+      Bchannel[i] = (unsigned char)(im[i]*255.0/max);
    }
 
    if(opt_D) brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(rp[0]+0.5), (int)(rp[1]+0.5), 4, 4, 0, 0, 255);
@@ -2258,33 +2258,6 @@ float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, fl
    free(image[2]);
 
    return(cc);
-}
-
-int save_as_ppm(const char *filename, int nx, int ny, char *R, char *G, char *B)
-{
-	FILE *fp;
-	int np;
-
-	np = nx*ny;
-
-	fp = fopen(filename,"w");
-	if(fp == NULL) return(1);
-
-	fprintf(fp,"P6\n");
-	fprintf(fp,"# Created by Automatic Registration Toolbox \n");
-	fprintf(fp,"%d %d\n",nx, ny);
-	fprintf(fp,"255\n");
-
-	for(int i=0; i<np; i++)
-	{
-		fwrite(R+i, 1, 1, fp);
-		fwrite(G+i, 1, 1, fp);
-		fwrite(B+i, 1, 1, fp);
-	}
-
-	fclose(fp);
-
-	return(0);
 }
 
 int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned char *G, unsigned char *B)
