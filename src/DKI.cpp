@@ -60,21 +60,6 @@ void formA7(float *A, int n, float *u1, float *u2, float *u3, float *b, float *w
 
 ////////////////////////////////////////////////////////////////////////////////
 
-float *formA(float *A, int n, float *u1, float *u2, float *u3, float *b, float scale)
-{
-   for(int i=0; i<n; i++)
-   {
-      A[i*6+0] = -b[i]*u1[i]*u1[i]/scale;
-      A[i*6+1] = -b[i]*2.0*u1[i]*u2[i]/scale;
-      A[i*6+2] = -b[i]*2.0*u1[i]*u3[i]/scale;
-      A[i*6+3] = -b[i]*u2[i]*u2[i]/scale;
-      A[i*6+4] = -b[i]*2.0*u2[i]*u3[i]/scale;
-      A[i*6+5] = -b[i]*u3[i]*u3[i]/scale;
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 float estimate_K(float *A, float *x, float *y, int n)
 {
    float Knum=0.0;

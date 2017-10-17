@@ -285,7 +285,6 @@ extern void second_and_fourth_order_moments(float4 *x, float4 *y, float4 *E, flo
 extern float4 mardia_kurtosis(float4 *x1, float4 *x2, int4 v);
 extern float4 mardia_kurtosis(float4 *x);
 
-extern float4 *formA(float4 *A, int4 n, float4 *u1, float4 *u2, float4 *u3, float4 *b, float4 scale);
 extern float4 estimate_K(float4 *A, float4 *x, float4 *y, int4 n);
 extern void update_x(float4 *A, float4 *x, float4 *y, float4 K, int4 n);
 extern void update_v(float4 *u0, float4 *u1, float4 *u2, float4 *b, float4 *y, int4 n, float4 *v, float4 scale);
