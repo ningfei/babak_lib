@@ -1322,17 +1322,17 @@ int main(int argc, char **argv)
 
       ////////////////////////////////////////////////////////////////////////////////////////////
       // Compute the affine transformation  atl_to_sub and update atl2PIL
-      if(opt_v) printf("Affine registration @ 12.5\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 12.5%% resolution ...\n");
       generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
       affineReg(PILatl8, PILsub8, PILmsk8, dim8, patch_r, search_R, A);
       multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
 
-      if(opt_v) printf("Affine registration @ 25\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 25%% resolution ...\n");
       generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
       affineReg(PILatl4, PILsub4, PILmsk4, dim4, patch_r, search_R, A);
       multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
 
-      if(opt_v) printf("Affine registration @ 50\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 50%% resolution ...\n");
       generateMultiResolution(atl, atlDim, atl2PIL+i*16, PILatl1, PILatl2, PILatl4, PILatl8);
       affineReg(PILatl2, PILsub2, PILmsk2, dim2, patch_r, search_R, A);
       multi(A,4,4,atl2PIL+i*16,4,4,atl2PIL+i*16);  // update atl2PIL
@@ -1532,14 +1532,14 @@ exit(0);
       for(int v=0; v<dim1.nv; v++) Xwarp[v]=Ywarp[v]=Zwarp[v]=0.0;
 
 /*
-      if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 12.5%% resolution ...\n");
       for(int i=0; i<iter8; i++)
       {
          generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
          brainwashnlReg(PILatl8, PILsub8, PILmsk8, dim8, patch_r, search_R/3, Xwarp, Ywarp, Zwarp,5);
       }
 
-      if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 25%% resolution ...\n");
       for(int i=0; i<iter4; i++)
       {
          generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
@@ -1547,14 +1547,14 @@ exit(0);
       }
 */
 
-      if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 50%% resolution ...\n");
       for(int i=0; i<iter2; i++)
       {
          generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);
          brainwashnlReg(PILatl2, PILsub2, PILmsk2, dim2, patch_r, search_R, Xwarp, Ywarp, Zwarp,5);
       }
 
-      if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 100%% resolution ...\n");
       for(int i=0; i<iter1; i++)
       {
          generateMultiResolution(atl, atlDim, atl2PIL+ai*16, Xwarp, Ywarp, Zwarp, PILatl1, PILatl2, PILatl4, PILatl8);

@@ -822,17 +822,17 @@ int main(int argc, char **argv)
       float A[16];
       FILE *fp;
 
-      if(opt_v) printf("Affine registration @ 12.5\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 12.5%% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL8, trgPIL8, mskPIL8, dim8, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
-      if(opt_v) printf("Affine registration @ 25\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 25%% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL4, trgPIL4, mskPIL4, dim4, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
 
-      if(opt_v) printf("Affine registration @ 50\% resolution ...\n");
+      if(opt_v) printf("Affine registration @ 50%% resolution ...\n");
       generateMultiResolution(sub, dim_sub, subTPIL, subPIL1, subPIL2, subPIL4, subPIL8);
       affineReg(subPIL2, trgPIL2, mskPIL2, dim2, patch_r, search_R, A);
       multi(A,4,4,subTPIL,4,4,subTPIL);  // update subTPIL according to A
@@ -886,7 +886,7 @@ int main(int argc, char **argv)
 
    if(iter8>=1)
    {
-      if(opt_v) printf("Non-linear registration @ 12.5\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 12.5%% resolution ...\n");
       for(int i=0; i<iter8; i++)
       {
          generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
@@ -896,7 +896,7 @@ int main(int argc, char **argv)
 
    if(iter4>=1)
    {
-      if(opt_v) printf("Non-linear registration @ 25\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 25%% resolution ...\n");
       for(int i=0; i<iter4; i++)
       {
          generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
@@ -906,7 +906,7 @@ int main(int argc, char **argv)
 
    if(iter2>=1)
    {
-      if(opt_v) printf("Non-linear registration @ 50\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 50%% resolution ...\n");
       for(int i=0; i<iter2; i++)
       {
          generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);
@@ -916,7 +916,7 @@ int main(int argc, char **argv)
 
    if(iter1>=1)
    {
-      if(opt_v) printf("Non-linear registration @ 100\% resolution ...\n");
+      if(opt_v) printf("Non-linear registration @ 100%% resolution ...\n");
       for(int i=0; i<iter1; i++)
       {
          generateMultiResolution(sub, dim_sub, subTPIL, Xwarp, Ywarp, Zwarp, subPIL1, subPIL2, subPIL4, subPIL8);

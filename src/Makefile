@@ -1,7 +1,7 @@
 # for makhmal
 MPICC = /usr/local/openmpi/bin/mpic++ -Wall
 
-CFLAGS = -funroll-all-loops -O3
+CFLAGS = -O3
 CC = g++
 INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -ldcdf -llevmar -llapack -lblas
