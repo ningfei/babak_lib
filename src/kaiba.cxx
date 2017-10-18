@@ -738,7 +738,7 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    if(verbose)
    {
       printf("PIL brain cloud: %s\n",filename);
-      printf("PIL brain cloud threshold level = %d\%\n",CLOUD_THRESH);
+      printf("PIL brain cloud threshold level = %d%%\n",CLOUD_THRESH);
       printf("PIL brain cloud matrix size = %d x %d x %d (voxels)\n", 
       PILbraincloud_hdr.dim[1], PILbraincloud_hdr.dim[2], PILbraincloud_hdr.dim[3]);
       printf("PIL brain cloud voxel size = %8.6f x %8.6f x %8.6f (mm^3)\n", 
@@ -954,7 +954,7 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
          if(verbose)
          {
             printf("Cost = %f\n", mincost);
-            printf("Relative change = %3.1e x 100%\n", relative_change );
+            printf("Relative change = %3.1e x 100%%\n", relative_change );
          }
    
          if( oldmincost==0.0 || relative_change <= TOLERANCE )

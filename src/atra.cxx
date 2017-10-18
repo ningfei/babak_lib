@@ -67,7 +67,6 @@
 //////////////////////////////////////////////
 
 #include <stdlib.h>
-#include <malloc.h>  
 #include <math.h>
 #include <strings.h>
 #include <string.h>
@@ -1005,7 +1004,7 @@ int main(int argc, char **argv)
 #endif
 
    time(&time_end);
-   if(opt_v) printf("Execution time = %d minutes and %d seconds\n",(time_end-time_start)/60,
+   if(opt_v) printf("Execution time = %ld minutes and %ld seconds\n",(time_end-time_start)/60,
    (time_end-time_start)%60);
 
    return 0;
