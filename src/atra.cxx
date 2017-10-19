@@ -85,7 +85,7 @@
 #define YES 1
 #define NO 0
 
-#define DEFAULT_SEARCH_RADIUS 5
+#define DEFAULT_SEARCH_RADIUS 3
 #define DEFAULT_PATCh_RADIUS 7
 #define MAX_RADIUS 100
 #define MAXITER 25  // default maxiter
