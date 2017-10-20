@@ -608,10 +608,10 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       }
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
-      if(opt_v) printf("Number of seeds = %d\n", nseeds);
-      if(opt_v) printf("Number of noncovergent seeds = %d\n",nlm_nonconvergent);
-      if(opt_v) printf("Number of aligned landmarks = %d\n",current_nlm_aligned);
-      if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
+      //  if(opt_v) printf("Number of seeds = %d\n", nseeds);
+      if(opt_v) printf("Number of LOOC landmarks detected = %d\n",nseeds-nlm_nonconvergent);
+      if(opt_v) printf("Number of aligned LOOC landmarks = %d\n",current_nlm_aligned);
+      // if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
 
       if(nlm<6)
       {
@@ -645,17 +645,21 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
                for(int i=0; i<nim; i++) Q[k] += P[i][k];
                Q[k]/=nim;
          }
-   
+
          for(int GPiter=0; GPiter<100; GPiter++)
          {
             for(int i=0; i<nim; i++) 
             {
-               for(int k=0; k<3*nlm; k++) { Ptmp[k]=P[i][k]; Qtmp[k]=Q[k]; }
-   
+               for(int k=0; k<3*nlm; k++) 
+               {  
+                  Ptmp[k]=P[i][k]; 
+                  Qtmp[k]=Q[k]; 
+               }
+
                Procrustes(Qtmp, nlm, Ptmp, TGPA[i]);
             }
    
-            // update Q: find a new Q as the average of transformed P[m]
+            // update Q: find a new Q as the average of transformed P[i]
             for(int k=0; k<nlm; k++) 
             {
                Q[k]=Q[k+nlm]=Q[k+nlm*2]=0.0;
@@ -665,18 +669,23 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
                   dum[1] = P[i][nlm + k];
                   dum[2] = P[i][2*nlm + k];
    
-                  Q[k]         += dum[0]*TGPA[i][0] + dum[1]*TGPA[i][1] + dum[2]*TGPA[i][2]  + TGPA[i][3];
-                  Q[nlm + k]   += dum[0]*TGPA[i][4] + dum[1]*TGPA[i][5] + dum[2]*TGPA[i][6]  + TGPA[i][7];
-                  Q[2*nlm + k] += dum[0]*TGPA[i][8] + dum[1]*TGPA[i][9] + dum[2]*TGPA[i][10] + TGPA[i][11];
+                  Q[k]         += (dum[0]*TGPA[i][0] + dum[1]*TGPA[i][1] + dum[2]*TGPA[i][2]  + TGPA[i][3]);
+                  Q[nlm + k]   += (dum[0]*TGPA[i][4] + dum[1]*TGPA[i][5] + dum[2]*TGPA[i][6]  + TGPA[i][7]);
+                  Q[2*nlm + k] += (dum[0]*TGPA[i][8] + dum[1]*TGPA[i][9] + dum[2]*TGPA[i][10] + TGPA[i][11]);
                }
                Q[k]       /= nim;
                Q[k+nlm]   /= nim;
                Q[k+2*nlm] /= nim;
             }
          }
+
          free(Q);
          free(Ptmp);
          free(Qtmp);
+         for(int i=0; i<nim; i++)
+         {
+            free(P[i]); 
+         }
       }
    
       // update TPIL 
