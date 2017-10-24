@@ -104,8 +104,7 @@ int opt;
 static struct option options[] =
 {
    {"-orient",1,'O'},
-   {"-k",1,'k'},
-   {"-kaiba",1,'k'},
+   {"-o",1,'o'},
    {"-nx",1,'x'},
    {"-ny",1,'y'},
    {"-nz",1,'z'},
@@ -128,17 +127,17 @@ static struct option options[] =
 
 void print_help_and_exit()
 {
-   printf("\nUsage: atra [-v -nx <n> -ny <n> -nz <n> -dx <f> -dy <f> -dz <f> -orient <code> -k <filename>] -i <image list file>\n"
+   printf("\nUsage: atra [-v -nx <n> -ny <n> -nz <n> -dx <f> -dy <f> -dz <f> -orient <code> -o <OutputPrefix>] -i <volume list>\n\n"
    "Required:\n"
-   "\t-i <image list file>: A text file containing the list of NIFTI images to be registered\n"
+   "\t-i <volume list>: A text file containing the list of 3D T1W volumes to be registered.\n"
+   "\tThe input volumes are required to be in NIFTI-1 format of type 'short int'.\n\n"
    "Options:\n"
    "\t-v Enables verbose mode\n\n" 
    "\t-nx <int> -ny <int> -nz <int>: Output matrix size (default: 255x255x189)\n\n"
    "\t-dx <float> -dy <float> -dz <float>: Output voxel size (default: 1.0x1.0x1.0 mm^3)\n\n"
    "\t-orient <code>: Output orientation (default <code> is PIL (Posterior-Inferior-Left))\n"
    "\t<code> is a string of 3 letters with 48 possibilities, e.g., RAS (Right-Anterior-Superior).\n\n"
-   "\t-k <filename>: Saves inforamation in <filename> for input to the KAIBA program.\n"
-   "\tdefault <filename> is kaiba_imlist.txt\n\n"
+   "\t-o <OutputPrefix>: Prefix used for saving some output files (default=atra).\n\n"
    );
 
    exit(0);
@@ -303,26 +302,33 @@ SPH &searchsph, SPH &testsph, int lm_out[][3])
    return(d);
 }
 
-void atra(const char *imagelistfile, DIM output_dim, const char *output_orientation, const char *kaibafile)
+void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientationCode, const char *outputPrefix)
 {
+   //PIL2OUT maps points from PIL orientation to the output 
+   //orientation specified by outputOrientationCode
+   float PIL2OUT[16];
+   float *ssd;
+   int nim=0; // number of volumes listed as input in imagelistfile
+   int *seedi, *seedj, *seedk;
+   char temporaryFilename[DEFAULT_STRING_LENGTH]; // place holder for temporary filenames
+   short *PILbraincloud;
+   SHORTIM PILim[MAXIM];
+   SHORTIM im[MAXIM];
+   DIM PILbraincloud_dim;
+   DIM input_dim;
+   nifti_1_header PILbraincloud_hdr; 
+   nifti_1_header tmp_hdr; 
+
    FILE *fp;
-   int nim=0; // number of image files in imagelistfile
-   char dummystring[DEFAULT_STRING_LENGTH];
    char **imagefile; // the nim image files
    char **landmarksfile; // the (potential) nim landmarks files
    char **imagefileprefix;
-   short *PILbraincloud;
-   nifti_1_header PILbraincloud_hdr; 
-   DIM PILbraincloud_dim;
 
    float **TPIL; // nim-array of 4x4 transformation matrices which transform each of
                  // the nim images into the standardized PIL system
    float **TGPA; // nim-array of 4x4 transformation matrices obtained from Generalized Procrustes Analysis 
-   SHORTIM PILim[MAXIM];
-   SHORTIM im[MAXIM];
    nifti_1_header imhdr;
    float *invT;
-   int *seedi, *seedj, *seedk;
    int nseeds=0;
 
    SPH refsph(patch_radius);
@@ -335,7 +341,6 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    int nlm_nonconvergent;
    int current_nlm_aligned;
    int final_nlm_aligned=0;
-   float *ssd;
    float *A; // (NxM) matrix where N=n; M=sph.n
    char *sameflag;
    int lm_in[MAXIM][3]; // (i,j,k) coordinates of the input landmarks
@@ -343,15 +348,18 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    int cbd; //city block distance 
    char loomsk[MAXIM];
    int lmcm[3]; // landmarks center of mass
-   float PIL2OUT[16];
    float TOUT[16], TOUT_FSL[16];
    float OUT2PIL[16];
    float PIL2RAS[16];
    float OUT2RAS[16];
    float T_ijk2xyz[16];
+   float *scalefactor;
+   float *avgOutputImage;
+   short *avgOutputImageShort;
 
-   //PIL2OUT takes points from PIL space to output space
-   inversePILtransform(output_orientation, PIL2OUT);
+   //PIL2OUT maps points from PIL orientation to the output 
+   //orientation specified by outputOrientationCode
+   inversePILtransform(outputOrientationCode, PIL2OUT);
 
    opt_qform=YES;
    opt_sform=YES;
@@ -359,37 +367,43 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    // find nim
    fp=fopen(imagelistfile,"r");
    nim=0;
-   while(fscanf(fp,"%s",dummystring) != EOF ) 
+   while(fscanf(fp,"%s",temporaryFilename) != EOF ) 
    {
-         if( not_magical_nifti(dummystring,0)==0 ) nim++;
+      if( not_magical_nifti(temporaryFilename,0)==0 ) nim++;
    }
    fclose(fp);
 
-   if(opt_v) printf("Number of images to be registered = %d\n", nim);
+   if(opt_v) printf("Number of volumes to be registered = %d\n", nim);
 
-   if(nim<=1) 
+   if(nim==0) 
    {
-      printf("At least two 3D T1W NIFTI images of type 'short' must be specified in %s.\n", imagelistfile);
+      printf("Number of input volumes = %d, I have nothing to do!\n", nim);
       exit(0);
    }
 
    // allocate memory for various arrays
+   // All 5 variables freed before atra() returns
    imagefile = (char **)calloc(nim, sizeof(char *));
    landmarksfile = (char **)calloc(nim, sizeof(char *));
    imagefileprefix = (char **)calloc(nim, sizeof(char *));
    TPIL = (float **)calloc(nim, sizeof(float *));
    TGPA = (float **)calloc(nim, sizeof(float *));
+
    for(int i=0; i<nim; i++)
    {
+      // freed before atra() returns
       imagefile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(imagefile[i],"");
 
+      // freed before atra() returns
       landmarksfile[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(landmarksfile[i],"");
 
+      // freed before atra() returns
       imagefileprefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(imagefileprefix[i],"");
 
+      // both variables freed before atra() returns
       TPIL[i] = (float *)calloc(16, sizeof(float));
       TGPA[i] = (float *)calloc(16, sizeof(float));
    }
@@ -399,29 +413,29 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    ////////////////////////////////////////////////////////////////////////////////////////////
    fp=fopen(imagelistfile,"r");
    nim=0;
-   while(fscanf(fp,"%s",dummystring) != EOF ) 
+   while(fscanf(fp,"%s",temporaryFilename) != EOF ) 
    {
-         if( not_magical_nifti(dummystring,0)==0 ) 
-         {
-            strcpy(imagefile[nim], dummystring);
-            if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
-            nim++;
-         }
-         else
-         {
-            // ensure nim>0 in case the put a lm file first
-            if(nim>0) strcpy(landmarksfile[nim-1], dummystring);
-         }
+      if( not_magical_nifti(temporaryFilename,0)==0 ) 
+      {
+         strcpy(imagefile[nim], temporaryFilename);
+         if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
+         nim++;
+      }
+      else
+      {
+         // ensure nim>0 in case they put a lm file first
+         if(nim>0) strcpy(landmarksfile[nim-1], temporaryFilename);
+      }
    }
    fclose(fp);
 
    if(opt_v) 
    {
-      printf("Input image list:\n");
+      printf("Input volume list:\n");
       for(int i=0; i<nim; i++) 
       {
-         printf("Image %d: %s\n",i+1,imagefile[i]);
-         if(landmarksfile[i][0]!='\0') printf("Image %d landmarks: %s\n",i+1,landmarksfile[i]);
+         printf("Volume %d: %s\n",i+1,imagefile[i]);
+         if(landmarksfile[i][0]!='\0') printf("Volume %d landmarks: %s\n",i+1,landmarksfile[i]);
       }
    }
    ////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,15 +443,16 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    /////////////////////////////////////////////////////////////////////////////////////////////
    // read PILbraincloud.nii from the $ARTHOME directory
    /////////////////////////////////////////////////////////////////////////////////////////////
-   sprintf(dummystring,"%s/PILbrain.nii",ARTHOME);
+   sprintf(temporaryFilename,"%s/PILbrain.nii",ARTHOME);
 
-   PILbraincloud = (short  *)read_nifti_image(dummystring, &PILbraincloud_hdr);
+   // freed before atra() returns
+   PILbraincloud = (short  *)read_nifti_image(temporaryFilename, &PILbraincloud_hdr);
 
    set_dim(PILbraincloud_dim, PILbraincloud_hdr);
 
    if(PILbraincloud==NULL)
    {
-         printf("Error reading %s, aborting ...\n", dummystring);
+         printf("Error reading %s, aborting ...\n", temporaryFilename);
          exit(1);
    }
    /////////////////////////////////////////////////////////////////////////////////////////////
@@ -460,7 +475,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    }
 
    /////////////////////////////////////////////////////////////////////////////////////////////
-   // file TPIL
+   // find TPIL
    /////////////////////////////////////////////////////////////////////////////////////////////
    if(opt_v) printf("PIL transformation:\n");
    for(int i=0; i<nim; i++)
@@ -474,16 +489,87 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    {
       set_dim(PILim[i], PILbraincloud_hdr);
 
+      //freed before atra() returns
       im[i].v = (short *)read_nifti_image(imagefile[i], &imhdr);
       set_dim(im[i], imhdr);
 
       invT = inv4(TPIL[i]);
+      //freed before atra() returns
       PILim[i].v = resliceImage(im[i].v, im[i].nx, im[i].ny, im[i].nz, im[i].dx, im[i].dy, im[i].dz,
       PILim[i].nx, PILim[i].ny, PILim[i].nz, PILim[i].dx, PILim[i].dy, PILim[i].dz, invT, LIN);
       free(invT);
+   }
 
-      //sprintf(dummystring,"%s_PIL0.nii",imagefileprefix[i]);
-      //save_nifti_image(dummystring, PILim[i].v, &PILbraincloud_hdr);
+   if(nim==1)
+   {
+      short *tmp;
+
+      tmp_hdr = read_NIFTI_hdr(imagefile[0]);
+      set_dim(input_dim, tmp_hdr);
+
+      multi(PIL2OUT,4,4,TPIL[0],4,4,TOUT);
+      invT = inv4(TOUT);
+      tmp = resliceImage(im[0].v,input_dim,output_dim,invT,LIN);
+      free(invT);
+
+      set_dim(tmp_hdr, output_dim);
+      tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
+      sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
+      sprintf(temporaryFilename,"%s_%s.nii",imagefileprefix[0],outputOrientationCode);
+      save_nifti_image(temporaryFilename, tmp, &tmp_hdr);
+
+      PILtransform(outputOrientationCode, OUT2PIL);
+      inversePILtransform("RAS", PIL2RAS);
+      ijk2xyz(T_ijk2xyz, output_dim.nx, output_dim.ny, output_dim.nz, output_dim.dx, output_dim.dy, output_dim.dz);
+      multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, OUT2RAS);
+      multi(OUT2RAS, 4, 4,  T_ijk2xyz, 4,  4, OUT2RAS);
+      update_qsform(temporaryFilename, OUT2RAS);
+
+      // Yes! saving the same image again under a different name! 
+      sprintf(temporaryFilename,"%s_avg_%s.nii",outputPrefix, outputOrientationCode);
+      save_nifti_image(temporaryFilename, tmp, &tmp_hdr);
+      update_qsform(temporaryFilename, OUT2RAS);
+
+      free(tmp);
+
+      sprintf(temporaryFilename,"%s_PIL.mrx",imagefileprefix[0]);
+      remove(temporaryFilename);
+
+      multi(PIL2OUT,4,4,TPIL[0],4,4,TOUT);
+      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
+      fp=fopen(temporaryFilename,"w");
+      printMatrix(TOUT,4,4,"",fp);
+      fclose(fp);
+
+      art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
+      sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[0]);
+      fp=fopen(temporaryFilename,"w");
+      printMatrix(TOUT_FSL,4,4,"",fp);
+      fclose(fp);
+
+      sprintf(temporaryFilename,"%s.txt",outputPrefix);
+      fp = fopen(temporaryFilename,"w");
+      fprintf(fp,"%d\n",nim);
+      fprintf(fp,"%s %f\n",imagefile[0],1.0);
+      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
+      fprintf(fp,"%s\n",temporaryFilename);
+      fclose(fp);
+
+      free(imagefile[0]);
+      free(imagefile);
+      free(landmarksfile[0]);
+      free(landmarksfile);
+      free(imagefileprefix[0]);
+      free(imagefileprefix);
+      free(TPIL[0]);
+      free(TPIL);
+      free(TGPA[0]);
+      free(TGPA);
+      free(im[0].v);
+      free(PILim[0].v);
+      free(PILbraincloud);
+
+      return;
    }
 
    //////////////////////////////////////////////////////////
@@ -497,10 +583,11 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       nseeds++;
    }
 
-   seedi = (int *)calloc(nseeds, sizeof(int));
-   seedj = (int *)calloc(nseeds, sizeof(int));
-   seedk = (int *)calloc(nseeds, sizeof(int));
-   sameflag = (char *)calloc(nseeds, sizeof(char));
+   // all 5 variables freed before atra() returns
+   seedi = (int *)calloc(nseeds, sizeof(int)); 
+   seedj = (int *)calloc(nseeds, sizeof(int)); 
+   seedk = (int *)calloc(nseeds, sizeof(int)); 
+   sameflag = (char *)calloc(nseeds, sizeof(char)); 
    alignedLM = (int *)calloc(nseeds*3, sizeof(int));
 
    nseeds=0;
@@ -517,8 +604,9 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    //////////////////////////////////////////////////////////
 
    //////////////////////////////////////////////////////////
-   // LOOC landmark detection
+   // LOOC landmark identification
    //////////////////////////////////////////////////////////
+   // All 4 variables free before atra() returns
    ssd = (float *)calloc(refsph.n,sizeof(float));
    A = (float *)calloc(nim*refsph.n,sizeof(float));
    Pt = (float **)calloc(nim, sizeof(float *) );
@@ -526,9 +614,10 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
 
    // the Pt[i] are actually nlm*3 matrices but we allocate more rows (nseeds rows)
    // since at this time we only know that nlm<=nseeds
+   // Pt[i] are freed before atra() returns
    for(int i=0;i<nim;i++) Pt[i] = (float *)calloc(nseeds*3, sizeof(float) );
 
-   if(opt_v) printf("LOOC landmark detection ...\n");
+   if(opt_v) printf("LOOC landmark identification ...\n");
    if(opt_v && maxiter!=MAXITER) printf("Maximum number of allowed iterations per seed = %d\n",maxiter);
    if(opt_v && del!=20) printf("Del = %d\n",del);
 
@@ -567,23 +656,18 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
          if(sameflag[s]) { current_nlm_aligned++;}
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         //printf("\nLM %d\n",nlm);
-   
          for(int i=0; i<nim; i++)
          {
-   
             Pt[i][nlm*3 + 0] = lm_out[i][0]; 
             Pt[i][nlm*3 + 1] = lm_out[i][1]; 
             Pt[i][nlm*3 + 2] = lm_out[i][2]; 
-
-            //printf("%s %d %d %d\n",imagefile[i],lm_out[i][0],lm_out[i][1],lm_out[i][2]);
          }
    
          nlm++;
       }
 
-      if(current_nlm_aligned <= final_nlm_aligned && iteration>0) break;
-      else  //final_nlm_aligned does not get update, nor is alignedLM
+      if( current_nlm_aligned <= final_nlm_aligned && iteration>0) break;
+      else  //final_nlm_aligned does not get updated, nor is alignedLM
       {
          int incrementflg;
 
@@ -609,9 +693,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
       //  if(opt_v) printf("Number of seeds = %d\n", nseeds);
-      if(opt_v) printf("Number of LOOC landmarks detected = %d\n",nseeds-nlm_nonconvergent);
-      if(opt_v) printf("Number of aligned LOOC landmarks = %d\n",current_nlm_aligned);
-      // if(opt_v) printf("Number of non-aligned landmarks = %d\n",nlm-current_nlm_aligned);
+      if(opt_v) printf("Number of LOOC landmarks identified = %d\n",nlm);
+      if(opt_v) printf("%5.2f%% aligned\n",100.0*current_nlm_aligned/nlm);
 
       if(nlm<6)
       {
@@ -707,14 +790,15 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    // end of iterations
    //////////////////////////////////////////////////////////
 
-   float *mean, *scale_factor;
+   float *mean; 
    float min, max;
    int ii,jj,kk,np,ny,nv;
 
-   fp = fopen(kaibafile,"w");
+   sprintf(temporaryFilename,"%s.txt",outputPrefix);
+   fp = fopen(temporaryFilename,"w");
    fprintf(fp,"%d\n",nim);
    mean = (float *)calloc(nim, sizeof(float));
-   scale_factor = (float *)calloc(nim, sizeof(float));
+   scalefactor = (float *)calloc(nim, sizeof(float));
 
    for(int i=0; i<nim; i++) mean[i]=0.0;
 
@@ -740,24 +824,24 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
 
    for(int i=0; i<nim; i++) 
    {
-      scale_factor[i] = min/mean[i];
-      fprintf(fp,"%s %f\n",imagefile[i],scale_factor[i]);
-      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
-      fprintf(fp,"%s\n",dummystring);
+      scalefactor[i] = min/mean[i];
+      fprintf(fp,"%s %f\n",imagefile[i],scalefactor[i]);
+      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[i]);
+      fprintf(fp,"%s\n",temporaryFilename);
    }
    fclose(fp);
 
    free(mean);
-   free(scale_factor);
 
    //////////////////////////////////////////////////////////
    // save outputs
    //////////////////////////////////////////////////////////
+   avgOutputImage = (float *)calloc(output_dim.nv, sizeof(float));
+   avgOutputImageShort = (short *)calloc(output_dim.nv, sizeof(short));
+
    for(int i=0; i<nim; i++)
    {
       short *tmp;
-      nifti_1_header tmp_hdr; 
-      DIM input_dim;
 
       tmp_hdr = read_NIFTI_hdr(imagefile[i]);
       set_dim(input_dim, tmp_hdr);
@@ -770,35 +854,46 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
       set_dim(tmp_hdr, output_dim);
       tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
       sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
-      sprintf(dummystring,"%s_%s.nii",imagefileprefix[i],output_orientation);
-      save_nifti_image(dummystring, tmp, &tmp_hdr);
+      sprintf(temporaryFilename,"%s_%s.nii",imagefileprefix[i],outputOrientationCode);
+      save_nifti_image(temporaryFilename, tmp, &tmp_hdr);
 
-      PILtransform(output_orientation, OUT2PIL);
+      PILtransform(outputOrientationCode, OUT2PIL);
       inversePILtransform("RAS", PIL2RAS);
       ijk2xyz(T_ijk2xyz, output_dim.nx, output_dim.ny, output_dim.nz, output_dim.dx, output_dim.dy, output_dim.dz);
       multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, OUT2RAS);
       multi(OUT2RAS, 4, 4,  T_ijk2xyz, 4,  4, OUT2RAS);
-      update_qsform(dummystring, OUT2RAS);
+      update_qsform(temporaryFilename, OUT2RAS);
+
+      for(int v=0; v<output_dim.nv; v++) avgOutputImage[v] += tmp[v]*scalefactor[i];
 
       free(tmp);
 
       // save transformation matrix
-      sprintf(dummystring,"%s_PIL.mrx",imagefileprefix[i]);
-      remove(dummystring);
+      sprintf(temporaryFilename,"%s_PIL.mrx",imagefileprefix[i]);
+      remove(temporaryFilename);
 
       multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
-      sprintf(dummystring,"%s.mrx",imagefileprefix[i]);
-      fp=fopen(dummystring,"w");
+      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[i]);
+      fp=fopen(temporaryFilename,"w");
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
 
       art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
-      sprintf(dummystring,"%s_FSL.mat",imagefileprefix[i]);
-      fp=fopen(dummystring,"w");
+      sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[i]);
+      fp=fopen(temporaryFilename,"w");
       printMatrix(TOUT_FSL,4,4,"",fp);
       fclose(fp);
    }
    //////////////////////////////////////////////////////////
+
+   for(int v=0; v<output_dim.nv; v++) avgOutputImageShort[v] = (short)(avgOutputImage[v]/nim + 0.5);
+
+   sprintf(temporaryFilename,"%s_avg_%s.nii",outputPrefix, outputOrientationCode);
+   save_nifti_image(temporaryFilename, avgOutputImageShort, &tmp_hdr);
+   update_qsform(temporaryFilename, OUT2RAS);
+
+   free(avgOutputImage);
+   free(avgOutputImageShort);
 
    // free memory
    for(int i=0; i<nim; i++)
@@ -827,6 +922,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *output_orientat
    free(A);
    free(Pt);
    free(P);
+   free(scalefactor);
 
    return;
 }
@@ -837,7 +933,7 @@ int main(int argc, char **argv)
 
    time(&time_start);
 
-   char output_orientation[4]="PIL";
+   char outputOrientationCode[4]="PIL";
 
    DIM output_dim;
    output_dim.nx=output_dim.ny=output_dim.nz=0;
@@ -846,7 +942,7 @@ int main(int argc, char **argv)
    // filename where the list of images to be registered are input 
    char imagelistfile[DEFAULT_STRING_LENGTH]=""; 
 
-   char kaibafile[DEFAULT_STRING_LENGTH]="kaiba_imlist.txt";
+   char outputPrefix[DEFAULT_STRING_LENGTH]="atra";
 
    while( (opt=getoption(argc, argv, options)) != -1)
    {
@@ -877,8 +973,8 @@ int main(int argc, char **argv)
             maxiter = atoi(optarg);
             if(maxiter<10 || maxiter>100) maxiter=MAXITER;
             break;
-         case 'k':
-            sprintf(kaibafile,"%s",optarg);
+         case 'o':
+            sprintf(outputPrefix,"%s",optarg);
             break;
          case 'i':
             sprintf(imagelistfile,"%s",optarg);
@@ -887,7 +983,7 @@ int main(int argc, char **argv)
             opt_v=YES;
             break;
          case 'O':
-            sprintf(output_orientation,"%s",optarg);
+            sprintf(outputOrientationCode,"%s",optarg);
             break;
          case 'r':
             patch_radius = atoi(optarg);
@@ -910,7 +1006,7 @@ int main(int argc, char **argv)
    }
 
    for(int c=0; c<4; c++)
-      output_orientation[c]=toupper(output_orientation[c]);
+      outputOrientationCode[c]=toupper(outputOrientationCode[c]);
 
    getARTHOME();
 
@@ -922,15 +1018,15 @@ int main(int argc, char **argv)
       exit(0);
    }
 
-   if( isOrientationCodeValid(output_orientation)==0 )
+   if( isOrientationCodeValid(outputOrientationCode)==0 )
    {
-      printf("Sorry, %s is not a valid orientation code.\n",output_orientation);
+      printf("Sorry, %s is not a valid orientation code.\n",outputOrientationCode);
       exit(0);
    }
 
-   if(opt_v) printf("Output orientation: %s\n",output_orientation);
+   if(opt_v) printf("Post-registration volume orientation: %s\n",outputOrientationCode);
 
-   atra(imagelistfile, output_dim, output_orientation, kaibafile);
+   atra(imagelistfile, output_dim, outputOrientationCode, outputPrefix);
 
 #if 0
    ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1013,8 +1109,8 @@ int main(int argc, char **argv)
 #endif
 
    time(&time_end);
-   if(opt_v) printf("Execution time = %ld minutes and %ld seconds\n",(time_end-time_start)/60,
-   (time_end-time_start)%60);
+   if(opt_v) printf("Execution time = %ld minutes and %ld seconds = %ld seconds\n",(time_end-time_start)/60,
+   (time_end-time_start)%60, (time_end-time_start));
 
    return 0;
 }

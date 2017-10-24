@@ -1,6 +1,6 @@
 
 # for makhmal
-MPICC = /usr/local/openmpi/bin/mpic++ -Wall
+MPICC = /usr/local/bin/mpic++ -Wall
 
 CFLAGS = -O3
 CC = g++
@@ -184,51 +184,51 @@ clean:
 	rm -f *.o
 
 # compilation of executables
-PILtransform: libbabak.a PILtransform.cxx
+PILtransform: PILtransform.cxx
 	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(LIBS) $(INC)
 	mv PILtransform ../bin
 
-brainwash: libbabak.a brainwash.cxx
+brainwash: brainwash.cxx
 	$(CC) $(CFLAGS) -o brainwash brainwash.cxx $(LIBS) $(INC)
 	mv brainwash ../bin
 
-3dwarper: libbabak.a 3dwarper.cxx
+3dwarper: 3dwarper.cxx
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.cxx $(LIBS) $(INC)
 	mv 3dwarper ../bin
 
-acpcdetect: libbabak.a acpcdetect.cxx
+acpcdetect: acpcdetect.cxx
 	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.cxx $(LIBS) $(INC)
 	mv acpcdetect ../bin
 
-applywarp3d: libbabak.a applywarp3d.cxx
+applywarp3d: applywarp3d.cxx
 	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LIBS)
 	mv applywarp3d ../bin
 
-scaleImage: libbabak.a scaleImage.cxx
+scaleImage: scaleImage.cxx
 	$(CC) $(CFLAGS) -o scaleImage scaleImage.cxx $(INC) $(LIBS)
 	mv scaleImage ../bin
 
-avgImage: libbabak.a avgImage.cxx
+avgImage: avgImage.cxx
 	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
 	mv avgImage ../bin
 
-ivf: libbabak.a ivf.cxx
+ivf: ivf.cxx
 	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)
 	mv ivf ../bin
 
-unwarp2d: libbabak.a unwarp2d.cxx
+unwarp2d: unwarp2d.cxx
 	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.cxx $(INC) $(LIBS)
 	mv unwarp2d ../bin
 
-cphdr: libbabak.a cphdr.cxx
+cphdr: cphdr.cxx
 	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
 	mv cphdr ../bin
 
-reslice: libbabak.a reslice.cxx
+reslice: reslice.cxx
 	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
 	mv reslice ../bin
 
-kaiba: libbabak.a kaiba.cxx
+kaiba: kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
 	mv kaiba ../bin
 #Example: $(CC) $(CFLAGS) -o kaiba kaiba.cxx -DBETA_PARAM=0.3 $(INC) $(LIBS)
@@ -236,22 +236,22 @@ kaiba: libbabak.a kaiba.cxx
 # having the following statement in kaiba.cxx
 #define BETA_PARAM 0.3
 
-oi: libbabak.a oi.cxx
+oi: oi.cxx
 	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)
 	mv oi ../bin
 
-atra: libbabak.a atra.cxx
+atra: atra.cxx
 	$(CC) $(CFLAGS) -o atra atra.cxx $(INC) $(LIBS)
 	mv atra ../bin
 
-art2fsl: libbabak.a art2fsl.cxx
+art2fsl: art2fsl.cxx
 	$(CC) $(CFLAGS) -o art2fsl art2fsl.cxx $(INC) $(LIBS)
 	mv art2fsl ../bin
 
-fsl2art: libbabak.a fsl2art.cxx
+fsl2art: fsl2art.cxx
 	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
 	mv fsl2art ../bin
 
-yuki: libbabak.a yuki.cxx
+yuki: yuki.cxx
 	$(MPICC) $(CFLAGS) -o yuki yuki.cxx $(INC) $(LIBS)
 	mv yuki ../bin
