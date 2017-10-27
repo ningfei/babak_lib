@@ -397,7 +397,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
    free(invT);
 
    // Detect 8 landmarks on the MSP on the subimPIL volume
-   sprintf(modelfile,"%s/ali8.mdl",ARTHOME);
+   sprintf(modelfile,"%s/orion.mdl",ARTHOME);
 
    LM=detect_landmarks(subimPIL, modelfile, n);
 
