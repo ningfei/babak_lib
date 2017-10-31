@@ -481,7 +481,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL)
          lmy[i]=(int)( lm[1] + 0.5 );
       }
 
-      sprintf(filename,"%s_ORION.ppm",subfile_prefix);
+      sprintf(filename,"%s_orion.ppm",subfile_prefix);
       mspPPM(subimPIL, lmx, lmy, n, filename);
 
       delete lmx;
