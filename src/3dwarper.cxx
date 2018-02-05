@@ -752,12 +752,12 @@ int main(int argc, char **argv)
       // find subTPIL 
       if(opt_v) printf("Computing subject image PIL transformation ...\n");
       if(sublmfile[0] != '\0' && opt_v) printf("Subject image landmarks are read from %s\n",sublmfile);
-      new_PIL_transform(subjectImageFile, sublmfile, subTPIL);
+      new_PIL_transform(subjectImageFile, sublmfile, subTPIL, 1);
 
       // find trgTPIL
       if(opt_v) printf("Computing target image PIL transformation ...\n");
       if(trglmfile[0] != '\0' && opt_v) printf("Target image landmarks are read from %s\n",trglmfile);
-      new_PIL_transform(targetImageFile, trglmfile, trgTPIL);
+      new_PIL_transform(targetImageFile, trglmfile, trgTPIL, 1);
    }
    ////////////////////////////////////////////////////////////////////////////////////////////
    

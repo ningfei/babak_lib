@@ -156,4 +156,10 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, 
    //Running the gnuplot to generate the .png file.
    sprintf(command,"gnuplot %s.plt",name);
    system(command);
+
+   // added by back to remove these files afterwards
+   sprintf(filename,"%s.dat",name);
+   remove(filename);
+   sprintf(filename,"%s.plt",name);
+   remove(filename);
 }

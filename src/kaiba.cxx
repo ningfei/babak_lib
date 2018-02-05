@@ -55,7 +55,7 @@ int opt;
 /////////////////////////////////////////////////////////////////////////
 // Global variables
 
-int opt_png=NO; // flag for outputing PNG images
+int opt_png=YES; // flag for outputing PNG images
 char opt_flip=YES;
 char flipped; // Takes YES or NO
 float alpha_param;
@@ -69,7 +69,7 @@ static struct option options[] =
    {"-noflip",0,'F'},
    {"-version",0,'V'},
    {"-V",0,'V'},
-   {"-png",0,'g'},
+   {"-nopng",0,'g'},
    {"-p",1,'p'},   // output prefix
    {"-o",1,'p'},   // output prefix
    {"-b",1,'b'},   // baseline image
@@ -82,17 +82,16 @@ static struct option options[] =
 
 void print_help_and_exit()
 {
-   printf("\nUsage: kaiba [options] -p <prefix> -b <basline>.nii [-f <follow-up>.nii]\n"
+   printf("\nUsage: kaiba [options] -o <output prefix> -i <T1W NIFTI>.nii or -i <image list>.txt\n"
    "\nRequired arguments:\n"
-   "   -p <prefix>: Prefix used for naming output files\n"
-   "   -b <basline>.nii: Baseline T1-weighted 3D structural MRI (must be NIFTI format of type short)\n"
+   "   -o <prefix>: Prefix used for naming output files\n"
+   "   -i <T1W NIFTI>.nii: T1-weighted 3D structural MRI (must be NIFTI format of type short)\n"
+   "   -i <image list>.txt: Image list output from ATRA program\n"
    "\nOptions:\n"
    "   -v : Enables verbose mode\n"
    "   -V or -version : Prints program version\n"
-   "   -png : Outputs images in PNG format in addition to PPM\n"
-   "   -f <follow-up>.nii: Follow-up T1-weighted 3D structural MRI (must NIFTI format of type short)\n"
-   "   -blm <filename>: Manually specifies AC/PC/RP landmarks at baseline\n"
-   "   -flm <filename>: Manually specifies AC/PC/RP landmarks at follow-up\n"
+   "   -nopng : Prevents output images in PNG format (still outputs PPM)\n"
+   "   -lm <filename>: Manually specifies AC/PC/RP landmarks for <T1W NIFIT>.nii\n"
 //   "   -a or -alpha <alpha>: Specifies to alpha parameter\n"
    "\n");
 
@@ -787,10 +786,10 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    float4 *ifTPIL; // inverse of fTPIL
 
    if(verbose) printf("Computing baseline image PIL transformation ...\n");
-   new_PIL_transform(bfile, blmfile, bTPIL);
+   new_PIL_transform(bfile, blmfile, bTPIL, 0);
    if(opt_png)
    {
-      sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",bprefix,bprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",bprefix,bprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
    }
@@ -798,10 +797,10 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    ibTPIL= inv4(bTPIL);
 
    if(verbose) printf("Computing follow-up image PIL transformation ...\n");
-   new_PIL_transform(ffile, flmfile, fTPIL);
+   new_PIL_transform(ffile, flmfile, fTPIL, 0);
    if(opt_png)
    {
-      sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",fprefix,fprefix); system(cmnd);
+      sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",fprefix,fprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",fprefix,fprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",fprefix,fprefix); system(cmnd);
    }
@@ -1514,7 +1513,7 @@ int main(int argc, char **argv)
       switch (opt) 
       {
          case 'V':
-            printf("KAIBA Version 3.0 released July 6, 2017.\n");
+            printf("KAIBA Version 3.0 released Jan. 30, 2018.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
          case 'F':
@@ -1524,7 +1523,7 @@ int main(int argc, char **argv)
             opt_v=YES;
             break;
          case 'g':
-            opt_png=YES;
+            opt_png=NO;
             break;
          case 'p':
             sprintf(opprefix,"%s",optarg);
@@ -1626,7 +1625,7 @@ int main(int argc, char **argv)
    // Ensure that an output prefix has been specified at the command line.
    if( opprefix[0]=='\0' )
    {
-      printf("Please specify an output prefix using argument: -p <prefix>\n");
+      printf("Please specify an output prefix using argument: -o <prefix>\n");
       exit(0);
    }
 
@@ -1700,11 +1699,11 @@ int main(int argc, char **argv)
    else if (nim==1) 
    {
       if(opt_v) printf("Computing PIL transformation ...\n");
-      new_PIL_transform(imagefile[0],lmfile,TPIL[0]);
+      new_PIL_transform(imagefile[0],lmfile,TPIL[0], 0);
 
       if(opt_png)
       {
-         sprintf(cmnd,"pnmtopng %s_LM.ppm > %s_LM.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
          sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
          sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
       }
@@ -1720,7 +1719,7 @@ int main(int argc, char **argv)
    sprintf(filename,"%s.csv",opprefix);
    fp = fopen(filename,"w");
    if(fp==NULL) file_open_error(filename);
-   fprintf(fp,"Image,Side,HPF\n");
+   fprintf(fp,"Volume,Hemisphere,HPF\n");
 
    if(opt_v) printf("\nLandmark detection ...\n");
    sprintf(filename,"%s/%s.mdl",ARTHOME,"rhc3");

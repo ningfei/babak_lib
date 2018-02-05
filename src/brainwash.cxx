@@ -1204,7 +1204,7 @@ int main(int argc, char **argv)
    if(opt_v) printf("Computing PIL transformation for %s ...\n",subImageFile);
    opt_ppm=YES;
    if(subLMfile[0] != '\0' && opt_v) printf("Image landmarks are read from %s\n",subLMfile);
-   new_PIL_transform(subImageFile, subLMfile, sub2PIL);
+   new_PIL_transform(subImageFile, subLMfile, sub2PIL, 1);
    opt_ppm=NO;
 
    // atlas selection
@@ -1318,7 +1318,7 @@ int main(int argc, char **argv)
       }
 
       if(opt_v) printf("Computing PIL transformation for %s ...\n", atlaspath);
-      new_PIL_transform(atlaspath,"", atl2PIL+i*16);
+      new_PIL_transform(atlaspath,"", atl2PIL+i*16, 1);
 
       ////////////////////////////////////////////////////////////////////////////////////////////
       // Compute the affine transformation  atl_to_sub and update atl2PIL

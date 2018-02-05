@@ -186,51 +186,51 @@ clean:
 # compilation of executables
 PILtransform: PILtransform.cxx
 	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(LIBS) $(INC)
-	mv PILtransform ../bin
+	mv PILtransform ${ARTHOME}/bin
 
 brainwash: brainwash.cxx
 	$(CC) $(CFLAGS) -o brainwash brainwash.cxx $(LIBS) $(INC)
-	mv brainwash ../bin
+	mv brainwash ${ARTHOME}/bin
 
 3dwarper: 3dwarper.cxx
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.cxx $(LIBS) $(INC)
-	mv 3dwarper ../bin
+	mv 3dwarper ${ARTHOME}/bin
 
 acpcdetect: acpcdetect.cxx
 	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.cxx $(LIBS) $(INC)
-	mv acpcdetect ../bin
+	mv acpcdetect ${ARTHOME}/bin
 
 applywarp3d: applywarp3d.cxx
 	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LIBS)
-	mv applywarp3d ../bin
+	mv applywarp3d ${ARTHOME}/bin
 
 scaleImage: scaleImage.cxx
 	$(CC) $(CFLAGS) -o scaleImage scaleImage.cxx $(INC) $(LIBS)
-	mv scaleImage ../bin
+	mv scaleImage ${ARTHOME}/bin
 
 avgImage: avgImage.cxx
 	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
-	mv avgImage ../bin
+	mv avgImage ${ARTHOME}/bin
 
 ivf: ivf.cxx
 	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)
-	mv ivf ../bin
+	mv ivf ${ARTHOME}/bin
 
 unwarp2d: unwarp2d.cxx
 	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.cxx $(INC) $(LIBS)
-	mv unwarp2d ../bin
+	mv unwarp2d ${ARTHOME}/bin
 
 cphdr: cphdr.cxx
 	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
-	mv cphdr ../bin
+	mv cphdr ${ARTHOME}/bin
 
 reslice: reslice.cxx
 	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
-	mv reslice ../bin
+	mv reslice ${ARTHOME}/bin
 
 kaiba: kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
-	mv kaiba ../bin
+	mv kaiba ${ARTHOME}/bin
 #Example: $(CC) $(CFLAGS) -o kaiba kaiba.cxx -DBETA_PARAM=0.3 $(INC) $(LIBS)
 # If we used the option -DBETA_PARAM=0.3 as in the above example, it will be the same as
 # having the following statement in kaiba.cxx
@@ -238,20 +238,20 @@ kaiba: kaiba.cxx
 
 oi: oi.cxx
 	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)
-	mv oi ../bin
+	mv oi ${ARTHOME}/bin
 
 atra: atra.cxx
 	$(CC) $(CFLAGS) -o atra atra.cxx $(INC) $(LIBS)
-	mv atra ../bin
+	mv atra ${ARTHOME}/bin
 
 art2fsl: art2fsl.cxx
 	$(CC) $(CFLAGS) -o art2fsl art2fsl.cxx $(INC) $(LIBS)
-	mv art2fsl ../bin
+	mv art2fsl ${ARTHOME}/bin
 
 fsl2art: fsl2art.cxx
 	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
-	mv fsl2art ../bin
+	mv fsl2art ${ARTHOME}/bin
 
 yuki: yuki.cxx
 	$(MPICC) $(CFLAGS) -o yuki yuki.cxx $(INC) $(LIBS)
-	mv yuki ../bin
+	mv yuki ${ARTHOME}/bin

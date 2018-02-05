@@ -481,7 +481,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    for(int i=0; i<nim; i++)
    {
       if(opt_v) printf("Processing %s ...\n",imagefile[i]);
-      new_PIL_transform(imagefile[i],landmarksfile[i],TPIL[i]);
+      new_PIL_transform(imagefile[i],landmarksfile[i],TPIL[i],1);
    }
    /////////////////////////////////////////////////////////////////////////////////////////////
 
