@@ -235,48 +235,51 @@ float diceindex(short *setA, short *setB, int n)
 
 void saveMatrix(float *A, int n, int m, char *filename)
 {
-	FILE *fp;
+   FILE *fp;
 
-	fp = fopen(filename, "w");
+   fp = fopen(filename, "w");
+   if(fp==NULL) file_open_error(filename);
 
-	fwrite(&n, sizeof(int), 1, fp);
-	fwrite(&m, sizeof(int), 1, fp);
-	fwrite(A, sizeof(float), n*m, fp);
+   fwrite(&n, sizeof(int), 1, fp);
+   fwrite(&m, sizeof(int), 1, fp);
+   fwrite(A, sizeof(float), n*m, fp);
 
-	fclose(fp);
+   fclose(fp);
 }
 
 void saveMatrix(short *A, int n, int m, char *filename)
 {
-	FILE *fp;
+   FILE *fp;
 
-	fp = fopen(filename, "w");
+   fp = fopen(filename, "w");
+   if(fp==NULL) file_open_error(filename);
 
-	fwrite(&n, sizeof(int), 1, fp);
-	fwrite(&m, sizeof(int), 1, fp);
-	fwrite(A, sizeof(short), n*m, fp);
+   fwrite(&n, sizeof(int), 1, fp);
+   fwrite(&m, sizeof(int), 1, fp);
+   fwrite(A, sizeof(short), n*m, fp);
 
-	fclose(fp);
+   fclose(fp);
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 float *readMatrix(int *n, int *m, char *filename)
 {
-	FILE *fp;
-	float *A;
+   FILE *fp;
+   float *A;
 
-	fp = fopen(filename, "r");
+   fp = fopen(filename, "r");
+   if(fp==NULL) file_open_error(filename);
 
-	fread(n, sizeof(int), 1, fp);
-	fread(m, sizeof(int), 1, fp);
+   fread(n, sizeof(int), 1, fp);
+   fread(m, sizeof(int), 1, fp);
 
-	A = (float *)calloc( (*n)*(*m), sizeof(float));
+   A = (float *)calloc( (*n)*(*m), sizeof(float));
 
-	fread(A, sizeof(float), (*n)*(*m), fp);
+   fread(A, sizeof(float), (*n)*(*m), fp);
 
-	fclose(fp);
+   fclose(fp);
 
-	return(A);
+   return(A);
 }
 //////////////////////////////////////////////////////////////////////////////////
 

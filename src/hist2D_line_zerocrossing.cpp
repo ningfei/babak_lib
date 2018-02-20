@@ -178,6 +178,7 @@ double hist2D_line_zerocrossing(const char *bfile, const char *ffile, const char
 
       sprintf(filename,"hist_%s_%s.mat",bprefix,fprefix);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
       n=0;
       for(int j=0; j<=rangey; j++)
       {
@@ -221,6 +222,7 @@ double hist2D_line_zerocrossing(const char *bfile, const char *ffile, const char
       {
          sprintf(filename,"hist_%s_%s.plt",bprefix,fprefix);
          fp = fopen(filename,"w");
+         if(fp==NULL) file_open_error(filename);
    
          fprintf(fp,"unset key\n");
          fprintf(fp,"plot 'hist_%s_%s.mat' matrix with image\n",bprefix,fprefix);

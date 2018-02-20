@@ -366,6 +366,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
 
    // find nim
    fp=fopen(imagelistfile,"r");
+   if(fp==NULL) file_open_error(imagelistfile);
+
    nim=0;
    while(fscanf(fp,"%s",temporaryFilename) != EOF ) 
    {
@@ -412,6 +414,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    // fill imagefile, landmarksfile and imagefileprefix arrays
    ////////////////////////////////////////////////////////////////////////////////////////////
    fp=fopen(imagelistfile,"r");
+   if(fp==NULL) file_open_error(imagelistfile);
    nim=0;
    while(fscanf(fp,"%s",temporaryFilename) != EOF ) 
    {
@@ -538,17 +541,20 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       multi(PIL2OUT,4,4,TPIL[0],4,4,TOUT);
       sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
       fp=fopen(temporaryFilename,"w");
+      if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
 
       art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
       sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[0]);
       fp=fopen(temporaryFilename,"w");
+      if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT_FSL,4,4,"",fp);
       fclose(fp);
 
       sprintf(temporaryFilename,"%s.txt",outputPrefix);
       fp = fopen(temporaryFilename,"w");
+      if(fp==NULL) file_open_error(temporaryFilename);
       fprintf(fp,"%d\n",nim);
       fprintf(fp,"%s %f\n",imagefile[0],1.0);
       sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
@@ -796,6 +802,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
 
    sprintf(temporaryFilename,"%s.txt",outputPrefix);
    fp = fopen(temporaryFilename,"w");
+   if(fp==NULL) file_open_error(temporaryFilename);
    fprintf(fp,"%d\n",nim);
    mean = (float *)calloc(nim, sizeof(float));
    scalefactor = (float *)calloc(nim, sizeof(float));
@@ -875,12 +882,14 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
       sprintf(temporaryFilename,"%s.mrx",imagefileprefix[i]);
       fp=fopen(temporaryFilename,"w");
+      if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
 
       art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
       sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[i]);
       fp=fopen(temporaryFilename,"w");
+      if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT_FSL,4,4,"",fp);
       fclose(fp);
    }

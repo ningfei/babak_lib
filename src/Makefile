@@ -7,7 +7,7 @@ CC = g++
 INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
 
-all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki
+all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki 
 
 createDir:
 	mkdir -p ../bin
@@ -211,6 +211,10 @@ scaleImage: scaleImage.cxx
 avgImage: avgImage.cxx
 	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
 	mv avgImage ${ARTHOME}/bin
+
+one_sample_t: one_sample_t.cxx
+	$(CC) $(CFLAGS) -o one_sample_t one_sample_t.cxx $(INC) $(LIBS)
+	mv one_sample_t ${ARTHOME}/bin
 
 ivf: ivf.cxx
 	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)

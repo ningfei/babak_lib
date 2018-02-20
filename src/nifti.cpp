@@ -249,6 +249,7 @@ void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *
    int nv;
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fread(hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
 
@@ -266,6 +267,7 @@ void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *
    *im = (unsigned char *)calloc(nv,sizeof(unsigned char));
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fseek(fp, (long)hdr->vox_offset, SEEK_SET);
    fread(*im, sizeof(unsigned char), nv, fp);
    fclose(fp);
@@ -277,6 +279,7 @@ void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr)
    int nv;
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fread(hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
 
@@ -294,6 +297,7 @@ void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr)
    *im = (short *)calloc(nv,sizeof(short));
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fseek(fp, (long)hdr->vox_offset, SEEK_SET);
    fread(*im, sizeof(short), nv, fp);
    fclose(fp);
@@ -329,6 +333,7 @@ void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr)
    }
 
    fp=fopen(filename,"w");
+   if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
    fwrite(im, 1, nv*hdr->bitpix/8, fp);
@@ -352,6 +357,7 @@ void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *h
    extender.extension[0]=0;
 
    fp=fopen(filename,"w");
+   if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
    fwrite(im, sizeof(unsigned char),nv,fp);
@@ -380,6 +386,7 @@ void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr)
    extender.extension[3]=0;
 
    fp=fopen(filename,"w");
+   if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
    fwrite(im, sizeof(short),nv,fp);
@@ -403,6 +410,7 @@ void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr)
    extender.extension[0]=0;
 
    fp=fopen(filename,"w");
+   if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
    fwrite(im, sizeof(float),nv,fp);
@@ -417,6 +425,7 @@ nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, c
    int extension_size;
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    fread(extender, sizeof(nifti1_extender), 1, fp);
 
@@ -447,6 +456,7 @@ void print_NIFTI_hdr(const char *filename)
    nifti_1_header hdr;
 
    fp = fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
 

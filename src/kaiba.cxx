@@ -1563,6 +1563,7 @@ int main(int argc, char **argv)
    else // an image list was specified using -i <imagelistfile>
    {
       fp=fopen(bfile,"r");
+      if(fp==NULL) file_open_error(bfile);
       fscanf(fp,"%d",&nim);
       fclose(fp);
    }
@@ -1599,6 +1600,7 @@ int main(int argc, char **argv)
       // fill imagefile mrxfile arrays
       //////////////////////////////////////////////////////////////////////////////////
       fp=fopen(bfile,"r");
+      if(fp==NULL) file_open_error(bfile);
       fscanf(fp,"%d",&nim);
       for(int i=0; i<nim; i++)
       {

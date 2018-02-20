@@ -29,6 +29,7 @@ void update_qsform(const char *imagefilename , float *matrix)
    mat44 R;
 
    fp = fopen(imagefilename,"r");
+   if(fp==NULL) file_open_error(imagefilename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
 
    if(hdr.dim[0]<1 || hdr.dim[0]>7)
@@ -138,6 +139,7 @@ void update_qsform( const char *imagefile1, const char *imagefile2)
 
    ///////////////////////////////////////////////////////////////////////////
    fp = fopen(imagefile1,"r");
+   if(fp==NULL) file_open_error(imagefile1);
 
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    if(hdr.dim[0]<1 || hdr.dim[0]>7)
@@ -163,6 +165,7 @@ void update_qsform( const char *imagefile1, const char *imagefile2)
    ///////////////////////////////////////////////////////////////////////////
 
    fp = fopen(imagefile2,"r");
+   if(fp==NULL) file_open_error(imagefile2);
 
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    if(hdr.dim[0]<1 || hdr.dim[0]>7)

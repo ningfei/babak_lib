@@ -153,6 +153,7 @@ int main(int argc, char **argv)
    }
 
    fp = fopen(outputmatrixfile,"w");
+   if(fp==NULL) file_open_error(outputmatrixfile);
    fprintf(fp,"%f %f %f %f\n",Mfsl[0],Mfsl[1],Mfsl[2],Mfsl[3]);
    fprintf(fp,"%f %f %f %f\n",Mfsl[4],Mfsl[5],Mfsl[6],Mfsl[7]);
    fprintf(fp,"%f %f %f %f\n",Mfsl[8],Mfsl[9],Mfsl[10],Mfsl[11]);

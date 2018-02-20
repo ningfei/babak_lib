@@ -831,7 +831,8 @@ extern int readSeriesNumber(const char *file, int *seriesNumber, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -915,7 +916,8 @@ int readImageNumber(const char *file, int *imageNumber, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -1033,6 +1035,7 @@ void readDicomInfo(const char *file, int np, dicominfo *info)
    }
 
    fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
    for(int b=byteOffset; b<hdrsize; b++)
    {
@@ -1525,6 +1528,7 @@ float *dx, float *dy, float *dz, int *TE, char *patientID, int *imageNumber, int
    if(errorFlag) return(0);
 
    fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
    for(int b=byteOffset; b<hdrsize; b++)
    {
@@ -1870,7 +1874,8 @@ int readTE(const char *file, int *TE, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -1954,7 +1959,8 @@ int readPhaseEncodingDirection(const char *file, char *PED, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2062,7 +2068,8 @@ int readImageSliceThickness(const char *file, float *dz, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	// Some 3D sequences may not have element 88 of group 18.
 	for(int b=byteOffset; b<hdrsize; b++)
@@ -2116,7 +2123,8 @@ int readImageSliceThickness(const char *file, float *dz, int np)
 
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2207,7 +2215,8 @@ int readImageVoxelSize(const char *file, float *dx, float *dy, float *dz, int np
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2264,7 +2273,8 @@ int readImageVoxelSize(const char *file, float *dx, float *dy, float *dz, int np
 
 	if(errorFlag || !dx_dy_flag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	// Some 3D sequences may not have element 88 of group 18.
 	for(int b=byteOffset; b<hdrsize; b++)
@@ -2318,7 +2328,8 @@ int readImageVoxelSize(const char *file, float *dx, float *dy, float *dz, int np
 
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2403,6 +2414,7 @@ int readImageMatrixSize(const char *file, unsigned short *nx, unsigned short *ny
    if(errorFlag) return(0);
 
    fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
    while( byteOffset<filesize-5 ) 
    {
@@ -2520,7 +2532,8 @@ int readPatientID(const char *file, char *patientID, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2602,7 +2615,8 @@ int readRowCol(const char *file, float *rowvec, float *colvec, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2685,7 +2699,8 @@ int readTLHC(const char *file, float *TLHC, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{
@@ -2771,6 +2786,8 @@ int readPixelData(const char *file, char *data, int opt_j, int np)
 		byteOffset = filesize - np*2;
 
 		fp=fopen(file,"r");
+        if(fp==NULL) file_open_error(file);
+
 		fseek(fp,byteOffset,SEEK_SET);
 
 		if( fread(data, 1, np*2, fp) != np*2) {fclose(fp); return(0);}
@@ -2782,7 +2799,8 @@ int readPixelData(const char *file, char *data, int opt_j, int np)
 	errorFlag=readMetaFileInfo(file, &byteOffset, &transferSyntax);
 	if(errorFlag) return(0);
 
-	fp=fopen(file,"r");
+   fp=fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
 
 	for(int b=byteOffset; b<hdrsize; b++)
 	{

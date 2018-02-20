@@ -56,6 +56,7 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
    }
 
    fp=fopen(ppmfile,"w");
+   if(fp==NULL) file_open_error(ppmfile);
 
    /*Write the header part of the PPM file*/
    fprintf(fp,"P6\n");
@@ -421,6 +422,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
       int cm[3];
 
       fp=fopen(modelfile, "r");
+      if(fp==NULL) file_open_error(modelfile);
 
       fread(&n, sizeof(int), 1, fp);
       fread(&r, sizeof(int), 1, fp);
@@ -451,6 +453,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
       FILE *fp;
       sprintf(filename,"%s_PIL.mrx",subfile_prefix);
       fp=fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
       printMatrix(TPIL,4,4,"",fp);
       fclose(fp);
    }
@@ -563,6 +566,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
       FILE *fp;
       
       fp = fopen(lmfile,"r");
+      if(fp==NULL) file_open_error(lmfile);
       fscanf(fp,"%f %f %f\n", &ac[0], &ac[1], &ac[2]); ac[3]=1;
       fscanf(fp,"%f %f %f\n", &pc[0], &pc[1], &pc[2]); pc[3]=1;
       fscanf(fp,"%f %f %f\n", &rp[0], &rp[1], &rp[2]); rp[3]=1;

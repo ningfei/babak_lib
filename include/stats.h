@@ -236,6 +236,27 @@ template <class TYPE> double paired_samples_t(TYPE *x1, TYPE *x2, int n, int &df
    return(t);
 }
 
+template <class TYPE> double one_sample_t(TYPE *x, int n, int &df, double &mean)
+{
+   double var;
+   double sd;
+   double t;
+
+   df = n-1;
+
+   if(n<2) return(0.0);
+
+   var = sample_variance(x,n,mean)/n;
+
+   sd = sqrt(var);
+
+   if( sd==0.0) return(0.0);
+
+   t = mean/sd;
+
+   return(t);
+}
+
 #define _stats_h
 
 #endif

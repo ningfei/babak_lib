@@ -107,6 +107,7 @@ void findMSP(const char *filename, char *orient, const char *lmfile, float *Tmsp
 
       // read landmarks, add code to detect errors here
       fp = fopen(lmfile,"r");
+      if(fp==NULL) file_open_error(lmfile);
       fscanf(fp,"%f %f %f\n", &ac[0], &ac[1], &ac[2]);
       fscanf(fp,"%f %f %f\n", &pc[0], &pc[1], &pc[2]);
       fscanf(fp,"%f %f %f\n", &rp[0], &rp[1], &rp[2]);

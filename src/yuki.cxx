@@ -297,6 +297,7 @@ void update_qsform( const char *imagefilename , float *matrix)
    mat44 R;
 
    fp = fopen(imagefilename,"r");
+   if(fp==NULL) file_open_error(imagefilename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
 
    if(hdr.dim[0]<1 || hdr.dim[0]>7)
@@ -355,6 +356,7 @@ void update_qsform( const char *imagefilename , float *matrix)
    fclose(fp);
 
    fp = fopen(imagefilename,"w");
+   if(fp==NULL) file_open_error(imagefilename);
 
    if(swapflg)
    {
@@ -2614,6 +2616,7 @@ int main(int argc, char **argv)
    {
       int dum;
       fp = fopen(preselected_atlases,"r");
+      if(fp==NULL) file_open_error(preselected_atlases);
       fscanf(fp,"%d\n",&number_of_atlases_used);
       for(int i=0; i<number_of_atlases_used; i++) fscanf(fp,"%d\n",&dum);
       fscanf(fp,"%f\n",&max_t);
@@ -2901,6 +2904,7 @@ int main(int argc, char **argv)
             printf("Preselected atlases = %s\n", preselected_atlases);
 
          fp = fopen(preselected_atlases,"r");
+         if(fp==NULL) file_open_error(preselected_atlases);
          fscanf(fp,"%d\n",&number_of_atlases_used);
          fclose(fp);
       }
@@ -2979,6 +2983,7 @@ int main(int argc, char **argv)
          if(preselected_atlases[0]!='\0') 
          {
             fp = fopen(preselected_atlases,"r");
+            if(fp==NULL) file_open_error(preselected_atlases);
             fscanf(fp,"%d\n",&number_of_atlases_used);
             for(int i=0; i<number_of_atlases_used; i++)
                fscanf(fp,"%d\n",&atlas_indx[number_of_atlases_available-1-i]);
@@ -2988,6 +2993,7 @@ int main(int argc, char **argv)
          // saves the selected atlases
          sprintf(selected_atlases_file,"%s_A.txt",prefix);
          fp = fopen(selected_atlases_file, "w");
+         if(fp==NULL) file_open_error(selected_atlases_file);
          fprintf(fp, "%d\n", number_of_atlases_used);
          for(int i=0; i<number_of_atlases_used; i++)
          {
@@ -3218,6 +3224,7 @@ int main(int argc, char **argv)
 
          // save the threshold used for label fusion
          fp = fopen(selected_atlases_file, "a");
+         if(fp==NULL) file_open_error(selected_atlases_file);
          fprintf(fp, "%f\n", max_t);
          fclose(fp);
 
@@ -3423,6 +3430,7 @@ int main(int argc, char **argv)
          if (checkFileExistence(csvfile)==0)
          {
             fp = fopen(csvfile,"a");
+            if(fp==NULL) file_open_error(csvfile);
             fprintf(fp,"ID, CC_area, CC_perimeter, CC_circularity, CC_length");
             if(opt_W) 
             {
@@ -3437,6 +3445,7 @@ int main(int argc, char **argv)
          }
 
          fp = fopen(csvfile,"a");
+         if(fp==NULL) file_open_error(csvfile);
          fprintf(fp,"%s, ",prefix);
          fprintf(fp,"%6.2f, ",CCarea);
          fprintf(fp,"%6.2f, ",CCperimeter);

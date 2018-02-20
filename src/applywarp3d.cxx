@@ -393,6 +393,7 @@ int main(int argc, char **argv)
          printf("\nReading displacement field: %s\n",w2dfile);
 
          fp=fopen(w2dfile,"r");
+         if(fp==NULL) file_open_error(w2dfile);
          fread(&hdr,sizeof(nifti_1_header),1,fp);
          fread(&extender, sizeof(nifti1_extender), 1, fp);
          if(hdr.dim[0]<1 || hdr.dim[0]>7)

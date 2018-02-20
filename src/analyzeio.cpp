@@ -81,26 +81,22 @@ void get_analyze_file_names(const char *filename, char *basename_hdr, char *base
 
 void read_analyze_hdr(struct dsr *hdr, char *filename)
 {
-	FILE *fp;
-	int n;
+   FILE *fp;
+   int n;
 
-	fp=fopen(filename,"r");
-	if(fp==NULL) 
-	{
-		printf("error: cannot open file %s !\n",filename);
-		exit(0);
-	}
+   fp=fopen(filename,"r");
+   if(fp==NULL) file_open_error(filename);
 
-	n=(int)fread(hdr,sizeof(struct dsr),1,fp);
+   n=(int)fread(hdr,sizeof(struct dsr),1,fp);
 
-	if(n!=1) 
-	{
-		printf("error: reading from file %s !\n",filename);
-		fclose(fp);
-		exit(0);
-	}
+   if(n!=1) 
+   {
+      printf("error: reading from file %s !\n",filename);
+      fclose(fp);
+      exit(0);
+   }
 
-	fclose(fp);
+   fclose(fp);
 }
 
 void setDimensions(struct dsr hdr, int *nx, int *ny, int *nz, float *dx, float *dy, float *dz, short *dataType)
@@ -236,6 +232,7 @@ char *read_image(char *file, int n)
 	if(im==NULL) return(NULL);
 	
 	fp = fopen(file,"r");
+    if(fp==NULL) file_open_error(file);
 	nread=(int)fread(im,1,n,fp);
 	fclose(fp);
 
@@ -246,13 +243,14 @@ char *read_image(char *file, int n)
 
 void read_image(char *file, char *im, int n)
 {
-	FILE *fp;
+   FILE *fp;
 
-	if(im==NULL) return;
+   if(im==NULL) return;
 	
-	fp = fopen(file,"r");
-	fread(im,1,n,fp);
-	fclose(fp);
+   fp = fopen(file,"r");
+   if(fp==NULL) file_open_error(file);
+   fread(im,1,n,fp);
+   fclose(fp);
 }
 
 // assumes that the *.img and *.hdr files exist and we have read permission.
@@ -554,14 +552,15 @@ void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz
 	hdr.dime.glmin=min;
 	hdr.dime.glmax=max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(short),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(short),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
-
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz, float dx, float dy, float dz, int v)
@@ -586,14 +585,15 @@ void write_analyze_image(const char *filename, short *im, int nx, int ny, int nz
 	hdr.dime.glmin=min;
 	hdr.dime.glmax=max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(short),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(short),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
-
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz)
@@ -618,14 +618,15 @@ void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz
 	hdr.dime.glmin=(int)min;
 	hdr.dime.glmax=(int)max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(float),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(float),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
-
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz, float dx, float dy, float dz, int v)
@@ -650,14 +651,15 @@ void write_analyze_image(const char *filename, float *im, int nx, int ny, int nz
 	hdr.dime.glmin=(int)min;
 	hdr.dime.glmax=(int)max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(float),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(float),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
-
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz)
@@ -682,14 +684,15 @@ void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny
 	hdr.dime.glmin=min;
 	hdr.dime.glmax=max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(unsigned char),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(unsigned char),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
-
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny, int nz, float dx, float dy, float dz, int v)
@@ -714,13 +717,15 @@ void write_analyze_image(const char *filename, unsigned char *im, int nx, int ny
 	hdr.dime.glmin=min;
 	hdr.dime.glmax=max;
 
-	fp=fopen(imgfile,"w");
-	fwrite(im,sizeof(unsigned char),nv,fp);
-	fclose(fp);
+   fp=fopen(imgfile,"w");
+   if(fp==NULL) file_open_error(imgfile);
+   fwrite(im,sizeof(unsigned char),nv,fp);
+   fclose(fp);
 
-	fp=fopen(hdrfile,"w");
-	fwrite(&hdr,sizeof(struct dsr),1,fp);
-	fclose(fp);
+   fp=fopen(hdrfile,"w");
+   if(fp==NULL) file_open_error(hdrfile);
+   fwrite(&hdr,sizeof(struct dsr),1,fp);
+   fclose(fp);
 }
 
 // assumes that the *.img and *.hdr files exist and we have read permission.

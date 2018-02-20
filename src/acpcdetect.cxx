@@ -505,6 +505,7 @@ int main(int argc, char **argv)
       multi(PIL2OUT, 4, 4,  Tacpc, 4,  4, Tacpc);
 
       fp = fopen(transformation_filename,"w");
+      if(fp==NULL) file_open_error(transformation_filename);
       printMatrix(Tacpc, 4, 4, "ART acpcdetect tilt correction matrix:", fp);
       fclose(fp);
    }

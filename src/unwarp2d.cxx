@@ -458,6 +458,7 @@ int main(int argc, char **argv)
       if(-min>s) s=-min;
 
       fp=fopen(warpfile,"w");
+      if(fp==NULL) file_open_error(warpfile);
       trg_hdr.bitpix=8*sizeof(short);
       trg_hdr.vox_offset=352.0;
       trg_hdr.dim[0]=5;

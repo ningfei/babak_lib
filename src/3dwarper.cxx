@@ -844,6 +844,7 @@ int main(int argc, char **argv)
       sprintf(filename,"%s_affine.mrx",subprefix);
       if(opt_v) printf("Saving subject image -> target image affine transformaion in %s ...\n",filename);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
       printMatrix(sub_to_trg,4,4,"",fp);
       fclose(fp);
    }
@@ -979,6 +980,7 @@ int main(int argc, char **argv)
       if(-min>s) s=-min;
 
       fp=fopen(warpfile,"w");
+      if(fp==NULL) file_open_error(warpfile);
       trg_hdr.bitpix=8*sizeof(short);
       trg_hdr.vox_offset=352.0;
       trg_hdr.dim[0]=5;

@@ -382,6 +382,7 @@ int main(int argc, char **argv)
    ////////////////////////////////////////////////////////////////////////////////
 
    fp=fopen(filename1,"r");
+   if(fp==NULL) file_open_error(filename1);
 
    fread(&hdr,sizeof(nifti_1_header),1,fp);
    fread(&extender, sizeof(nifti1_extender), 1, fp);
@@ -573,6 +574,7 @@ int main(int argc, char **argv)
       if(-min>s) s=-min;
 
       fp=fopen(filename2,"w");
+      if(fp==NULL) file_open_error(filename2);
       hdr.dim[1]=nx2;
       hdr.dim[2]=ny2;
       hdr.dim[3]=nz2;

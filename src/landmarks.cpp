@@ -42,6 +42,7 @@ void makePPM(SHORTIM im, int *lm, const char *ppmfile)
    }
 
    fp=fopen(ppmfile,"w");
+   if(fp==NULL) file_open_error(ppmfile);
 
    /*Write the header part of the PPM file*/
    fprintf(fp,"P6\n");
@@ -138,6 +139,7 @@ float *detect_landmarks(const char *subfile, const char *mdlfile, int &nl, char 
    subim.np = subim.nx*subim.ny;
 
    fpi=fopen(mdlfile, "r");
+   if(fpi==NULL) file_open_error(mdlfile);
 
    fread(&nl, sizeof(int), 1, fpi);
    fread(&r, sizeof(int), 1, fpi);
@@ -228,6 +230,7 @@ float *read_landmark_centers(const char *mdlfile, int &nl)
    float *Q;
 
    fpi=fopen(mdlfile, "r");
+   if(fpi==NULL) file_open_error(mdlfile);
 
    fread(&nl, sizeof(int), 1, fpi);
    fread(&r, sizeof(int), 1, fpi);

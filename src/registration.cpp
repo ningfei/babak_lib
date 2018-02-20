@@ -1885,6 +1885,7 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 	}
 
 	fp = fopen("tt","w");
+    if(fp==NULL) file_open_error("tt");
 
 	for(int i=-40; i<=40; i++)
 	// for(int i=-240; i<=240; i++)

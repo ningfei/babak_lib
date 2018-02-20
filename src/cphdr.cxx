@@ -130,6 +130,7 @@ int main(int argc, char **argv)
 
    input_hdr_segment = (char *)calloc(input_hdr_size, 1);
    input_fp = fopen(inputfile,"r");
+   if(input_fp==NULL) file_open_error(inputfile);
    fread(input_hdr_segment, 1, input_hdr_size, input_fp);
    fclose(input_fp);
    input_hdr_ptr = (nifti_1_header *)input_hdr_segment;
@@ -162,12 +163,14 @@ int main(int argc, char **argv)
    printf("Output data size = %d\n",output_data_size);
 
    output_fp = fopen(outputfile,"r");
+   if(output_fp==NULL) file_open_error(outputfile);
    fread(output_hdr_segment, 1, output_hdr_size, output_fp);
    fread(output_data_segment, 1, output_data_size, output_fp);
    fclose(output_fp);
    output_hdr_ptr = (nifti_1_header *)output_hdr_segment;
 
    output_fp = fopen(outputfile,"w");
+   if(output_fp==NULL) file_open_error(outputfile);
    fwrite(input_hdr_segment, 1, input_hdr_size, output_fp);
    fwrite(output_data_segment, 1, output_data_size, output_fp);
    fclose(output_fp);

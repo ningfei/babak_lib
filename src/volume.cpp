@@ -62,14 +62,14 @@ int VOLUME::isVision(char *pathname)
 
 int VOLUME::isSMIS(char *pathname)
 {
-	int val=0;
-	FILE *fp;
-        char key[1025];
-        char dum[1025];
+   int val=0;
+   FILE *fp;
+   char key[1025];
+   char dum[1025];
 
 
-        // Is the first file SMIS?
-        fp=fopen(pathname,"r");
+   // Is the first file SMIS?
+   fp=fopen(pathname,"r");
 
 	if(fp==NULL)
 	{
@@ -154,18 +154,19 @@ void VOLUME::read_smis_header(char *pathname)
 
 	np = nx*ny;
 
-        fp=fopen(pathname,"r");
-        fseek(fp,np*2+512,0);
-        while( fgets(dum,1024,fp) != NULL )
-        {
+   fp=fopen(pathname,"r");
+   if(fp==NULL) file_open_error(pathname);
+   fseek(fp,np*2+512,0);
+   while( fgets(dum,1024,fp) != NULL )
+   {
                 sscanf(dum,"%s",key);
                 if( strcmp(key,":FOV")==0 )
                 {
                         sscanf(dum,"%s %f",key,&fov);
                         continue;
                 }
-        }
-        fclose(fp);
+   }
+   fclose(fp);
 
 	dx=fov/nx;
 	dy=fov/ny;
@@ -230,9 +231,9 @@ void VOLUME::read_vision_header(char *pathname)
 
 void VOLUME::read_smis_image(char *pathname)
 {
-        FILE *fp;
+   FILE *fp;
 
-        fp = fopen(pathname,"r");
+   fp = fopen(pathname,"r");
 
 	if(fp==NULL)
 	{
@@ -332,10 +333,11 @@ void VOLUME::readsiemensvision(char *pathname)
 
 	// determine the patient ID and name of the input image
 	// we will look for all files which have the same name and ID
-	fp=fopen(pathname,"r");
+   fp=fopen(pathname,"r");
+   if(fp==NULL) file_open_error(pathname);
 
-	nt=1;
-	dt=0;
+   nt=1;
+   dt=0;
 
 /*
 fseek(fp, 2864, SEEK_SET);
@@ -469,6 +471,7 @@ np=nx*ny;
 		// determine the patient ID and name of the file
 		// we will look for all files which have the same name and ID
 		fp=fopen(filename,"r");
+        if(fp==NULL) file_open_error(filename);
 		fseek(fp, 795, SEEK_SET);
 		fread(patientID2,sizeof(char),12,fp);
 		patientID2[12]='\0';
@@ -518,6 +521,7 @@ np=nx*ny;
 		imagenumber=imagenumbers[i]-imagenumbermin;
 
 		fp=fopen(filenames[i],"r");
+        if(fp==NULL) file_open_error(filenames[i]);
 
 		if(imagenumber==0)
 		{
@@ -610,6 +614,7 @@ int VOLUME::readsiemensvision(int N, char **filename)
 	// determine the patient ID and name of the input image
 	// we will look for all files which have the same name and ID
 	fp=fopen(filename[0],"r");
+    if(fp==NULL) file_open_error(filename[0]);
 
 	fseek(fp, 5000, SEEK_SET);
 	fread(&dx, sizeof(double), 1, fp);
@@ -703,6 +708,7 @@ int VOLUME::readsiemensvision(int N, char **filename)
 		// determine the patient ID and name of the file
 		// ensure all files which have the same name and ID
 		fp=fopen(filename[i],"r");
+        if(fp==NULL) file_open_error(filename[i]);
 
 		fseek(fp, 795, SEEK_SET);
 		fread(patientID2,sizeof(char),12,fp);
@@ -769,6 +775,7 @@ int VOLUME::readsiemensvision(int N, char **filename)
 	for(int i=0;i<N;i++)
 	{
 		fp=fopen(filename[i],"r");
+        if(fp==NULL) file_open_error(filename[i]);
 
 		fseek(fp, 3212, SEEK_SET);
 		fread(&imagenumber,sizeof(int),1,fp);
@@ -822,6 +829,7 @@ void VOLUME::readmosaic(char *pathname)
 	dt=0;
 
 	fp=fopen(pathname,"r");
+    if(fp==NULL) file_open_error(pathname);
 
 	fseek(fp, 5000, SEEK_SET);
 	fread(&dx, sizeof(double), 1, fp);
@@ -959,6 +967,7 @@ void VOLUME::savenki(char *pathname)
 	char DT=1;
 
 	fp=fopen(pathname,"w");
+    if(fp==NULL) file_open_error(pathname);
 	fwrite("NKI", sizeof(char), 3, fp);
 	fwrite(&id, sizeof(short), 1, fp);
 	fwrite(&hdrsize, sizeof(short), 1, fp);
@@ -1105,6 +1114,7 @@ void VOLUME::read_ge(char *pathname)
 	// determine the patient ID and name of the input image
 	// we will look for all files which have the same name and ID
 	fp=fopen(pathname,"r");
+    if(fp==NULL) file_open_error(pathname);
 
 	nt=1;
 	dt=0;
@@ -1246,6 +1256,7 @@ void VOLUME::read_ge(char *pathname)
 		// determine the patient ID and name of the file
 		// we will look for all files which have the same name and ID
 		fp=fopen(filename,"r");
+        if(fp==NULL) file_open_error(filename);
 
 		fseek(fp,exam_hdr_offset+84,0);
 		fread(patientID2,sizeof(char),12,fp);
@@ -1288,6 +1299,7 @@ void VOLUME::read_ge(char *pathname)
 	for(i=0;i<numberoffiles;i++)
 	{
 		fp=fopen(filenames[i],"r");
+        if(fp==NULL) file_open_error(filenames[i]);
 
 		fseek(fp, hdr_size, SEEK_SET);
 		fread(data+i*np, sizeof(short), np, fp);
@@ -1302,6 +1314,7 @@ void VOLUME::read_ge(char *pathname)
 	if(nz==1)
 	{
 			fp=fopen(filenames[0],"r");
+            if(fp==NULL) file_open_error(filenames[0]);
 
 			fseek(fp,im_hdr_offset+130,0);
 			fread(cntr,sizeof(float),3,fp);
@@ -1340,6 +1353,7 @@ void VOLUME::read_ge(char *pathname)
 			if(i==0)
 			{
 				fp=fopen(filenames[i],"r");
+                if(fp==NULL) file_open_error(filenames[i]);
 
 				fseek(fp,im_hdr_offset+130,0);
 				fread(Ca,sizeof(float),3,fp);
@@ -1361,6 +1375,7 @@ void VOLUME::read_ge(char *pathname)
 			if(i==1)
 			{
 				fp=fopen(filenames[i],"r");
+                if(fp==NULL) file_open_error(filenames[i]);
 
 				fseek(fp,im_hdr_offset+130,0);
 				fread(Cb,sizeof(float),3,fp);
@@ -1454,6 +1469,7 @@ void VOLUME::read_gelx(char *pathname)
 	// determine the patient ID and name of the input image
 	// we will look for all files which have the same name and ID
 	fp=fopen(pathname,"r");
+    if(fp==NULL) file_open_error(pathname);
 
 	nt=1;
 	dt=0;
@@ -1577,6 +1593,7 @@ void VOLUME::read_gelx(char *pathname)
 		// determine the patient ID and name of the file
 		// we will look for all files which have the same name and ID
 		fp=fopen(filename,"r");
+        if(fp==NULL) file_open_error(filename);
 
 		if( fread(&suite_hdr, sizeof(SUITEDATATYPE), 1, fp)!=1 ) { fclose(fp); continue; }
 
@@ -1620,6 +1637,7 @@ void VOLUME::read_gelx(char *pathname)
 	for(i=0;i<numberoffiles;i++)
 	{
 		fp=fopen(filenames[i],"r");
+        if(fp==NULL) file_open_error(filenames[i]);
 
                 fread(&suite_hdr, sizeof(SUITEDATATYPE), 1, fp);
 		fseek(fp,116,SEEK_SET);
@@ -1649,6 +1667,7 @@ void VOLUME::read_gelx(char *pathname)
 	if(nz==1)
 	{
 		fp=fopen(filenames[0],"r");
+        if(fp==NULL) file_open_error(filenames[0]);
 
                 fread(&suite_hdr, sizeof(SUITEDATATYPE), 1, fp);
 		fseek(fp,116,SEEK_SET);
@@ -1697,6 +1716,7 @@ void VOLUME::read_gelx(char *pathname)
 			if(i==0)
 			{
 				fp=fopen(filenames[i],"r");
+                if(fp==NULL) file_open_error(filenames[i]);
 
 				fread(&suite_hdr, sizeof(SUITEDATATYPE), 1, fp);
 				fseek(fp,116,SEEK_SET);
@@ -1727,6 +1747,7 @@ void VOLUME::read_gelx(char *pathname)
 			if(i==1)
 			{
 				fp=fopen(filenames[i],"r");
+                if(fp==NULL) file_open_error(filenames[i]);
 
 				fread(&suite_hdr, sizeof(SUITEDATATYPE), 1, fp);
 				fseek(fp,116,SEEK_SET);
@@ -1837,6 +1858,7 @@ int VOLUME::read_analyze(const char *pathname)
 	data =(short *)calloc(nv, sizeof(short));
 
 	fp = fopen(imgfile,"r");
+    if(fp==NULL) file_open_error(imgfile);
 	fread(data,sizeof(short),nv,fp);
 	fclose(fp);
 

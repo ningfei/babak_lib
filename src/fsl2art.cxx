@@ -153,6 +153,7 @@ int main(int argc, char **argv)
    }
 
    fp = fopen(outputmatrixfile,"w");
+   if(fp==NULL) file_open_error(outputmatrixfile);
    fprintf(fp,"%f %f %f %f\n",Mart[0],Mart[1],Mart[2],Mart[3]);
    fprintf(fp,"%f %f %f %f\n",Mart[4],Mart[5],Mart[6],Mart[7]);
    fprintf(fp,"%f %f %f %f\n",Mart[8],Mart[9],Mart[10],Mart[11]);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <babak_lib.h>
 
 //*********************************************************************
 // "hist1D_plot" plots the histogram of the data1 and data2 arrays based 
@@ -31,6 +32,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2)
    {
       sprintf(filename,"%s.dat",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       for(int i=0; i<n; i++)
          fprintf(fp,"%d %f %f\n", bin[i], data1[i], data2[i]);
@@ -43,6 +45,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2)
    {
       sprintf(filename,"%s.plt",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       fprintf(fp,"set terminal png\n");
       fprintf(fp,"set output '%s.png'\n",name);
@@ -76,6 +79,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, 
    {
       sprintf(filename,"%s.dat",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       for(int i=0; i<n; i++)
          fprintf(fp,"%d %f %f\n", bin[i], data1[i], data2[i]);
@@ -88,6 +92,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, 
    {
       sprintf(filename,"%s.plt",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       fprintf(fp,"set terminal png\n");
       fprintf(fp,"set output '%s.png'\n",name);
@@ -122,6 +127,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, 
    {
       sprintf(filename,"%s.dat",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       for(int i=0; i<n; i++)
          fprintf(fp,"%d %f %f\n", bin[i], data1[i], data2[i]);
@@ -134,6 +140,7 @@ void hist1D_plot(const char *name, int n, int *bin, float *data1, float *data2, 
    {
       sprintf(filename,"%s.plt",name);
       fp = fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
 
       fprintf(fp,"set terminal png\n");
       fprintf(fp,"set output '%s.png'\n",name);
