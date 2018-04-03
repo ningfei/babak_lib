@@ -9,7 +9,7 @@ void memory_allocation_error(const char *s)
 
 void file_open_error(const char *s)
 {
-	printf("\nError: Cannot open \"%s\", aborting ...\n\n",s);
+	printf("\nError: Could not open \"%s\", aborting ...\n\n",s);
 	exit(EXIT_FAILURE);
 }
 
