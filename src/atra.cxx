@@ -698,9 +698,9 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       }
 
       if(opt_v) printf("Iteration %d ...\n", iteration+1);
-      //  if(opt_v) printf("Number of seeds = %d\n", nseeds);
-      if(opt_v) printf("Number of LOOC landmarks identified = %d\n",nlm);
-      //if(opt_v) printf("%5.2f%% aligned\n",100.0*current_nlm_aligned/nlm);
+      #if(opt_v) printf("Number of seeds = %d\n", nseeds);
+      #if(opt_v) printf("Number of LOOC landmarks identified = %d\n",nlm);
+      if(opt_v) printf("N* = %d\n",current_nlm_aligned);
 
       if(nlm<6)
       {
