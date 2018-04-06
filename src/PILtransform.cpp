@@ -404,6 +404,29 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
 
    convert_to_xyz(LM, n, subimPIL);
  
+   // This block outputs the locations of the detected landmarks 
+   // in (i,j,k) coordinates of the native space of the input volume
+   {
+      FILE *fp;
+      float landmark[4];
+      invT = inv4(TPIL0);
+      sprintf(filename,"%s_orion.lm",subfile_prefix);
+      fp=fopen(filename,"w");
+      if(fp==NULL) file_open_error(filename);
+      for(int i=0; i<n; i++)
+      {
+         landmark[0]=LM[0*n + i];
+         landmark[1]=LM[1*n + i];
+         landmark[2]=LM[2*n + i];
+         landmark[3]=1;
+         multi(invT,4,4,landmark,4,1,landmark);
+         convert_to_ijk(landmark, 1, subim);
+         fprintf(fp,"%5.1f %5.1f %5.1f\n",landmark[0], landmark[1], landmark[2]);
+      }
+      fclose(fp);
+      free(invT);
+   }
+
    float *P;
    float *Q; // Image using Q insted of P' in Eq. (1) of Arun et al. 1987
    float TLM[16];
