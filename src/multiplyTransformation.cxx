@@ -25,8 +25,6 @@ int main(int argc, char **argv)
 {
 	float Tin1[16],Tin2[16],Tout[16];
 
-	printf("%d\n",argc);
-
 	if(argc != 4)
 		print_help_and_exit();
 
