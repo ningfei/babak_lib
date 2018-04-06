@@ -1,0 +1,24 @@
+Installation of art2:
+
+(0) art2 requires openmotif installation, e.g., for macOS using the command: 
+brew install openmotif
+
+(1) Define the $ARTHOME environment variable on your system if not already defined.
+This should point to a directory where ART programs are installed.  Ex:
+export ARTHOME=/usr/local/art
+
+(2) Move art2_*.tar.gz to $ARTHOME
+mv art2_*.tar.gz $ARTHOME
+
+(3) Unpack
+cd $ARTHOME
+tar xvzf art2_*.tar.gz
+
+$ARTHOME/bin/art2 is the executable program
+
+$ARTHOME/doc/artdoc.pdf contains documentation for an older version, but it is
+still useful.
+
+To see a list of the run-time libraries required by art2, on macOS use the command: 
+otool -L art2
+You will need all these on your system for running art2.
