@@ -10,7 +10,6 @@ LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
 all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation
 
 createDir:
-	mkdir -p ../bin
 	mkdir -p ../lib
 
 # because of functions in matrixops, linking the libbabak will possibly require lapack libs.
