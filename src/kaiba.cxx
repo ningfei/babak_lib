@@ -1188,6 +1188,7 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
 
       // if image was flipped (PIR), then 'lhc3' finds the RHROI
       // and 'rhc3' finds the LHROI
+ /*
       if( side[0]=='r')
       {
          if(!flipped)
@@ -1202,6 +1203,8 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
          else
             sprintf(filename,"%s_RHROI2.nii",prefix);
       }
+*/
+      sprintf(filename,"%s",prefix);
 
       for(int n=0; n<hcim.nv; n++) stndrd_roi[n] = 0;
 
@@ -1240,9 +1243,11 @@ float8 compute_hi(char *imfile, char *roifile)
    int I_alpha;
    int nbin;
    char roifileprefix[1024]=""; //baseline image prefix
+   char roifiledir[1024]=""; //baseline image prefix
    char filename[1024]=""; //baseline image prefix
 
    if( niftiFilename(roifileprefix, roifile)==0 ) exit(1);
+   getDirectoryName(roifile, roifiledir);
 
    if(opt_v)
    {
@@ -1436,7 +1441,7 @@ float8 compute_hi(char *imfile, char *roifile)
          bin[i] = i;
       }
 
-      sprintf(filename,"%s_hist",roifileprefix);
+      sprintf(filename,"%s/%s_hist",roifiledir,roifileprefix);
       hist1D_plot(filename, n, bin, data1, data2, I_gm, I_csf);
 
       free(data1);
@@ -1483,6 +1488,7 @@ int main(int argc, char **argv)
    char **imagefile; // the nim input image files
    char **mrxfile; // the nim input image files
    char **imagefileprefix; 
+   char **imagedir; 
    float *scalefactor;
    char dummystring[DEFAULT_STRING_LENGTH];
 
@@ -1574,6 +1580,7 @@ int main(int argc, char **argv)
    imagefile = (char **)calloc(nim, sizeof(char *));
    mrxfile = (char **)calloc(nim, sizeof(char *));
    imagefileprefix = (char **)calloc(nim, sizeof(char *));
+   imagedir = (char **)calloc(nim, sizeof(char *));
    scalefactor = (float *)calloc(nim, sizeof(float));
 
    for(int i=0; i<nim; i++)
@@ -1586,6 +1593,9 @@ int main(int argc, char **argv)
 
       imagefileprefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(imagefileprefix[i],"");
+
+      imagedir[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagedir[i],"");
    }
 
    if( not_magical_nifti(bfile,0)==0 )  // a single image was specified using -i <image>.nii
@@ -1593,6 +1603,7 @@ int main(int argc, char **argv)
       strcpy(imagefile[0], bfile);
       if( niftiFilename(imagefileprefix[0], imagefile[0])==0 ) { exit(0); }
       scalefactor[0]=1.0;
+      getDirectoryName(imagefile[0], imagedir[0]);
    }
    else
    {
@@ -1608,6 +1619,7 @@ int main(int argc, char **argv)
          fscanf(fp,"%f",&scalefactor[i]);
          fscanf(fp,"%s",mrxfile[i]);
          if( niftiFilename(imagefileprefix[i], imagefile[i])==0 ) { exit(0); }
+         getDirectoryName(imagefile[i], imagedir[i]);
       }
       fclose(fp);
    }
@@ -1705,9 +1717,10 @@ int main(int argc, char **argv)
 
       if(opt_png)
       {
-         sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",imagefileprefix[0],imagefileprefix[0]); system(cmnd);
+         sprintf(filename,"%s/%s",imagedir[0],imagefileprefix[0]);
+         sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",filename, filename); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",filename, filename); system(cmnd);
+         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",filename,filename); system(cmnd);
       }
 
       invT = inv4(TPIL[0]);
@@ -1732,12 +1745,16 @@ int main(int argc, char **argv)
    flipped=NO;
    for(int i=0; i<nim; i++)
    {
-      find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i], Tright0);
-      sprintf(roifile,"%s_RHROI1.nii",imagefileprefix[i]);
+      //find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i], Tright0);
+      //sprintf(roifile,"%s_RHROI1.nii",imagefileprefix[i]);
+      sprintf(roifile,"%s/%s_RHROI1.nii",imagedir[i],imagefileprefix[i]);
+      find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", roifile, Tright0);
       RHI0[i]=compute_hi(imagefile[i], roifile);
 
-      find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i], Tleft0);
-      sprintf(roifile,"%s_LHROI1.nii",imagefileprefix[i]);
+      //find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i], Tleft0);
+      //sprintf(roifile,"%s_LHROI1.nii",imagefileprefix[i]);
+      sprintf(roifile,"%s/%s_LHROI1.nii",imagedir[i],imagefileprefix[i]);
+      find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", roifile, Tleft0);
       LHI0[i]=compute_hi(imagefile[i], roifile);
    }
 
@@ -1762,12 +1779,16 @@ int main(int argc, char **argv)
       {
          TPIL[i][8]*=-1.0; TPIL[i][9]*=-1.0; TPIL[i][10]*=-1.0; TPIL[i][11]*=-1.0; 
 
-         find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i],Tright1);
-         sprintf(roifile,"%s_RHROI2.nii",imagefileprefix[i]);
+         //find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i],Tright1);
+         //sprintf(roifile,"%s_RHROI2.nii",imagefileprefix[i]);
+         sprintf(roifile,"%s/%s_RHROI2.nii",imagedir[i],imagefileprefix[i]);
+         find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", roifile,Tright1);
          RHI1[i]=compute_hi(imagefile[i], roifile);
 
-         find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i],Tleft1);
-         sprintf(roifile,"%s_LHROI2.nii",imagefileprefix[i]);
+         //find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i],Tleft1);
+         //sprintf(roifile,"%s_LHROI2.nii",imagefileprefix[i]);
+         sprintf(roifile,"%s/%s_LHROI2.nii",imagedir[i],imagefileprefix[i]);
+         find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", roifile,Tleft1);
          LHI1[i]=compute_hi(imagefile[i], roifile);
       }
    }
