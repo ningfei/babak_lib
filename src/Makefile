@@ -201,7 +201,7 @@ acpcdetect: acpcdetect.cxx
 	mv acpcdetect ${ARTHOME}/bin
 
 applywarp3d: applywarp3d.cxx
-	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LIBS)
+	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LESSLIBS)
 	mv applywarp3d ${ARTHOME}/bin
 
 scaleImage: scaleImage.cxx
@@ -209,7 +209,7 @@ scaleImage: scaleImage.cxx
 	mv scaleImage ${ARTHOME}/bin
 
 avgImage: avgImage.cxx
-	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LIBS)
+	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LESSLIBS)
 	mv avgImage ${ARTHOME}/bin
 
 one_sample_t: one_sample_t.cxx
@@ -225,7 +225,7 @@ unwarp2d: unwarp2d.cxx
 	mv unwarp2d ${ARTHOME}/bin
 
 cphdr: cphdr.cxx
-	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LIBS)
+	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LESSLIBS)
 	mv cphdr ${ARTHOME}/bin
 
 reslice: reslice.cxx
@@ -261,7 +261,7 @@ yuki: yuki.cxx
 	mv yuki ${ARTHOME}/bin
 
 analyze2nii: analyze2nii.cxx
-	$(MPICC) $(CFLAGS) -o analyze2nii analyze2nii.cxx $(INC) $(LIBS)
+	$(CC) $(CFLAGS) -o analyze2nii analyze2nii.cxx $(INC) $(LIBS)
 	mv analyze2nii ${ARTHOME}/bin
 
 multiplyTransformation: multiplyTransformation.cxx
