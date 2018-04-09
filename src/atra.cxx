@@ -323,6 +323,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    char **imagefile; // the nim image files
    char **landmarksfile; // the (potential) nim landmarks files
    char **imagefileprefix;
+   char **imagedir;
 
    float **TPIL; // nim-array of 4x4 transformation matrices which transform each of
                  // the nim images into the standardized PIL system
@@ -388,6 +389,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    imagefile = (char **)calloc(nim, sizeof(char *));
    landmarksfile = (char **)calloc(nim, sizeof(char *));
    imagefileprefix = (char **)calloc(nim, sizeof(char *));
+   imagedir = (char **)calloc(nim, sizeof(char *));
    TPIL = (float **)calloc(nim, sizeof(float *));
    TGPA = (float **)calloc(nim, sizeof(float *));
 
@@ -404,6 +406,10 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       // freed before atra() returns
       imagefileprefix[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
       sprintf(imagefileprefix[i],"");
+
+      // freed before atra() returns
+      imagedir[i] = (char *)calloc(DEFAULT_STRING_LENGTH, sizeof(char));
+      sprintf(imagedir[i],"");
 
       // both variables freed before atra() returns
       TPIL[i] = (float *)calloc(16, sizeof(float));
@@ -422,6 +428,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       {
          strcpy(imagefile[nim], temporaryFilename);
          if( niftiFilename(imagefileprefix[nim], imagefile[nim])==0 ) { exit(0); }
+         getDirectoryName(imagefile[nim], imagedir[nim]);
          nim++;
       }
       else
@@ -518,7 +525,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       set_dim(tmp_hdr, output_dim);
       tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
       sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
-      sprintf(temporaryFilename,"%s_%s.nii",imagefileprefix[0],outputOrientationCode);
+      sprintf(temporaryFilename,"%s/%s_%s.nii",imagedir[0],imagefileprefix[0],outputOrientationCode);
       save_nifti_image(temporaryFilename, tmp, &tmp_hdr);
 
       PILtransform(outputOrientationCode, OUT2PIL);
@@ -535,18 +542,18 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
 
       free(tmp);
 
-      sprintf(temporaryFilename,"%s_PIL.mrx",imagefileprefix[0]);
+      sprintf(temporaryFilename,"%s/%s_PIL.mrx",imagedir[0],imagefileprefix[0]);
       remove(temporaryFilename);
 
       multi(PIL2OUT,4,4,TPIL[0],4,4,TOUT);
-      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
+      sprintf(temporaryFilename,"%s/%s.mrx",imagedir[0],imagefileprefix[0]);
       fp=fopen(temporaryFilename,"w");
       if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
 
       art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
-      sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[0]);
+      sprintf(temporaryFilename,"%s/%s_FSL.mat",imagedir[0],imagefileprefix[0]);
       fp=fopen(temporaryFilename,"w");
       if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT_FSL,4,4,"",fp);
@@ -557,7 +564,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       if(fp==NULL) file_open_error(temporaryFilename);
       fprintf(fp,"%d\n",nim);
       fprintf(fp,"%s %f\n",imagefile[0],1.0);
-      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[0]);
+      sprintf(temporaryFilename,"%s/%s.mrx",imagedir[0],imagefileprefix[0]);
       fprintf(fp,"%s\n",temporaryFilename);
       fclose(fp);
 
@@ -833,7 +840,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    {
       scalefactor[i] = min/mean[i];
       fprintf(fp,"%s %f\n",imagefile[i],scalefactor[i]);
-      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[i]);
+      sprintf(temporaryFilename,"%s/%s.mrx",imagedir[i],imagefileprefix[i]);
       fprintf(fp,"%s\n",temporaryFilename);
    }
    fclose(fp);
@@ -861,7 +868,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       set_dim(tmp_hdr, output_dim);
       tmp_hdr.magic[0]='n'; tmp_hdr.magic[1]='+'; tmp_hdr.magic[2]='1';
       sprintf(tmp_hdr.descrip,"Created by ART ATRA program.");
-      sprintf(temporaryFilename,"%s_%s.nii",imagefileprefix[i],outputOrientationCode);
+      sprintf(temporaryFilename,"%s/%s_%s.nii",imagedir[i],imagefileprefix[i],outputOrientationCode);
       save_nifti_image(temporaryFilename, tmp, &tmp_hdr);
 
       PILtransform(outputOrientationCode, OUT2PIL);
@@ -876,18 +883,18 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       free(tmp);
 
       // save transformation matrix
-      sprintf(temporaryFilename,"%s_PIL.mrx",imagefileprefix[i]);
+      sprintf(temporaryFilename,"%s/%s_PIL.mrx",imagedir[i], imagefileprefix[i]);
       remove(temporaryFilename);
 
       multi(PIL2OUT,4,4,TPIL[i],4,4,TOUT);
-      sprintf(temporaryFilename,"%s.mrx",imagefileprefix[i]);
+      sprintf(temporaryFilename,"%s/%s.mrx",imagedir[i],imagefileprefix[i]);
       fp=fopen(temporaryFilename,"w");
       if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT,4,4,"",fp);
       fclose(fp);
 
       art_to_fsl(TOUT, TOUT_FSL, input_dim, output_dim);
-      sprintf(temporaryFilename,"%s_FSL.mat",imagefileprefix[i]);
+      sprintf(temporaryFilename,"%s/%s_FSL.mat",imagedir[i],imagefileprefix[i]);
       fp=fopen(temporaryFilename,"w");
       if(fp==NULL) file_open_error(temporaryFilename);
       printMatrix(TOUT_FSL,4,4,"",fp);
@@ -910,6 +917,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
       free(imagefile[i]);
       free(landmarksfile[i]);
       free(imagefileprefix[i]);
+      free(imagedir[i]);
       free(TPIL[i]);
       free(TGPA[i]);
       free(PILim[i].v);
@@ -919,6 +927,7 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    free(imagefile);
    free(landmarksfile);
    free(imagefileprefix);
+   free(imagedir);
    free(TPIL);
    free(TGPA);
    free(PILbraincloud);

@@ -31,7 +31,8 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
 {
    int colourflag;
 //   unsigned char colour[3]={0xFF,0xFF,0x00};
-   unsigned char colour[3]={0x00,0xFF,0x00};
+//   unsigned char colour[3]={0x00,0xFF,0x00};
+   unsigned char colour[3]={0xFF,0xFF,0xFF};
    unsigned char *imgTemp;
    FILE *fp;
 
@@ -70,14 +71,15 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
       {
          for(int m=0;m<nl;m++)
          {
-            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; } 
-            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; } 
-            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; } 
-            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; } 
-            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; } 
-            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; } 
-            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; } 
-            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; } 
+//uncomment to save in different colours
+//            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; } 
+//            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; } 
+//            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; } 
+//            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; } 
+//            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; } 
+//            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; } 
+//            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; } 
+//            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; } 
             
             if( (i==ii[m] && jj[m]-d<j && j<jj[m]+d) || (j==jj[m] && ii[m]-d<i && i<ii[m]+d) )
             {
@@ -362,9 +364,11 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    nifti_1_header PILbraincloud_hdr;
    // subfile without the directory structure and extension
    char subfile_prefix[1024]; 
+   char imagedir[1024]; 
    char modelfile[1024];
 
    if( niftiFilename(subfile_prefix, subfile)==0 ) exit(0);
+   getDirectoryName(subfile, imagedir);
 
    getARTHOME();
 
@@ -410,7 +414,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
       FILE *fp;
       float landmark[4];
       invT = inv4(TPIL0);
-      sprintf(filename,"%s_orion.lm",subfile_prefix);
+      sprintf(filename,"%s/%s_orion.lm",imagedir,subfile_prefix);
       fp=fopen(filename,"w");
       if(fp==NULL) file_open_error(filename);
       for(int i=0; i<n; i++)
@@ -474,7 +478,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    if(SAVE_MRX_FLAG == 1)
    {
       FILE *fp;
-      sprintf(filename,"%s_PIL.mrx",subfile_prefix);
+      sprintf(filename,"%s/%s_PIL.mrx",imagedir, subfile_prefix);
       fp=fopen(filename,"w");
       if(fp==NULL) file_open_error(filename);
       printMatrix(TPIL,4,4,"",fp);
@@ -508,7 +512,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
          lmy[i]=(int)( lm[1] + 0.5 );
       }
 
-      sprintf(filename,"%s_orion.ppm",subfile_prefix);
+      sprintf(filename,"%s/%s_orion.ppm",imagedir, subfile_prefix);
       mspPPM(subimPIL, lmx, lmy, n, filename);
 
       delete lmx;

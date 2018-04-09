@@ -406,8 +406,8 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
    char fullpath[512]; // directory + filename
    getDirectoryName(imagefilename, dirname);
    niftiFilename(filename,imagefilename);
-   //sprintf(fullpath,"%s/%s_ACPC_sagittal.ppm",dirname,filename);
-   sprintf(fullpath,"%s_ACPC_sagittal.ppm",filename);
+   sprintf(fullpath,"%s/%s_ACPC_sagittal.ppm",dirname,filename);
+   //sprintf(fullpath,"%s_ACPC_sagittal.ppm",filename);
 
    if(opt_ppm)
    {
@@ -468,8 +468,8 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
 
 
    niftiFilename(filename,imagefilename);
-   //sprintf(fullpath,"%s/%s_ACPC_axial.ppm",dirname,filename);
-   sprintf(fullpath,"%s_ACPC_axial.ppm",filename);
+   sprintf(fullpath,"%s/%s_ACPC_axial.ppm",dirname,filename);
+   //sprintf(fullpath,"%s_ACPC_axial.ppm",filename);
 
    if(opt_ppm)
    {
