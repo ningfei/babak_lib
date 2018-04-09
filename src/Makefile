@@ -6,6 +6,7 @@ CFLAGS = -O3
 CC = g++
 INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
+LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc
 
 all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation
 
@@ -264,5 +265,5 @@ analyze2nii: analyze2nii.cxx
 	mv analyze2nii ${ARTHOME}/bin
 
 multiplyTransformation: multiplyTransformation.cxx
-	$(MPICC) $(CFLAGS) -o multiplyTransformation multiplyTransformation.cxx $(INC) $(LIBS)
+	$(CC) $(CFLAGS) -o multiplyTransformation multiplyTransformation.cxx $(INC) $(LESSLIBS)
 	mv multiplyTransformation ${ARTHOME}/bin
