@@ -185,7 +185,7 @@ clean:
 
 # compilation of executables
 PILtransform: PILtransform.cxx
-	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(LIBS) $(INC)
+	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(INC) $(LIBS)
 	mv PILtransform ${ARTHOME}/bin
 
 brainwash: brainwash.cxx
