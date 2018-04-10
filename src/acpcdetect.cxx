@@ -218,12 +218,12 @@ int main(int argc, char **argv)
    float d;
    //////////////////////////////////////////////////
 
-   char transformation_filename[512];
-   char outputfilename[512];
-   char modelfile[1024];
-   char imagefilename[512];
-   char orientation[4];
-   char output_orientation[4];
+   char transformation_filename[512]="";
+   char outputfilename[512]="";
+   char modelfile[1024]="";
+   char imagefilename[512]="";
+   char orientation[4]="";
+   char output_orientation[4]="";
 
    float AC[4]={0.0, 0.0, 0.0, 1.0};
    float PC[4]={0.0, 0.0, 0.0, 1.0};
@@ -244,12 +244,6 @@ int main(int argc, char **argv)
    // It is very important to have these initializations
    onx=ony=onz=0;
    odx=ody=odz=0.0;
-   outputfilename[0]='\0';
-   transformation_filename[0]='\0';
-   orientation[0]='\0';
-   output_orientation[0]='\0';
-   modelfile[0]='\0';
-   imagefilename[0]='\0';
    searchradius[0] = 50.0;
    searchradius[1] = 15.0;
    searchradius[2] = 15.0;
@@ -297,7 +291,7 @@ int main(int argc, char **argv)
             opt_qform = YES;
             break;
          case 'V':
-            printf("2011-04-05\n");
+            printf("April 10, 2018\n");
             exit(0);
          case 'x':
             onx = atoi(optarg);
