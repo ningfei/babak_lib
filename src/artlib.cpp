@@ -50,7 +50,7 @@ void detectRP(float *RP1, float *RP2, char *modelfile, short *volumeMSP_LR, shor
 void defineTemplate(int r, int h, short *x, short *y, short *z);
 char *expandMask(short *mask_HR, DIM HR, float *RPmean, double RPsr);
 short *thresholdImageOtsu(short *im, int nv, int *nbv);
-int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
+int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile,
 float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v);
 float reflectVertex(int pmax, float fac);
 int dsm(void);
@@ -1313,7 +1313,7 @@ short *thresholdImageOtsu(short *im, int nv, int *nbv)
 	return(msk);
 }
 
-int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile, double *searchradius,
+int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile,
 float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
 {
    char modelfilepath[1024];
@@ -2520,19 +2520,9 @@ void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, floa
    char orientation[4]="";
    char modelfile[1024]="";
 
-   // searchradius[0] is for VSPS
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
-   // It is very important to have these initializations
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
-
    float Tmsp[16]; // transforms image to MSP aligned PIL orientation
 
-   detect_AC_PC_MSP(imfile, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, 0, 0, 0);
+   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0, 0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    for(int i=0; i<4; i++) ac[i] = AC[i];
@@ -2552,23 +2542,13 @@ void find_pil_transformation(char *imfile, DIM dim, float *pilT)
    char orientation[4]="";
    char modelfile[1024]="";
 
-   // searchradius[0] is for VSPS
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
-   // It is very important to have these initializations
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
-
    float AC[4]={0.0, 0.0, 0.0, 1.0};
    float PC[4]={0.0, 0.0, 0.0, 1.0};
    float VSPS[4]={0.0, 0.0, 0.0, 1.0};
 
    float Tmsp[16]; // transforms image to MSP aligned PIL orientation
 
-   detect_AC_PC_MSP(imfile, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, 0, 0, 0);
+   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0, 0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    for(int i=0; i<4; i++) ac[i] = AC[i];

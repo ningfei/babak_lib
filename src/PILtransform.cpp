@@ -1,8 +1,12 @@
+#define _PILTRANSFORM
+
 #include <babak_lib.h>
 #include <sph.h>
 #include <ctype.h>
 #include <landmarks.h>
 #include <stats.h>
+
+double searchradius[3]={50.0, 15.0, 15.0}; // in units of mm
 
 void transform_P(float *P, int nl, float *T)
 {
@@ -559,16 +563,6 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
 {
    char modelfile[1024]="";
 
-   // searchradius[0] is for RP
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
-   // It is very important to have these initializations
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
-
    DIM dim;
    char orient[4]="";  // empty means that the orientation is read from header
    float ac[4]={0.0, 0.0, 0.0, 1.0};
@@ -603,7 +597,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
    }
 
    opt_MSP=NO;
-   detect_AC_PC_MSP(imfile,orient,modelfile,searchradius,ac,pc,rp,Tmsp,0,verbose,0);
+   detect_AC_PC_MSP(imfile,orient,modelfile,ac,pc,rp,Tmsp,0,verbose,0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);

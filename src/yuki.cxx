@@ -393,11 +393,6 @@ short *find_subject_msp(char *imagefilename, char *prefix)
    int opt_D=NO;
    int opt_T2=NO;
 
-   // searchradius[0] is for VSPS
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
    float Tmsp[16]; // transforms volOrig to MSP aligned PIL orientation
 
    float ac[4], pc[4];  
@@ -407,11 +402,7 @@ short *find_subject_msp(char *imagefilename, char *prefix)
    char outputfilename[512];
    FILE *fp;
 
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
-
-   detect_AC_PC_MSP(imagefilename, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, opt_D, 0, opt_T2);
+   detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_D, 0, opt_T2);
 
    input_dim.nx = Snx;
    input_dim.ny = Sny;
@@ -533,10 +524,6 @@ short *find_subject_msp(char *imagefilename, char *prefix, char *msp_transformat
    int opt_D=NO;
    int opt_T2=NO;
 
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
    float Tmsp[16]; // transforms volOrig to MSP aligned PIL orientation
 
    float ac[4], pc[4];  
@@ -545,11 +532,7 @@ short *find_subject_msp(char *imagefilename, char *prefix, char *msp_transformat
 
    char outputfilename[512];
 
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
-
-   detect_AC_PC_MSP(imagefilename, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, opt_D, 0, opt_T2);
+   detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_D, 0, opt_T2);
 
    input_dim.nx = Snx;
    input_dim.ny = Sny;

@@ -230,11 +230,6 @@ int main(int argc, char **argv)
    float VSPS[4]={0.0, 0.0, 0.0, 1.0};
    float Tmsp[16]; // transforms volOrig to MSP aligned PIL orientation
 
-   // searchradius[0] is for VSPS
-   // searchradius[1] is for AC
-   // searchradius[2] is for PC
-   double searchradius[3]; // in units of mm
-
    int onx, ony, onz;
    float odx, ody, odz;
 
@@ -244,9 +239,6 @@ int main(int argc, char **argv)
    // It is very important to have these initializations
    onx=ony=onz=0;
    odx=ody=odz=0.0;
-   searchradius[0] = 50.0;
-   searchradius[1] = 15.0;
-   searchradius[2] = 15.0;
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -324,13 +316,13 @@ int main(int argc, char **argv)
             sprintf(imagefilename,"%s",optarg);
             break;
          case '0':
-            searchradius[0] = atof(optarg);
+            searchradius[0] = atof(optarg); // searchradius[0] is for VSPS
             break;
          case '1':
-            searchradius[1] = atof(optarg);
+            searchradius[1] = atof(optarg); // searchradius[1] is for AC
             break;
          case '2':
-            searchradius[2] = atof(optarg);
+            searchradius[2] = atof(optarg); // searchradius[2] is for PC
             break;
          case 'D':
             opt_D=YES;
@@ -372,11 +364,6 @@ int main(int argc, char **argv)
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
-   if(opt_v) 
-   {
-      printf("\n-------------------------------------------------------\n");
-   }
-
    if(searchradius[0]<=0 || searchradius[0]>200.0) searchradius[0]=50.0;
    if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
    if(searchradius[2]<=0 || searchradius[2]>100.0) searchradius[2]=15.0;
@@ -388,9 +375,9 @@ int main(int argc, char **argv)
       printf("PC search radius = %5.1lf mm\n",searchradius[2]);
    }
 
-   detect_AC_PC_MSP(imagefilename, orientation, modelfile, searchradius, AC, PC, VSPS, Tmsp, opt_D, opt_v, opt_T2);
+   detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_D, opt_v, opt_T2);
 
-   if(opt_sform || opt_qform)
+  if(opt_sform || opt_qform)
    {
       float T_ijk2xyz[16];
       float Tacpc[16];

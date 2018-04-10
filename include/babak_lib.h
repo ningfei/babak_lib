@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef _PILTRANSFORM
+extern double searchradius[3]; // in units of mm
+#endif
+
 typedef unsigned char uchar;
 typedef unsigned short uint2;
 typedef unsigned short uint2;
@@ -325,7 +329,7 @@ extern char *definePCregion(DIM HR, float4 *RP, float4 *RPPCmean, float8 PCsr);
 extern char *expandMask(int2 *mask_HR, DIM HR, float4 *RPmean, float8 RPsr);
 extern void ACPCtransform(float4 *Tacpc, float4 *Tmsp, float4 *AC, float4 *PC, char flg);
 extern void compute_MSP_parameters_from_Tmsp(float4 *Tmsp, float4 *n, float4 *d);
-extern int4 detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile, float8 *searchradius,
+extern int4 detect_AC_PC_MSP( const char *imagefilename, char *orientation, char *modelfile,
 float4 *AC, float4 *PC, float4 *RP, float4 *Tmsp, int4 opt_D, int4 opt_v, int4 opt_T2);
 extern float4 optimizeNormalVector(int2 *image,DIM dim,float4 *A, float4 *B, float4 *C);
 extern float4 reflection_cross_correlation2(int2 *image, DIM dim, float4 A, float4 B, float4 C);
