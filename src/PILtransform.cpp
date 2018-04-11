@@ -490,6 +490,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    }
 
    // create the *LM.ppm image
+   if(opt_ppm)
    {
       int *lmx, *lmy;
       float lm[4]; 

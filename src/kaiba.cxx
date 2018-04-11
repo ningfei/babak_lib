@@ -77,6 +77,7 @@ static struct option options[] =
    {"-lm",1,'l'},  // landmark  file
    {"-alpha",1,'a'}, 
    {"-a",1,'a'}, 
+   {"-noppm",0,'N'}, 
    {0,0,0}
 };
 
@@ -90,6 +91,7 @@ void print_help_and_exit()
    "\nOptions:\n"
    "   -v : Enables verbose mode\n"
    "   -V or -version : Prints program version\n"
+   "   -noppm : Prevents outputtign *.ppm and *.png images\n"
    "   -nopng : Prevents output images in PNG format (still outputs PPM)\n"
    "   -lm <filename>: Manually specifies AC/PC/RP landmarks for <T1W NIFIT>.nii\n"
 //   "   -a or -alpha <alpha>: Specifies to alpha parameter\n"
@@ -787,7 +789,7 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
 
    if(verbose) printf("Computing baseline image PIL transformation ...\n");
    new_PIL_transform(bfile, blmfile, bTPIL, 0);
-   if(opt_png)
+   if(opt_png && opt_ppm)
    {
       sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",bprefix,bprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
@@ -798,7 +800,7 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
 
    if(verbose) printf("Computing follow-up image PIL transformation ...\n");
    new_PIL_transform(ffile, flmfile, fTPIL, 0);
-   if(opt_png)
+   if(opt_png && opt_ppm)
    {
       sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",fprefix,fprefix); system(cmnd);
       sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",fprefix,fprefix); system(cmnd);
@@ -1494,7 +1496,6 @@ int main(int argc, char **argv)
 
    short *tmp;
    char cmnd[1024]=""; // stores the command to run with system
-   opt_ppm=YES;
    opt_txt=NO;
 
    FILE *fp;
@@ -1522,6 +1523,9 @@ int main(int argc, char **argv)
             printf("KAIBA Version 3.0 released Jan. 30, 2018.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
+         case 'N':
+            opt_ppm=NO;
+            break;
          case 'F':
             opt_flip=NO;
             break;
@@ -1715,7 +1719,7 @@ int main(int argc, char **argv)
       if(opt_v) printf("Computing PIL transformation ...\n");
       new_PIL_transform(imagefile[0],lmfile,TPIL[0], 0);
 
-      if(opt_png)
+      if(opt_png && opt_ppm)
       {
          sprintf(filename,"%s/%s",imagedir[0],imagefileprefix[0]);
          sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",filename, filename); system(cmnd);

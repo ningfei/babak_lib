@@ -29,7 +29,7 @@ static struct option options[] =
 
    {"-sform",0,'s'},
    {"-qform",0,'q'},
-   {"-noppm",0,'p'},
+   {"-noppm",0,'N'},
    {"-notxt",0,'t'},
 
    {"-AC",1,'A'}, 
@@ -108,6 +108,7 @@ void print_help_and_exit()
    "Optional arguments:\n"
    "-h or -help: Prints help information.\n"
    "-v or -verbose : Enables verbose mode\n"
+   "-noppm : Prevents outputting *.ppm images\n"
    "-m or -model <model>: User-specified template model (default = $ARTHOME/T1acpc.mdl)\n"
    "-rvsps <r>: Search radius for VSPS (default = 50 mm)\n"
    "-rac <r>: Search radius for AC (default = 15 mm)\n"
@@ -273,7 +274,7 @@ int main(int argc, char **argv)
          case 't':
             opt_txt = NO;
             break;
-         case 'p':
+         case 'N':
             opt_ppm = NO;
             break;
          case 's':
