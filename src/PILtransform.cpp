@@ -7,6 +7,7 @@
 #include <stats.h>
 
 double searchradius[3]={50.0, 15.0, 15.0}; // in units of mm
+int opt_CENTER_AC=NO;
 
 void transform_P(float *P, int nl, float *T)
 {
@@ -600,12 +601,15 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
 
    opt_MSP=NO;
    detect_AC_PC_MSP(imfile,orient,modelfile,ac,pc,rp,Tmsp,verbose,0);
+   //restore to default state, this is important for subsequent calls to detect_AC_PC_MSP()
+   opt_MSP=YES; 
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);
 
-   // 0 put the FOV center at halfway btw AC and PC to match $ARTHOME/PILbrain.nii
-   ACPCtransform(TPIL, Tmsp, ac, pc, 0);
+   // if opt_CENTER_AC=NO, puts FOV center at halfway btw AC and PC to match $ARTHOME/PILbrain.nii
+   // if opt_CENTER_AC=YES, makes AC the FOV center
+   ACPCtransform(TPIL, Tmsp, ac, pc, opt_CENTER_AC);
 
    return;
 }

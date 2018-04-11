@@ -7,6 +7,7 @@
 
 #ifndef _PILTRANSFORM
 extern double searchradius[3]; // in units of mm
+extern int opt_CENTER_AC;
 #endif
 
 typedef unsigned char uchar;
