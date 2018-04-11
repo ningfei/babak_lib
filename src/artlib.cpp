@@ -37,7 +37,7 @@ void orig_ijk_to_pil_xyz(float *Tmsp, DIM orig_dim, float *AC, float *PC);
 void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg);
 void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, int ny, int sx, int sy, int L1, int L2, unsigned char Rvalue, unsigned char Gvalue, unsigned char Bvalue);
 void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,  
-float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, int opt_D);
+float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp);
 void compute_MSP_parameters_from_Tmsp(float *Tmsp, float *n, float *d);
 void compute_Tmsp_from_MSP_parameters(const char *orientation, float *Tmsp, float *n, float d);
 void updateTmsp(const char *imagefilename, float *Tmsp, float *RP, float *AC, float *PC);
@@ -51,7 +51,7 @@ void defineTemplate(int r, int h, short *x, short *y, short *z);
 char *expandMask(short *mask_HR, DIM HR, float *RPmean, double RPsr);
 short *thresholdImageOtsu(short *im, int nv, int *nbv);
 int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile,
-float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v);
+float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2);
 float reflectVertex(int pmax, float fac);
 int dsm(void);
 float reflection_cross_correlation2(short *image, DIM dim, float A, float B, float C);
@@ -319,7 +319,7 @@ void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, in
 }
 
 void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,  
-float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, int opt_D)
+float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 {
    char filename[1024]; // filename variable for reading/writing data files
    unsigned char *Rchannel, *Gchannel, *Bchannel;
@@ -360,11 +360,10 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
       Bchannel[i] = (unsigned char)(im[i]*255.0/max);
    }
 
-   if(opt_D) brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(rp[0]+0.5), (int)(rp[1]+0.5), 4, 4, 0, 0, 255);
+   brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(rp[0]+0.5), (int)(rp[1]+0.5), 4, 4, 0, 0, 255);
    brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(pc[0]+0.5), (int)(pc[1]+0.5), 4, 4, 255, 0, 0);
    brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(ac[0]+0.5), (int)(ac[1]+0.5), 4, 4, 0, 255, 0);
 
-	if(opt_D)
 	for(int i=1; i<HR.nx-1; i++)
 	for(int j=1; j<HR.ny-1; j++)
 	{
@@ -462,7 +461,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp, 
 		Bchannel[i] = (char)(im[i]*255.0/max);
 	}
 
-	if(opt_D) brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (HR.nx-1)/2, (HR.ny-1)/2, 0, (HR.nx-1)/2, 255, 255, 255);
+	brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (HR.nx-1)/2, (HR.ny-1)/2, 0, (HR.nx-1)/2, 255, 255, 255);
 	brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(pc[0]+0.5), (int)(pc[1]+0.5), 4, 4, 255, 0, 0);
 	brandImage(Rchannel, Gchannel, Bchannel, HR.nx, HR.ny, (int)(ac[0]+0.5), (int)(ac[1]+0.5), 4, 4, 0, 255, 0);
 
@@ -1314,7 +1313,7 @@ short *thresholdImageOtsu(short *im, int nv, int *nbv)
 }
 
 int detect_AC_PC_MSP(const char *imagefilename, char *orientation, char *modelfile,
-float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
+float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
 {
    char modelfilepath[1024];
 
@@ -1423,28 +1422,11 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
       }
 
       fclose(fp);
-
-      if(opt_D) 
-      {
-         printf("\nnxHR=%d nyHR=%d nzHR=%d dxHR=%f dyHR=%f dzHR=%f\n",HR.nx,HR.ny,HR.nz,HR.dx,HR.dy,HR.dz);
-         printf("nxLR=%d nyLR=%d nzLR=%d dxLR=%f dyLR=%f dzLR=%f\n",LR.nx,LR.ny,LR.nz,LR.dx,LR.dy,LR.dz);
-         printf("\nNumber of image volumes in the training set = %d\n",mhdr.nvol);
-         printf("\nRP template radius = %d voxels",mhdr.RPtemplateradius);
-         printf("\nRP template height = %d voxels",mhdr.RPtemplateheight);
-         printf("\nRP template size = %d voxels\n",mhdr.RPtemplatesize);
-         printf("\nAC template radius = %d voxels",mhdr.ACtemplateradius);
-         printf("\nAC template height = %d voxels",mhdr.ACtemplateheight);
-         printf("\nAC template size = %d voxels\n",mhdr.ACtemplatesize);
-         printf("\nPC template radius = %d voxels",mhdr.PCtemplateradius);
-         printf("\nPC template height = %d voxels",mhdr.PCtemplateheight);
-         printf("\nPC template size = %d voxels\n",mhdr.PCtemplatesize);
-         printf("\nNumber of rotation steps = %d\n",mhdr.nangles);
-      }
    }
 
    ////////////////////////////////////////////////////////////////////////////
 
-   volOrig = readNiftiImage( (const char *)imagefilename, &Orig, opt_D);
+   volOrig = readNiftiImage( (const char *)imagefilename, &Orig, 0);
 
    if(volOrig == NULL)
    {
@@ -1613,8 +1595,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_D, int opt_v, int opt_T2)
 
    saveACPClocation(imagefilename, Tmsp, Orig, AC, PC, RP, opt_v);
 
-   //saveACPCimages(imagefilename, ACregion, PCregion, RPregion, AC, PC, RP, HR, Orig, volOrig, Tmsp, opt_D);
-   saveACPCimages(imagefilename, ACregion, PCregion, RPregion, AC, PC, RP, HR, Orig, volOrig, Tmsp, 1);
+   saveACPCimages(imagefilename, ACregion, PCregion, RPregion, AC, PC, RP, HR, Orig, volOrig, Tmsp);
 
    {
       // the code in this block changes the AC and PC cooridnates from the (x,y,z) system in MSP aligned PIL
@@ -2522,7 +2503,7 @@ void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, floa
 
    float Tmsp[16]; // transforms image to MSP aligned PIL orientation
 
-   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0, 0);
+   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    for(int i=0; i<4; i++) ac[i] = AC[i];
@@ -2548,7 +2529,7 @@ void find_pil_transformation(char *imfile, DIM dim, float *pilT)
 
    float Tmsp[16]; // transforms image to MSP aligned PIL orientation
 
-   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0, 0);
+   detect_AC_PC_MSP(imfile, orientation, modelfile, AC, PC, VSPS, Tmsp, 0, 0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    for(int i=0; i<4; i++) ac[i] = AC[i];

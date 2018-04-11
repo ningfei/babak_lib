@@ -210,7 +210,6 @@ void computeSiemensVisionOffsets(float *Tmsp, float *AC, float *PC)
 
 int main(int argc, char **argv)
 {
-   int opt_D=NO;
    int opt_T2=NO;
 
    //////////////////////////////////////////////////
@@ -365,7 +364,7 @@ int main(int argc, char **argv)
    if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
    if(searchradius[2]<=0 || searchradius[2]>100.0) searchradius[2]=15.0;
 
-   detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_D, opt_v, opt_T2);
+   detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_v, opt_T2);
 
   if(opt_sform || opt_qform)
    {

@@ -599,7 +599,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, int ver
    }
 
    opt_MSP=NO;
-   detect_AC_PC_MSP(imfile,orient,modelfile,ac,pc,rp,Tmsp,0,verbose,0);
+   detect_AC_PC_MSP(imfile,orient,modelfile,ac,pc,rp,Tmsp,verbose,0);
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);
