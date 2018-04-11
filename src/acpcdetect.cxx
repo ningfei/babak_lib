@@ -52,11 +52,10 @@ static struct option options[] =
    {"--rpc",1,'2'},
    {"-rpc",1,'2'},
 
-   {"-D",0,'D'},
-
    {"-v",0,'v'},
    {"--verbose",0,'v'},
    {"-verbose",0,'v'},
+   {"-D",0,'v'},
 
    {"-m",1,'m'},
    {"--model",1,'m'},
@@ -99,7 +98,7 @@ int opt_nn=NO;
 void print_help_and_exit()
 {
    printf("\nUsage: acpcdetect [-V/-version -h/-help -v/-verbose -m/-model <model> -rvsps <r> -rac <r> -rpc <r>]\n"
-   "[-O/-orient <code> -D -M] [-o/-output <output volume> -oo <output orientation code>]\n"
+   "[-O/-orient <code> -M] [-o/-output <output volume> -oo <output orientation code>]\n"
    "[-onx <int> -ony <int> -onz <int> -odx <float> -ody <float> -odz <float> -sform -qform -noppm -notxt]\n"
    "[-AC <int> <int> <int>] [-T <filename>]\n"
    "-i/-image <input volume>\n\n"
@@ -124,8 +123,7 @@ void print_help_and_exit()
    "-onx, -ony, -onz: x/y/z matrix dimensions of the output image (default=same as input image).\n"
    "-odx, -ody, -odz: x/y/z voxel dimensions of the output image (default=same as input image).\n"
    "-M: Make the midpoint between AC and PC the center of the output FOV.\n"
-   "-T <filename>: Writes output rigid-body transformation matrix to specified <filename>.\n"
-   "-D: Prints additional information\n\n"
+   "-T <filename>: Writes output rigid-body transformation matrix to specified <filename>.\n\n"
    "Outputs:\n"
    "<input volume>_ACPC_sagittal.ppm: Sagittal view of the detected AC/PC locations\n"
    "<input volume>_ACPC_axial.ppm: Axial view of the detected AC/PC locations\n"
@@ -326,9 +324,6 @@ int main(int argc, char **argv)
          case '2':
             searchradius[2] = atof(optarg); // searchradius[2] is for PC
             break;
-         case 'D':
-            opt_D=YES;
-            break;
          case 'v':
             opt_v=YES;
             break;
@@ -369,13 +364,6 @@ int main(int argc, char **argv)
    if(searchradius[0]<=0 || searchradius[0]>200.0) searchradius[0]=50.0;
    if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
    if(searchradius[2]<=0 || searchradius[2]>100.0) searchradius[2]=15.0;
-
-   if(opt_D) 
-   {
-      printf("\nVSPS search radius = %5.1lf mm\n",searchradius[0]);
-      printf("AC search radius = %5.1lf mm\n",searchradius[1]);
-      printf("PC search radius = %5.1lf mm\n",searchradius[2]);
-   }
 
    detect_AC_PC_MSP(imagefilename, orientation, modelfile, AC, PC, VSPS, Tmsp, opt_D, opt_v, opt_T2);
 
