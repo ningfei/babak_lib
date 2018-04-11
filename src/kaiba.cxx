@@ -78,6 +78,7 @@ static struct option options[] =
    {"-alpha",1,'a'}, 
    {"-a",1,'a'}, 
    {"-noppm",0,'N'}, 
+   {"-notxt",0,'t'}, 
    {0,0,0}
 };
 
@@ -91,6 +92,7 @@ void print_help_and_exit()
    "\nOptions:\n"
    "   -v : Enables verbose mode\n"
    "   -V or -version : Prints program version\n"
+   "   -notxt: Prevents outputtign *ACPC.txt\n"
    "   -noppm : Prevents outputtign *.ppm and *.png images\n"
    "   -nopng : Prevents output images in PNG format (still outputs PPM)\n"
    "   -lm <filename>: Manually specifies AC/PC/RP landmarks for <T1W NIFIT>.nii\n"
@@ -1496,14 +1498,11 @@ int main(int argc, char **argv)
 
    short *tmp;
    char cmnd[1024]=""; // stores the command to run with system
-   opt_txt=NO;
 
    FILE *fp;
    char filename[1024]="";  // a generic filename for reading/writing stuff
 
    char opprefix[512]=""; // prefix used for reading/writing output files
-
-   opt_txt=NO; // avoids saving *ACPC.txt files
 
    char roifile[1024]="";
 
@@ -1523,6 +1522,9 @@ int main(int argc, char **argv)
             printf("KAIBA Version 3.0 released Jan. 30, 2018.\n");
             printf("Author: Babak A. Ardekani, Ph.D.\n");
             exit(0);
+         case 't':
+            opt_txt = NO;
+            break;
          case 'N':
             opt_ppm=NO;
             break;

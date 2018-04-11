@@ -414,11 +414,12 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
  
    // This block outputs the locations of the detected landmarks 
    // in (i,j,k) coordinates of the native space of the input volume
+   if(opt_txt)
    {
       FILE *fp;
       float landmark[4];
       invT = inv4(TPIL0);
-      sprintf(filename,"%s/%s_orion.lm",imagedir,subfile_prefix);
+      sprintf(filename,"%s/%s_orion.txt",imagedir,subfile_prefix);
       fp=fopen(filename,"w");
       if(fp==NULL) file_open_error(filename);
       for(int i=0; i<n; i++)

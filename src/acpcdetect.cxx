@@ -109,6 +109,7 @@ void print_help_and_exit()
    "-h or -help: Prints help information.\n"
    "-v or -verbose : Enables verbose mode\n"
    "-noppm : Prevents outputting *.ppm images\n"
+   "-notxt: Prevents outputting *_ACPC.txt\n"
    "-m or -model <model>: User-specified template model (default = $ARTHOME/T1acpc.mdl)\n"
    "-rvsps <r>: Search radius for VSPS (default = 50 mm)\n"
    "-rac <r>: Search radius for AC (default = 15 mm)\n"
