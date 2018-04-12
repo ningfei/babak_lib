@@ -24,6 +24,10 @@ static struct option options[] =
 {
    {"-nn",0,'n'}, // does nearest neighbor interpolation
 
+   {"-lm", 1, 'L'},
+   {"-landmarks", 1, 'L'},
+   {"--landmarks", 1, 'L'},
+
    {"-T", 1, 'r'},
    {"-M", 0, 'M'},  // make the midpoint between AC and PC the center of the FOV
 
@@ -220,6 +224,7 @@ int main(int argc, char **argv)
   float n[4]; 
   float d;
   char transformation_filename[512]="";
+  char landmarksfile[512]="";
   char outputfilename[512]="";
   char modelfile[1024]="";
   char imagefilename[512]="";
@@ -287,6 +292,9 @@ int main(int argc, char **argv)
          case 'T':
             opt_T2=YES;
             break;
+         case 'L':
+            sprintf(landmarksfile,"%s",optarg);
+            break;
          case 'o':
             sprintf(outputfilename,"%s",optarg);
             break;
@@ -325,8 +333,6 @@ int main(int argc, char **argv)
       }
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-
   if( imagefilename[0]=='\0' )
   {
     printf("Please specify an input image using -i or -image argument.\n");
@@ -337,14 +343,16 @@ int main(int argc, char **argv)
   {
     printf("Input image: %s\n",imagefilename);
   }
-  ///////////////////////////////////////////////////////////////////////////////////////////////
 
   if( not_magical_nifti(imagefilename) )
   {
     exit(0);
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////
+  if(opt_v && landmarksfile[0]!='\0') 
+  {
+    printf("Manually specified landmarks: %s\n",landmarksfile);
+  }
 
   if(searchradius[0]<=0 || searchradius[0]>200.0) searchradius[0]=50.0;
   if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
@@ -395,7 +403,7 @@ int main(int argc, char **argv)
   // PIL2RAS takes points from PIL 2 RAS space
   inversePILtransform("RAS", PIL2RAS);
 
-  standard_PIL_transformation(imagefilename, "", input_orientation, 0, TPIL);
+  standard_PIL_transformation(imagefilename, landmarksfile, input_orientation, 0, TPIL);
   multi(PIL2OUT, 4, 4,  TPIL, 4,  4, TPIL);
   if(transformation_filename[0]!='\0')
   {
@@ -476,6 +484,7 @@ int main(int argc, char **argv)
     //////////////////////////////////////////////////////////////////////////////////
   }
 
+#if 0
   detect_AC_PC_MSP(imagefilename, input_orientation, modelfile, AC, PC, VSPS, Tmsp, opt_v, opt_T2);
 
   if(opt_sform || opt_qform)
@@ -518,4 +527,5 @@ int main(int argc, char **argv)
   //{
   //  printf("\nEstimated mid-sagittal plane: (%8.7fx) + (%8.7fy) + (%8.7fz) = %8.5f (mm)\n", n[0],n[1],n[2],d);
   //}
+#endif
 }
