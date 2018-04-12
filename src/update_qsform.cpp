@@ -40,7 +40,7 @@ void update_qsform(const char *imagefilename , float *matrix)
 
    if( opt_sform)
    {
-      hdr.sform_code = NIFTI_XFORM_TALAIRACH;
+      hdr.sform_code = NIFTI_XFORM_ALIGNED_ANAT;
       hdr.srow_x[0]=matrix[0]; hdr.srow_x[1]=matrix[1]; hdr.srow_x[2]=matrix[2]; hdr.srow_x[3]=matrix[3];
       hdr.srow_y[0]=matrix[4]; hdr.srow_y[1]=matrix[5]; hdr.srow_y[2]=matrix[6]; hdr.srow_y[3]=matrix[7];
       hdr.srow_z[0]=matrix[8]; hdr.srow_z[1]=matrix[9]; hdr.srow_z[2]=matrix[10]; hdr.srow_z[3]=matrix[11];
@@ -48,7 +48,7 @@ void update_qsform(const char *imagefilename , float *matrix)
 
    if( opt_qform)
    {
-      hdr.qform_code = NIFTI_XFORM_TALAIRACH;
+      hdr.qform_code = NIFTI_XFORM_ALIGNED_ANAT;
       R.m[0][0]=matrix[0];  R.m[0][1]=matrix[1];  R.m[0][2]=matrix[2];  R.m[0][3]=matrix[3];
       R.m[1][0]=matrix[4];  R.m[1][1]=matrix[5];  R.m[1][2]=matrix[6];  R.m[1][3]=matrix[7];
       R.m[2][0]=matrix[8];  R.m[2][1]=matrix[9];  R.m[2][2]=matrix[10]; R.m[2][3]=matrix[11];
