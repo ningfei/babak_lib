@@ -247,7 +247,7 @@ int4 checkNiftiFileExtension(const char *filename);
 int4 isOrientationCodeValid(const char *orientCode);
 void swap_model_file_hdr(model_file_hdr *hdr);
 void swap_model_file_tail(model_file_tail *tail);
-void new_PIL_transform(const char *subfile, const char *lmfile, float4 *T, int SAVE_PIL_FLAG);
+void new_PIL_transform(const char *subfile, const char *lmfile, char *orient, float4 *T, int SAVE_PIL_FLAG);
 void standard_PIL_transformation(const char *imfile, const char *lmfile, char *orient, int4 verbose, float4 *TPIL);
 void convert_to_xyz(float *P, int n, SHORTIM im);
 void Procrustes(float *Q, float *Qavg, int n, float *P, float *Pavg, float *TLM);

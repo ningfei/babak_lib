@@ -356,9 +356,8 @@ void Procrustes(float *Q, int n, float *P, float *TLM)
 // subfile (subject file) - 3D T1W volume of type short in NIFTI format
 // TPIL - output 4x4 rigid-body transformation matrix that would transform
 // subfile into a standardized PIL orientation
-void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int SAVE_MRX_FLAG)
+void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float *TPIL, int SAVE_MRX_FLAG)
 {
-   char orient[4]="";
    float Qavg[3]; // average of rows of Q
    float Pavg[3]; // average of rows of P
    float TPIL0[16]; // transforms the original image to MSP/AC-PC aligned PIL orientation
@@ -371,7 +370,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    // subfile without the directory structure and extension
    char subfile_prefix[1024]; 
    char imagedir[1024]; 
-   char modelfile[1024];
+   char modelfile[1024]="";
 
    if( niftiFilename(subfile_prefix, subfile)==0 ) exit(0);
    getDirectoryName(subfile, imagedir);

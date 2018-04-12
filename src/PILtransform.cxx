@@ -23,6 +23,7 @@ void print_help_and_exit()
 
 int main(int argc, char **argv)
 {
+   char orient[4]=""; 
    char lmfile[256]=""; 
    char subfile[256]=""; 
    float TPIL[16];
@@ -59,5 +60,6 @@ int main(int argc, char **argv)
 
    if(lmfile[0] != '\0' && opt_v) printf("Landmarks are read from %s\n",lmfile);
 
-   new_PIL_transform(subfile,lmfile,TPIL,1);
+   orient[0] = '\0';
+   new_PIL_transform(subfile,lmfile,orient,TPIL,1);
 }

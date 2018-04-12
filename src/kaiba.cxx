@@ -704,6 +704,7 @@ void sqrt_matrix(float4 *T, float4 *sqrtT, float4 *invsqrtT)
 // ffile: follow-up image filename
 void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffile, const char *blmfile,const char *flmfile, int verbose)
 {
+   char orient[4]="";
    char cmnd[1024]="";  // to stores the command to run with system
    int2 *fmsk, *bmsk;
    float4 *sclfim, *sclbim;
@@ -790,7 +791,8 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    float4 *ifTPIL; // inverse of fTPIL
 
    if(verbose) printf("Computing baseline image PIL transformation ...\n");
-   new_PIL_transform(bfile, blmfile, bTPIL, 0);
+   orient[0]='\0';
+   new_PIL_transform(bfile, blmfile, orient, bTPIL, 0);
    if(opt_png && opt_ppm)
    {
       sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",bprefix,bprefix); system(cmnd);
@@ -801,7 +803,8 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    ibTPIL= inv4(bTPIL);
 
    if(verbose) printf("Computing follow-up image PIL transformation ...\n");
-   new_PIL_transform(ffile, flmfile, fTPIL, 0);
+   orient[0]='\0';
+   new_PIL_transform(ffile, flmfile, orient, fTPIL, 0);
    if(opt_png && opt_ppm)
    {
       sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",fprefix,fprefix); system(cmnd);
@@ -1478,6 +1481,7 @@ float8 compute_hi(char *imfile, char *roifile)
 
 int main(int argc, char **argv)
 {
+   char orient[4]="";
    float Tleft0[16], Tleft1[16], Tright0[16], Tright1[16];
    float4 *invT;
    SHORTIM aimpil; // average of input images after transformation to standard PIL space
@@ -1719,7 +1723,8 @@ int main(int argc, char **argv)
    else if (nim==1) 
    {
       if(opt_v) printf("Computing PIL transformation ...\n");
-      new_PIL_transform(imagefile[0],lmfile,TPIL[0], 0);
+      orient[0]='\0';
+      new_PIL_transform(imagefile[0],lmfile, orient, TPIL[0], 0);
 
       if(opt_png && opt_ppm)
       {

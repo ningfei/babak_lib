@@ -307,6 +307,7 @@ SPH &searchsph, SPH &testsph, int lm_out[][3])
 
 void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientationCode, const char *outputPrefix)
 {
+   char orient[4]="";
    //PIL2OUT maps points from PIL orientation to the output 
    //orientation specified by outputOrientationCode
    float PIL2OUT[16];
@@ -494,7 +495,8 @@ void atra(const char *imagelistfile, DIM output_dim, const char *outputOrientati
    for(int i=0; i<nim; i++)
    {
       if(opt_v) printf("Processing %s ...\n",imagefile[i]);
-      new_PIL_transform(imagefile[i],landmarksfile[i],TPIL[i],1);
+      orient[0]='\0';
+      new_PIL_transform(imagefile[i],landmarksfile[i],orient, TPIL[i],1);
    }
    /////////////////////////////////////////////////////////////////////////////////////////////
 
