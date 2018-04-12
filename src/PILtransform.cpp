@@ -378,7 +378,11 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    getARTHOME();
 
    // initial TPIL0 using old PIL transformation
+   char opt_CENTER_AC_old;   
+   opt_CENTER_AC_old = opt_CENTER_AC; // record opt_CENTER_AC
+   opt_CENTER_AC = NO; // temporarily set opt_CENTER_AC to NO
    standard_PIL_transformation(subfile, lmfile, orient, 0, TPIL0);
+   opt_CENTER_AC = opt_CENTER_AC_old; // restore opt_CENTER_AC
 
    /////////////////////////////////////////////////////////
    // Read input volume from subfile
@@ -480,17 +484,6 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
 
    multi(TLM,4,4,TPIL0,4,4,TPIL);
 
-   // save the PIL transformation in <subfile_prefix>_PIL.mrx
-   if(SAVE_MRX_FLAG == 1)
-   {
-      FILE *fp;
-      sprintf(filename,"%s/%s_PIL.mrx",imagedir, subfile_prefix);
-      fp=fopen(filename,"w");
-      if(fp==NULL) file_open_error(filename);
-      printMatrix(TPIL,4,4,"",fp);
-      fclose(fp);
-   }
-
    // create the *LM.ppm image
    if(opt_ppm)
    {
@@ -526,6 +519,37 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
       delete lmy;
       delete subimPIL.v;
    }
+
+  if(opt_CENTER_AC)
+  {
+    float ac[4]; 
+    float Ttmp[16];
+
+    ac[0] = P[1] + Pavg[0];  // landmark #1 is AC
+    ac[1] = P[n+1] + Pavg[1];
+    ac[2] = P[2*n+1] + Pavg[2];
+    ac[3] = 1.0;
+
+    multi(TLM,4,4,ac,4,1,ac);
+
+    Ttmp[0]=1.0;  Ttmp[1]=0.0;  Ttmp[2]=0.0;  Ttmp[3]=-ac[0];  // makes ac the center of the FOV
+    Ttmp[4]=0.0;  Ttmp[5]=1.0;  Ttmp[6]=0.0;  Ttmp[7]=-ac[1];  // ac[1] should be equal to pc[1]
+    Ttmp[8]=0.0;  Ttmp[9]=0.0;  Ttmp[10]=1.0; Ttmp[11]=0;
+    Ttmp[12]=0.0; Ttmp[13]=0.0; Ttmp[14]=0.0; Ttmp[15]=1.0;
+
+    multi(Ttmp,4,4,TPIL,4,4,TPIL);
+  }
+
+  // save the PIL transformation in <subfile_prefix>_PIL.mrx
+  if(SAVE_MRX_FLAG == 1)
+  {
+    FILE *fp;
+    sprintf(filename,"%s/%s_PIL.mrx",imagedir, subfile_prefix);
+    fp=fopen(filename,"w");
+    if(fp==NULL) file_open_error(filename);
+    printMatrix(TPIL,4,4,"",fp);
+    fclose(fp);
+  }
 
    {
       float ssd1=0.0;
