@@ -358,6 +358,7 @@ void Procrustes(float *Q, int n, float *P, float *TLM)
 // subfile into a standardized PIL orientation
 void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int SAVE_MRX_FLAG)
 {
+   char orient[4]="";
    float Qavg[3]; // average of rows of Q
    float Pavg[3]; // average of rows of P
    float TPIL0[16]; // transforms the original image to MSP/AC-PC aligned PIL orientation
@@ -378,7 +379,7 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    getARTHOME();
 
    // initial TPIL0 using old PIL transformation
-   standard_PIL_transformation(subfile, lmfile, 0, TPIL0);
+   standard_PIL_transformation(subfile, lmfile, orient, 0, TPIL0);
 
    /////////////////////////////////////////////////////////
    // Read input volume from subfile
@@ -562,12 +563,13 @@ void new_PIL_transform(const char *subfile, const char *lmfile, float *TPIL, int
    free(Q);
 }
 
-void standard_PIL_transformation(const char *imfile, const char *lmfile, int verbose, float *TPIL)
+// If is empty, i.e. orient="", that the orientation is read from imfile header
+// otherwise, the orien overrides the header information
+void standard_PIL_transformation(const char *imfile, const char *lmfile, char *orient, int verbose, float *TPIL)
 {
    char modelfile[1024]="";
 
    DIM dim;
-   char orient[4]="";  // empty means that the orientation is read from header
    float ac[4]={0.0, 0.0, 0.0, 1.0};
    float pc[4]={0.0, 0.0, 0.0, 1.0};
    float rp[4]={0.0, 0.0, 0.0, 1.0};
