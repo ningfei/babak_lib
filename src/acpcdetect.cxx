@@ -491,7 +491,7 @@ int main(int argc, char **argv)
     // Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
 
     // (i,j,k) -> (x,y,z) in output_orient
-    ijk2xyz(Tijk2xyz, onx, ony, onz, odx, ody, odz);
+    ijk2xyz(Tijk2xyz, output_dim);
 
     // OUT2PIL takes points from output_orient space to PIL space
     // (x,y,z) in output_orient -> (x,y,z) in PIL -> (x,y,z) in RAS
@@ -518,7 +518,7 @@ int main(int argc, char **argv)
     save_nifti_image(outputimagepath, output_image, &output_hdr);
 
     // Tijk2xyz: (i,j,k) -> (x,y,z) in output_orient
-    ijk2xyz(Tijk2xyz,input_dim.nx,input_dim.ny,input_dim.nz,input_dim.dx,input_dim.dy,input_dim.dz);
+    ijk2xyz(Tijk2xyz, input_dim);
 
     // Ttmp = TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in PIL
     multi(TPIL, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
