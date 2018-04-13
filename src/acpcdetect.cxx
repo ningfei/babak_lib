@@ -23,85 +23,66 @@ int opt;
 static struct option options[] =
 {
    {"-nn",0,'n'}, // does nearest neighbor interpolation
-
+   {"--standard", 0, 'S'},
+   {"-standard", 0, 'S'},
+   {"-s", 0, 'S'},
    {"-reorient", 1, 'R'},
    {"--reorient", 1, 'R'},
-
    {"-lm", 1, 'L'},
    {"-landmarks", 1, 'L'},
    {"--landmarks", 1, 'L'},
-
    {"-T", 1, 'r'},
    {"-centerAC", 0, 'M'},
    {"--centerAC", 0, 'M'},
-
 //   {"-sform",0,'s'},
 //   {"-qform",0,'q'},
    {"-noppm",0,'N'},
    {"-notxt",0,'t'},
-
    {"-V",0,'V'},
    {"-version",0,'V'},
    {"-Version",0,'V'},
-
 //   {"--T2",0,'T'},
 //   {"-T2",0,'T'},
-
    {"--rvsps",1,'0'},
    {"-rvsps",1,'0'},
-
    {"--rac",1,'1'},
    {"-rac",1,'1'},
-
    {"--rpc",1,'2'},
    {"-rpc",1,'2'},
-
    {"-v",0,'v'},
    {"--verbose",0,'v'},
    {"-verbose",0,'v'},
    {"-D",0,'v'},
-
 //   {"-m",1,'m'},
 //   {"--model",1,'m'},
 //   {"-model",1,'m'},
-
    {"-i",1,'i'},
    {"--input",1,'i'},
    {"-input",1,'i'},
-
-   {"-inputorient",1,'O'},
-   {"--inputorient",1,'O'},
-   {"-orient",1,'O'},
-   {"--orient",1,'O'},
-   {"-O",1,'O'},
+   {"-input_orient",1,'O'},
+   {"--input_orient",1,'O'},
    {"-io",1,'O'},
-
    {"-h",0,'h'},
    {"--help",0,'h'},
    {"-help",0,'h'},
-
    {"-o",1,'o'},
    {"-output",1,'o'},
    {"--output",1,'o'},
-
    {"-oo",1,'u'},
-   {"-outputorient",1,'u'},
-   {"--outputorient",1,'u'},
-
+   {"-output_orient",1,'u'},
+   {"--output_orient",1,'u'},
    {"-onx",1,'x'},
    {"-ony",1,'y'},
    {"-onz",1,'z'},
    {"-nx",1,'x'},
    {"-ny",1,'y'},
    {"-nz",1,'z'},
-
    {"-odx",1,'X'},
    {"-ody",1,'Y'},
    {"-odz",1,'Z'},
    {"-dx",1,'X'},
    {"-dy",1,'Y'},
    {"-dz",1,'Z'},
-
    {0,0,0}
 };
 
@@ -112,7 +93,7 @@ int opt_nn=NO;
 void print_help_and_exit()
 {
    printf("\nUsage: acpcdetect [-V/-version -h/-help -v/-verbose -rvsps <r> -rac <r> -rpc <r>]\n"
-   "[-O/-orient <code>] [-o/-output <output volume> -oo <output orientation code>]\n"
+   "[--input_orient <code>] [-o/-output <output volume> -oo <output orientation code>]\n"
    "[-nx <int> -ny <int> -nz <int> -dx <float> -dy <float> -dz <float> -noppm -notxt]\n"
    "[-T <filename>] [-reorient Y/N (default=Y)]\n"
    "-i/-image <input volume>\n\n"
@@ -127,7 +108,7 @@ void print_help_and_exit()
    "-rvsps <r>: Search radius for VSPS (default = 50 mm)\n"
    "-rac <r>: Search radius for AC (default = 15 mm)\n"
    "-rpc <r>: Search radius for PC (default = 15 mm)\n"
-   "-O or -orient <code>: Three-letter orientation code (See users' guide for more details). Examples:\n"
+   "--input_orient <code>: Three-letter orientation code (See users' guide for more details). Examples:\n"
    "\t\tPIL for Posterior-Inferior-Left\n"
    "\t\tRAS for Right-Anterior-Superior\n"
    "-o or -output <filename>: If this option is present, the program outputs an AC/PC and MSP aligned image\n"
@@ -224,6 +205,7 @@ void computeSiemensVisionOffsets(float *Tmsp, float *AC, float *PC)
 
 int main(int argc, char **argv)
 {
+  char opt_standard=NO;
   char reorient='Y';
   float *invT;
   float Ttmp[16];
@@ -244,18 +226,21 @@ int main(int argc, char **argv)
 //  char modelfile[1024]="";
   char inputimagepath[1024]="";
   char inputimagename[512]="";
-  char inputimagedir[512]="";
+  char inputimagedir[512]="";  // important to initialize to ""
   char outputimagepath[1024]="";
-  char input_orientation[4]="";
-  char output_orientation[4]="";
+  char input_orient[4]="";
+  char output_orient[4]="";
   float Tout[16]; // transforms input_image to the specified output orientation
   float TPIL[16]; // transforms input_image to PIL orientation
 
-  // It is very important to have these initializations
+  // It is very important to have these initializations.
   int onx=0, ony=0, onz=0;
   float odx=0.0, ody=0.0, odz=0.0;
 
-  opt_CENTER_AC=NO; // by default this program makes mid point between AC and PC the FOV center
+  // opt_CENTER_AC=NO means that by default the mid-point between AC and PC is set to the FOV
+  // center.  If --centerAC is selected, then the AC is made the FOV center.
+  // The opt_CENTER_AC variable is defined in PILtransform.cpp and made global in babak_lib.h
+  opt_CENTER_AC=NO; 
 
   while ((opt = getoption(argc, argv, options)) != -1 )
   {
@@ -266,6 +251,9 @@ int main(int argc, char **argv)
             break;
          case 'M':
             opt_CENTER_AC=YES;
+            break;
+         case 'S':
+            opt_standard=YES;
             break;
          case 't':
             opt_txt = NO;
@@ -334,10 +322,10 @@ int main(int argc, char **argv)
             print_help_and_exit();
             break;
          case 'O':
-            sprintf(input_orientation,"%s",optarg);
+            sprintf(input_orient,"%s",optarg);
             break;
          case 'u':
-            sprintf(output_orientation,"%s",optarg);
+            sprintf(output_orient,"%s",optarg);
             break;
 //         case 'm':
 //            sprintf(modelfile,"%s",optarg);
@@ -356,31 +344,30 @@ int main(int argc, char **argv)
     printf("Please specify an input image using: -i <inputimage.nii>\n");
     exit(0);
   }
+  if(opt_v) printf("Input image: %s\n",inputimagepath);
 
   if( outputimagepath[0]=='\0' )
   {
     printf("Please specify an output image using: -o <outputimage.nii>\n");
     exit(0);
   }
+  if(opt_v) printf("Output image: %s\n",outputimagepath);
 
+  // determine input image filename without the .nii suffix
   if( niftiFilename(inputimagename, inputimagepath)==0 ) { exit(1); }
+
+  // determine input image directory
   getDirectoryName(inputimagepath, inputimagedir);
 
   if(outputtransformationpath[0]=='\0')
   {
-    sprintf(outputtransformationpath,"%s/%s.mat",inputimagedir,inputimagename);
+    sprintf(outputtransformationpath,"%s/%s.mrx",inputimagedir,inputimagename);
   }
+  if(opt_v) printf("Output transformation matrix: %s\n",outputtransformationpath);
 
-  if( reorient!='Y' && reorient!='y' && reorient!='N' && reorient!='n' )
+  if(opt_v && landmarksfilepath[0]!='\0') 
   {
-     printf("Error: The --reorient flag can only be Y or N, aborting ...\n");
-  }
-
-  if(opt_v) 
-  {
-    printf("Input image: %s\n",inputimagepath);
-    printf("Output image: %s\n",outputimagepath);
-    printf("Output transformation matrix: %s\n",outputtransformationpath);
+    printf("Manually specified landmarks: %s\n",landmarksfilepath);
   }
 
   input_image = (short  *)read_nifti_image(inputimagepath, &input_hdr);
@@ -389,62 +376,52 @@ int main(int argc, char **argv)
     printf("Error reading %s, aborting ...\n", inputimagepath);
     exit(1);
   }
-
   set_dim(input_dim, input_hdr);
 
-  if(opt_v && landmarksfilepath[0]!='\0') 
+  // if input orientation is specified using --input_orient option, make sure it's valid
+  if(input_orient[0]!='\0' && isOrientationCodeValid(input_orient)==0)
   {
-    printf("Manually specified landmarks: %s\n",landmarksfilepath);
-  }
-
-  // if input orientation is specified using -O option, make sure it's valid
-  if(input_orientation[0]!='\0' && isOrientationCodeValid(input_orientation)==0)
-  {
-    printf("Error: %s is not a valid orientation code, aborting ...\n",input_orientation);
+    printf("Error: %s is not a valid orientation code, aborting ...\n",input_orient);
     exit(0);
   }
 
-  // if input orientation is not specified using -O option, read it from input image
-  if(input_orientation[0]=='\0')
+  // if input orientation is not specified using --input_orient option, read it from input image
+  if(input_orient[0]=='\0')
   {
-    getNiftiImageOrientation(inputimagepath, input_orientation);
-  }
-
-  if(opt_v)
-  {
-    printf("Input image orientation: %s\n",input_orientation);
+    getNiftiImageOrientation(inputimagepath, input_orient);
+    if(opt_v) printf("Input image orientation: %s\n",input_orient);
+  } else {
+    if(opt_v) printf("Input image orientation manually specified as: %s\n",input_orient);
   }
 
   // if ouput orientation is specified using -oo option, make sure it's valid
-  if(output_orientation[0]!='\0' && isOrientationCodeValid(output_orientation)==0 )
+  if(output_orient[0]!='\0' && isOrientationCodeValid(output_orient)==0 )
   {
-    printf("Error: %s is not a valid orientation code, aborting ...\n",output_orientation);
+    printf("Error: %s is not a valid orientation code, aborting ...\n",output_orient);
     exit(0);
   }
 
   // if output orientation is not specified using -oo option, make it same as input image
-  if(output_orientation[0]=='\0')
+  if(output_orient[0]=='\0')
   {
-    stpcpy(output_orientation, input_orientation);
+    stpcpy(output_orient, input_orient);
+  }
+  if(opt_v) printf("Output image orientation: %s\n",output_orient);
+
+  // find TPIL with transforms the input image to PIL orientation
+  if(opt_standard)
+  {
+    standard_PIL_transformation(inputimagepath, landmarksfilepath, input_orient, 0, TPIL);
+  }
+  else
+  {
+    new_PIL_transform(inputimagepath, landmarksfilepath, input_orient, TPIL, 0);
   }
 
-  if(opt_v)
-  {
-    printf("Output image orientation: %s\n",output_orientation);
-  }
+  // PIL2OUT takes points from PIL space to output_orient space
+  inversePILtransform(output_orient, PIL2OUT);
 
-  // PIL2OUT takes points from PIL space to output space
-  inversePILtransform(output_orientation, PIL2OUT);
-
-  // OUT2PIL takes points from output_orientation space to PIL space
-  PILtransform(output_orientation, OUT2PIL);
-
-  // PIL2RAS takes points from PIL 2 RAS space
-  inversePILtransform("RAS", PIL2RAS);
-
-  //standard_PIL_transformation(inputimagepath, landmarksfilepath, input_orientation, 0, TPIL);
-  new_PIL_transform(inputimagepath, landmarksfilepath, input_orientation, TPIL, 0);
-
+  //Tout transforms points from the input space to the output space
   multi(PIL2OUT, 4, 4,  TPIL, 4,  4, Tout);
 
   fp = fopen(outputtransformationpath,"w");
@@ -452,11 +429,20 @@ int main(int argc, char **argv)
   printMatrix(Tout, 4, 4, "ART acpcdetect tilt correction matrix:", fp);
   fclose(fp);
 
+  if( reorient!='Y' && reorient!='y' && reorient!='N' && reorient!='n' )
+  {
+     printf("Error: The --reorient flag can only be Y or N, aborting ...\n");
+  }
+
+  // PIL2RAS takes points from PIL 2 RAS space
+  // (x,y,z) in PIL -> (x,y,z) in RAS
+  inversePILtransform("RAS", PIL2RAS);
+
   if( reorient == 'Y' || reorient == 'y')
   {
     if(opt_v) 
     {
-      printf("Reorienting %s to %s orientation\n",outputimagepath, output_orientation);
+      printf("Reorienting %s to %s orientation\n",outputimagepath, output_orient);
     }
 
     output_hdr = input_hdr;
@@ -496,14 +482,25 @@ int main(int argc, char **argv)
     save_nifti_image(outputimagepath, output_image, &output_hdr);
 
     //////////////////////////////////////////////////////////////////////////////////
-    // This part of the code adjusts the SFORM matrix of the output image
+    // This part of the code adjusts the SFORM and QFORM matrices of the output image
     //////////////////////////////////////////////////////////////////////////////////
 
     // NOTE: PIL orientation is a stepping stone here
-    // T will transfrom for OUTPUT orientation to RAS orientation
+    // (i,j,k) -> (x,y,z) in output_orient -> (x,y,z) in PIL -> (x,y,z) in RAS
+    // = (i,j,k) -> (x,y,z) in RAS
+    // Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
+
+    // (i,j,k) -> (x,y,z) in output_orient
+    ijk2xyz(Tijk2xyz, onx, ony, onz, odx, ody, odz);
+
+    // OUT2PIL takes points from output_orient space to PIL space
+    // (x,y,z) in output_orient -> (x,y,z) in PIL -> (x,y,z) in RAS
+    PILtransform(output_orient, OUT2PIL);
+
+    // Ttmp = PIL2RAS * OUT2PIL 
     multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, Ttmp);
 
-    ijk2xyz(Tijk2xyz, onx, ony, onz, odx, ody, odz);
+    // Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
     multi(Ttmp, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
 
     opt_sform=YES; opt_qform=YES;
@@ -520,9 +517,13 @@ int main(int argc, char **argv)
     sprintf(output_hdr.descrip,"Created by ART acpcdetect");
     save_nifti_image(outputimagepath, output_image, &output_hdr);
 
+    // Tijk2xyz: (i,j,k) -> (x,y,z) in output_orient
     ijk2xyz(Tijk2xyz,input_dim.nx,input_dim.ny,input_dim.nz,input_dim.dx,input_dim.dy,input_dim.dz);
 
+    // Ttmp = TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in PIL
     multi(TPIL, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
+
+    // Ttmp = PIL2RAS * TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in RAS
     multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp);
 
     opt_sform=YES; opt_qform=YES;
