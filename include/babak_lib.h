@@ -26,6 +26,7 @@ typedef double float8;
 #define MAXIM 256 // maximum number of images allowed 
 
 #ifndef _update_qsform
+void update_qsform(nifti_1_header &hdr, float *matrix);
 void update_qsform( const char *imagefilename , float *matrix);
 void update_qsform( const char *imagefile1, const char *imagefile2);
 extern int opt_sform;

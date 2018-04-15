@@ -205,31 +205,23 @@ int main(int argc, char **argv)
   int nPA, nLR, nIS;
   float dPA, dLR, dIS;
   char opt_standard=NO;
-  float *invT;
-  float Ttmp[16];
   FILE *fp;
-  short *input_image;
-  short *output_image;
+  short *ipimage;
   DIM ipdim, opdim;  // input (ip) and output (op) dimension structures (dim)
-  nifti_1_header input_hdr, output_hdr; // 348 bytes
-  float Tijk2xyz[16];
+  nifti_1_header iphdr, ophdr; // 348 bytes
   float PIL2RAS[16];
-  float PIL2OUT[16];
-  float OUT2PIL[16];
 //  int opt_T2=NO;
-  float n[4]; 
-  float d;
   char optransformationpath[1024]="";
   char landmarksfilepath[512]="";
 //  char modelfile[1024]="";
-  char inputimagepath[1024]="";
-  char inputimagename[512]="";
-  char inputimagedir[512]="";  // important to initialize to ""
-  char outputimagepath[1024]="";
+  char ipimagepath[1024]="";
+  char ipimagename[512]="";
+  char ipimagedir[512]="";  // important to initialize to ""
+  char opimagepath[1024]="";
   char iporient[4]="";
   char oporient[4]="";
-  float Tout[16]; // transforms input_image to the specified output orientation
-  float TPIL[16]; // transforms input_image to PIL orientation
+  float Tout[16]; // transforms ipimage to the specified output orientation
+  float TPIL[16]; // transforms ipimage to PIL orientation
 
   // It is very important to have these initializations.
   int onx=0, ony=0, onz=0;
@@ -296,10 +288,10 @@ int main(int argc, char **argv)
             sprintf(landmarksfilepath,"%s",optarg);
             break;
          case 'o':
-            sprintf(outputimagepath,"%s",optarg);
+            sprintf(opimagepath,"%s",optarg);
             break;
          case 'i':
-            sprintf(inputimagepath,"%s",optarg);
+            sprintf(ipimagepath,"%s",optarg);
             break;
          case '0':
             searchradius[0] = atof(optarg); // searchradius[0] is for VSPS
@@ -331,23 +323,24 @@ int main(int argc, char **argv)
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  // Determine input image filename, directory name, and orientation.
-  // --input-orient overrides the input orientation inferred from the image header
+  // This block of code set the following variables: ipimagepath, ipimagename, ipimagedir
+  // iporient, ipimage, iphdr, ipdim, nPA, nIS, nLR, dPA, dIS, dLR 
 
-  if( inputimagepath[0]=='\0' )
+  if( ipimagepath[0]=='\0' )
   {
     printf("Please specify an input image using: -i <inputimage.nii>\n");
     exit(0);
   }
-  if(opt_v) printf("Input image: %s\n",inputimagepath);
+  if(opt_v) printf("Input image: %s\n",ipimagepath);
 
   // determine input image filename without the .nii suffix
-  if( niftiFilename(inputimagename, inputimagepath)==0 ) { exit(1); }
+  if( niftiFilename(ipimagename, ipimagepath)==0 ) { exit(1); }
 
   // determine input image directory
-  getDirectoryName(inputimagepath, inputimagedir);
+  getDirectoryName(ipimagepath, ipimagedir);
 
   // if input orientation is specified using --input-orient option, make sure it's valid
+  // --input-orient overrides the input orientation inferred from the image header
   if(iporient[0]!='\0' && isOrientationCodeValid(iporient)==0)
   {
     printf("%s is not a valid orientation code, aborting ...\n",iporient);
@@ -358,7 +351,7 @@ int main(int argc, char **argv)
   // this is almost always going to be the case
   if(iporient[0]=='\0')
   {
-    getNiftiImageOrientation(inputimagepath, iporient);
+    getNiftiImageOrientation(ipimagepath, iporient);
   }
 
   // change iporient to upper case letters, just in case
@@ -368,13 +361,20 @@ int main(int argc, char **argv)
 
   if(opt_v) printf("Input image orientation: %s\n",iporient);
 
-  input_image = (short  *)read_nifti_image(inputimagepath, &input_hdr);
-  if(input_image==NULL)
+  ipimage = (short  *)read_nifti_image(ipimagepath, &iphdr);
+  if(ipimage==NULL)
   {
-    printf("Error reading %s, aborting ...\n", inputimagepath);
+    printf("Error reading %s, aborting ...\n", ipimagepath);
     exit(1);
   }
-  set_dim(ipdim, input_hdr);
+
+  if( iphdr.datatype != DT_SIGNED_SHORT && iphdr.datatype != DT_UINT16)
+  {
+    printf("This program can only handle short and unsigned short data types, aborting ...\n");
+    exit(0);
+  }
+
+  set_dim(ipdim, iphdr);
 
   if(opt_v) 
   {
@@ -382,7 +382,7 @@ int main(int argc, char **argv)
     printf("Input image voxel size: %6.4f x %6.4f x %6.4f\n",ipdim.dx,ipdim.dy,ipdim.dz);
   }
 
-  // set nPA, nIS, nLR, dPA, dIS, dLR
+  // set nPA, nIS, nLR, dPA, dIS, dLR depending on iporient
   if(iporient[0]=='P' || iporient[0]=='A') { nPA=ipdim.nx; dPA=ipdim.dx; }
   if(iporient[0]=='I' || iporient[0]=='S') { nIS=ipdim.nx; dIS=ipdim.dx; }
   if(iporient[0]=='L' || iporient[0]=='R') { nLR=ipdim.nx; dLR=ipdim.dx; }
@@ -395,6 +395,8 @@ int main(int argc, char **argv)
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
+  // This block of code sets the following variables: oporient, opdim, opimagepath
+
   // if ouput orientation is specified using -oo option, make sure it's valid
   if(oporient[0]!='\0' && isOrientationCodeValid(oporient)==0 )
   {
@@ -436,18 +438,18 @@ int main(int argc, char **argv)
   // the input image, over-ridding all other settings
   if(opt_reorient==NO)
   {
-    set_dim(opdim, input_hdr);
+    set_dim(opdim, iphdr);
     stpcpy(oporient, iporient);
   }
 
-  if( outputimagepath[0]=='\0' )
+  if( opimagepath[0]=='\0' )
   {
-    sprintf(outputimagepath,"%s/%s_%s.nii",inputimagedir,inputimagename,oporient);
+    sprintf(opimagepath,"%s/%s_%s.nii",ipimagedir,ipimagename,oporient);
   }
 
   if(opt_v) 
   {
-    printf("Output image: %s\n",outputimagepath);
+    printf("Output image: %s\n",opimagepath);
     printf("Output image matrix size: %d x %d x %d\n",opdim.nx,opdim.ny,opdim.nz);
     printf("Output image voxel size: %6.4f x %6.4f x %6.4f\n",opdim.dx,opdim.dy,opdim.dz);
     printf("Output image orientation: %s\n",oporient);
@@ -464,40 +466,44 @@ int main(int argc, char **argv)
     printf("Manually specified landmarks: %s\n",landmarksfilepath);
   }
 
-  // find TPIL with transforms the input image to PIL orientation
+  // find TPIL which transforms the input image to PIL orientation
   if(opt_standard)
   {
-    standard_PIL_transformation(inputimagepath, landmarksfilepath, iporient, 0, TPIL);
+    standard_PIL_transformation(ipimagepath, landmarksfilepath, iporient, 0, TPIL);
   }
   else
   {
-    new_PIL_transform(inputimagepath, landmarksfilepath, iporient, TPIL, 0);
+    new_PIL_transform(ipimagepath, landmarksfilepath, iporient, TPIL, 0);
   }
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  sprintf(optransformationpath,"%s/%s.mrx",inputimagedir,inputimagename);
-  if(opt_v) printf("Output transformation matrix: %s\n",optransformationpath);
+  {
+    float Tout_FSL[16];
+    float PIL2OUT[16];
 
-  // PIL2OUT takes points from PIL space to oporient space
-  inversePILtransform(oporient, PIL2OUT);
+    sprintf(optransformationpath,"%s/%s.mrx",ipimagedir,ipimagename);
+    if(opt_v) printf("Output transformation matrix: %s\n",optransformationpath);
 
-  //Tout transforms points from the input space to the output space
-  multi(PIL2OUT, 4, 4,  TPIL, 4,  4, Tout);
+    // PIL2OUT takes points from PIL space to oporient space
+    inversePILtransform(oporient, PIL2OUT);
 
-  fp = fopen(optransformationpath,"w");
-  if(fp==NULL) file_open_error(optransformationpath);
-  printMatrix(Tout, 4, 4, "ART acpcdetect tilt correction matrix:", fp);
-  fclose(fp);
+    //Tout transforms points from the input space to the output space
+    multi(PIL2OUT, 4, 4,  TPIL, 4,  4, Tout);
 
-  float Tout_FSL[16];
-  art_to_fsl(Tout, Tout_FSL, ipdim, opdim);
-  sprintf(optransformationpath,"%s/%s_FSL.mat",inputimagedir,inputimagename);
-  if(opt_v) printf("Output transformation matrix (FSL format): %s\n",optransformationpath);
-  fp=fopen(optransformationpath,"w");
-  if(fp==NULL) file_open_error(optransformationpath);
-  printMatrix(Tout_FSL,4,4,"",fp);
-  fclose(fp);
+    fp = fopen(optransformationpath,"w");
+    if(fp==NULL) file_open_error(optransformationpath);
+    printMatrix(Tout, 4, 4, "ART acpcdetect tilt correction matrix:", fp);
+    fclose(fp);
+
+    art_to_fsl(Tout, Tout_FSL, ipdim, opdim);
+    sprintf(optransformationpath,"%s/%s_FSL.mat",ipimagedir,ipimagename);
+    if(opt_v) printf("Output transformation matrix (FSL format): %s\n",optransformationpath);
+    fp=fopen(optransformationpath,"w");
+    if(fp==NULL) file_open_error(optransformationpath);
+    printMatrix(Tout_FSL,4,4,"",fp);
+    fclose(fp);
+  }
   ///////////////////////////////////////////////////////////////////////////////////////
 
   // PIL2RAS takes points from PIL 2 RAS space
@@ -506,16 +512,22 @@ int main(int argc, char **argv)
 
   if( opt_reorient == YES)
   {
+    short *opimage;
+    float *invT;
+    float Tijk2xyz[16];
+    float Ttmp[16];
+    float OUT2PIL[16];
+
     ////////////////////////////////////////////////////////////////////
-    // setup output_hdr
-    output_hdr = input_hdr;
-    output_hdr.pixdim[1]=opdim.dx; 
-    output_hdr.pixdim[2]=opdim.dy; 
-    output_hdr.pixdim[3]=opdim.dz;
-    output_hdr.dim[1]=opdim.nx; 
-    output_hdr.dim[2]=opdim.ny; 
-    output_hdr.dim[3]=opdim.nz;
-    sprintf(output_hdr.descrip,"Created by ART acpcdetect");
+    // setup ophdr
+    ophdr = iphdr;
+    ophdr.pixdim[1]=opdim.dx; 
+    ophdr.pixdim[2]=opdim.dy; 
+    ophdr.pixdim[3]=opdim.dz;
+    ophdr.dim[1]=opdim.nx; 
+    ophdr.dim[2]=opdim.ny; 
+    ophdr.dim[3]=opdim.nz;
+    sprintf(ophdr.descrip,"Created by ART acpcdetect");
 
     // NOTE: PIL orientation is a stepping stone here
     // (i,j,k) -> (x,y,z) in oporient -> (x,y,z) in PIL -> (x,y,z) in RAS
@@ -535,31 +547,34 @@ int main(int argc, char **argv)
     // Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
     multi(Ttmp, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
 
-    update_qsform(output_hdr, Ttmp);
+    update_qsform(ophdr, Ttmp);
     ////////////////////////////////////////////////////////////////////
 
     invT = inv4(Tout);
     if(!opt_nn)
     {
-      output_image = resliceImage(input_image,ipdim,opdim,invT,LIN);
+      opimage = resliceImage(ipimage,ipdim,opdim,invT,LIN);
     }
     else
     {
-      output_image = resliceImage(input_image,ipdim,opdim,invT,NEARN);
+      opimage = resliceImage(ipimage,ipdim,opdim,invT,NEARN);
     }
     free(invT);
 
-    save_nifti_image(outputimagepath, output_image, &output_hdr);
+    save_nifti_image(opimagepath, opimage, &ophdr);
     
-    delete output_image;
+    delete opimage;
   }
 
   if( opt_reorient == NO)
   {
+    float Tijk2xyz[16];
+    float Ttmp[16];
+
     ////////////////////////////////////////////////////////////////////
-    // setup output_hdr
-    output_hdr = input_hdr;
-    sprintf(output_hdr.descrip,"Created by ART acpcdetect");
+    // setup ophdr
+    ophdr = iphdr;
+    sprintf(ophdr.descrip,"Created by ART acpcdetect");
 
     // Tijk2xyz: (i,j,k) -> (x,y,z) in oporient
     ijk2xyz(Tijk2xyz, ipdim);
@@ -570,11 +585,11 @@ int main(int argc, char **argv)
     // Ttmp = PIL2RAS * TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in RAS
     multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp);
 
-    update_qsform(output_hdr, Ttmp);
+    update_qsform(ophdr, Ttmp);
     ////////////////////////////////////////////////////////////////////
 
-    save_nifti_image(outputimagepath, input_image, &output_hdr);
+    save_nifti_image(opimagepath, ipimage, &ophdr);
   }
 
-  delete input_image;
+  delete ipimage;
 }
