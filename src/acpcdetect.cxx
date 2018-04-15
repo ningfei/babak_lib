@@ -22,65 +22,47 @@ int opt;
 
 static struct option options[] =
 {
+   {"-o",1,'o'},
+   {"-output",1,'o'},
+   {"-nx",1,'x'},
+   {"-ny",1,'y'},
+   {"-nz",1,'z'},
+   {"-dx",1,'X'},
+   {"-dy",1,'Y'},
+   {"-dz",1,'Z'},
+   {"-i",1,'i'},
+   {"-input",1,'i'},
+   {"-v",0,'v'},
+   {"-verbose",0,'v'},
+   {"-center-AC", 0, 'M'},
+   {"-output-orient",1,'u'},
+   {"-oo",1,'u'},
    {"-nn",0,'n'}, // does nearest neighbor interpolation
-   {"--standard", 0, 'S'},
    {"-standard", 0, 'S'},
    {"-s", 0, 'S'},
-   {"--do-not-reorient", 0, 'R'},
+   {"-do-not-reorient", 0, 'R'},
    {"-lm", 1, 'L'},
    {"-landmarks", 1, 'L'},
-   {"--landmarks", 1, 'L'},
-   {"--center-AC", 0, 'M'},
-   {"-center-AC", 0, 'M'},
 //   {"-sform",0,'s'},
 //   {"-qform",0,'q'},
    {"-noppm",0,'N'},
    {"-notxt",0,'t'},
    {"-V",0,'V'},
    {"-version",0,'V'},
-   {"-Version",0,'V'},
-//   {"--T2",0,'T'},
 //   {"-T2",0,'T'},
-   {"--rvsps",1,'0'},
+//   {"-T2",0,'T'},
    {"-rvsps",1,'0'},
-   {"--rac",1,'1'},
+   {"-rvsps",1,'0'},
    {"-rac",1,'1'},
-   {"--rpc",1,'2'},
+   {"-rac",1,'1'},
    {"-rpc",1,'2'},
-   {"-v",0,'v'},
-   {"--verbose",0,'v'},
-   {"-verbose",0,'v'},
-   {"-D",0,'v'},
+   {"-rpc",1,'2'},
 //   {"-m",1,'m'},
-//   {"--model",1,'m'},
 //   {"-model",1,'m'},
-   {"-i",1,'i'},
-   {"--input",1,'i'},
-   {"-input",1,'i'},
+//   {"-model",1,'m'},
    {"-input-orient",1,'O'}, // secret option
-   {"--input-orient",1,'O'}, // secret option
-   {"-io",1,'O'}, // secret option
    {"-h",0,'h'},
-   {"--help",0,'h'},
    {"-help",0,'h'},
-   {"-o",1,'o'},
-   {"-output",1,'o'},
-   {"--output",1,'o'},
-   {"-oo",1,'u'},
-   {"-output-orient",1,'u'},
-   {"--output-orient",1,'u'},
-   {"-onx",1,'x'},
-   {"-ony",1,'y'},
-   {"-onz",1,'z'},
-   {"-nx",1,'x'},
-   {"-ny",1,'y'},
-   {"-nz",1,'z'},
-   {"-odx",1,'X'},
-   {"-ody",1,'Y'},
-   {"-odz",1,'Z'},
-   {"-dx",1,'X'},
-   {"-dy",1,'Y'},
-   {"-dz",1,'Z'},
    {0,0,0}
 };
 
@@ -93,7 +75,7 @@ void print_help_and_exit()
    printf("\nUsage: acpcdetect [-V/-version -h/-help -v/-verbose -rvsps <r> -rac <r> -rpc <r>]\n"
    "[-o/-output <output volume> -oo <output orientation code>]\n"
    "[-nx <int> -ny <int> -nz <int> -dx <float> -dy <float> -dz <float> -noppm -notxt]\n"
-   "[--do-not-reorient]\n"
+   "[-do-not-reorient]\n"
    "-i/-image <input volume>\n\n"
    "Required arguments:\n"
    "-i or -image <input volume>: Input (test) image volume in NIFTI format of type `short'\n\n"
@@ -114,7 +96,7 @@ void print_help_and_exit()
    "\t\tRAS for Right-Anterior-Superior\n"
    "-nx, -ny, -nz: x/y/z matrix dimensions of the output image (default=same as input image).\n"
    "-dx, -dy, -dz: x/y/z voxel dimensions of the output image (default=same as input image).\n"
-   "--center-AC: Make AC the center of the output FOV.\n\n"
+   "-center-AC: Make AC the center of the output FOV.\n\n"
    "Outputs:\n"
    "<input volume>_ACPC_sagittal.ppm: Sagittal view of the detected AC/PC locations\n"
    "<input volume>_ACPC_axial.ppm: Axial view of the detected AC/PC locations\n"
@@ -228,7 +210,7 @@ int main(int argc, char **argv)
   float odx=0.0, ody=0.0, odz=0.0;
 
   // opt_CENTER_AC=NO means that by default the mid-point between AC and PC is set to the FOV
-  // center.  If --centerAC is selected, then the AC is made the FOV center.
+  // center.  If -centerAC is selected, then the AC is made the FOV center.
   // The opt_CENTER_AC variable is defined in PILtransform.cpp and made global in babak_lib.h
   opt_CENTER_AC=NO; 
 
@@ -339,15 +321,15 @@ int main(int argc, char **argv)
   // determine input image directory
   getDirectoryName(ipimagepath, ipimagedir);
 
-  // if input orientation is specified using --input-orient option, make sure it's valid
-  // --input-orient overrides the input orientation inferred from the image header
+  // if input orientation is specified using -input-orient option, make sure it's valid
+  // -input-orient overrides the input orientation inferred from the image header
   if(iporient[0]!='\0' && isOrientationCodeValid(iporient)==0)
   {
     printf("%s is not a valid orientation code, aborting ...\n",iporient);
     exit(0);
   }
 
-  // if input orientation is not specified using --input-orient option, read it from input image
+  // if input orientation is not specified using -input-orient option, read it from input image
   // this is almost always going to be the case
   if(iporient[0]=='\0')
   {
