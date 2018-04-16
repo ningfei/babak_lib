@@ -18,6 +18,7 @@
 char opt_v= NO;
 
 char opt_ppm = YES;
+char opt_png = YES; // flag for outputing PNG images
 char opt_txt = YES;
 char opt_AC = YES;
 char opt_PC = YES;
@@ -2246,29 +2247,50 @@ float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, fl
 
 int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned char *G, unsigned char *B)
 {
-	FILE *fp;
-	int np;
+  FILE *fp;
+  int np;
 
-	np = nx*ny;
+  np = nx*ny;
 
-	fp = fopen(filename,"w");
-	if(fp == NULL) return(1);
+  fp = fopen(filename,"w");
+  if(fp == NULL) return(1);
 
-	fprintf(fp,"P6\n");
-	fprintf(fp,"# Created by Automatic Registration Toolbox \n");
-	fprintf(fp,"%d %d\n",nx, ny);
-	fprintf(fp,"255\n");
+  fprintf(fp,"P6\n");
+  fprintf(fp,"# Created by Automatic Registration Toolbox \n");
+  fprintf(fp,"%d %d\n",nx, ny);
+  fprintf(fp,"255\n");
 
-	for(int i=0; i<np; i++)
-	{
-		fwrite(R+i, 1, 1, fp);
-		fwrite(G+i, 1, 1, fp);
-		fwrite(B+i, 1, 1, fp);
-	}
+  for(int i=0; i<np; i++)
+  {
+    fwrite(R+i, 1, 1, fp);
+    fwrite(G+i, 1, 1, fp);
+    fwrite(B+i, 1, 1, fp);
+  }
 
-	fclose(fp);
+  fclose(fp);
 
-	return(0);
+  if(opt_png)
+  {
+    char *pngfilename;
+    char *cmnd;
+    int L;
+
+    L = strlen(filename);
+    pngfilename = (char *)calloc(L,sizeof(char));
+    cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
+    stpcpy(pngfilename, filename);
+    pngfilename[L-1]='g';
+    pngfilename[L-2]='n';
+    pngfilename[L-3]='p';
+
+    sprintf(cmnd,"pnmtopng %s > %s",filename,pngfilename); 
+    if(opt_png) system(cmnd);
+
+    free(pngfilename);
+    free(cmnd);
+  }
+
+  return(0);
 }
 
 void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp)

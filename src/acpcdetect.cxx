@@ -1,6 +1,3 @@
-// BUG FIX (2011-07-29): The default interpolation method was nearest neighbor. The -nn option would use
-// trilinear interpolatin.  This was corrected.  Now the default interpolation method is trilinear and 
-// the -nn option forces the program to use nearest neighbor.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -206,8 +203,8 @@ int main(int argc, char **argv)
   float TPIL[16]; // transforms ipimage to PIL orientation
 
   // It is very important to have these initializations.
-  int onx=0, ony=0, onz=0;
-  float odx=0.0, ody=0.0, odz=0.0;
+  int nx=0, ny=0, nz=0;
+  float dx=0.0, dy=0.0, dz=0.0;
 
   // opt_CENTER_AC=NO means that by default the mid-point between AC and PC is set to the FOV
   // center.  If -centerAC is selected, then the AC is made the FOV center.
@@ -243,22 +240,22 @@ int main(int argc, char **argv)
             printf("April 10, 2018\n");
             exit(0);
          case 'x':
-            onx = atoi(optarg);
+            nx = atoi(optarg);
             break;
          case 'y':
-            ony = atoi(optarg);
+            ny = atoi(optarg);
             break;
          case 'z':
-            onz = atoi(optarg);
+            nz = atoi(optarg);
             break;
          case 'X':
-            odx = atof(optarg);
+            dx = atof(optarg);
             break;
          case 'Y':
-            ody = atof(optarg);
+            dy = atof(optarg);
             break;
          case 'Z':
-            odz = atof(optarg);
+            dz = atof(optarg);
             break;
 //         case 'T':
 //            opt_T2=YES;
@@ -405,12 +402,12 @@ int main(int argc, char **argv)
   if(oporient[2]=='P' || oporient[2]=='A') { opdim.nz=nPA; opdim.dz=dPA; }
   if(oporient[2]=='I' || oporient[2]=='S') { opdim.nz=nIS; opdim.dz=dIS; }
   if(oporient[2]=='L' || oporient[2]=='R') { opdim.nz=nLR; opdim.dz=dLR; }
-  if(onx > 0) opdim.nx=onx; 
-  if(ony > 0) opdim.ny=ony; 
-  if(onz > 0) opdim.nz=onz;
-  if(odx > 0.0) opdim.dx=odx; 
-  if(ody > 0.0) opdim.dy=ody; 
-  if(odz > 0.0) opdim.dz=odz;
+  if(nx > 0) opdim.nx=nx; 
+  if(ny > 0) opdim.ny=ny; 
+  if(nz > 0) opdim.nz=nz;
+  if(dx > 0.0) opdim.dx=dx; 
+  if(dy > 0.0) opdim.dy=dy; 
+  if(dz > 0.0) opdim.dz=dz;
   opdim.nt=1; 
   opdim.dt=0.0; 
   opdim.np=opdim.nx*opdim.ny; 

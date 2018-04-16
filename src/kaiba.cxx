@@ -55,7 +55,6 @@ int opt;
 /////////////////////////////////////////////////////////////////////////
 // Global variables
 
-int opt_png=YES; // flag for outputing PNG images
 char opt_flip=YES;
 char flipped; // Takes YES or NO
 float alpha_param;
@@ -705,7 +704,6 @@ void sqrt_matrix(float4 *T, float4 *sqrtT, float4 *invsqrtT)
 void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffile, const char *blmfile,const char *flmfile, int verbose)
 {
    char orient[4]="";
-   char cmnd[1024]="";  // to stores the command to run with system
    int2 *fmsk, *bmsk;
    float4 *sclfim, *sclbim;
    int2 *PILbraincloud;
@@ -793,24 +791,12 @@ void symmetric_registration(SHORTIM &aimpil, const char *bfile, const char *ffil
    if(verbose) printf("Computing baseline image PIL transformation ...\n");
    orient[0]='\0';
    new_PIL_transform(bfile, blmfile, orient, bTPIL, 0);
-   if(opt_png && opt_ppm)
-   {
-      sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",bprefix,bprefix); system(cmnd);
-      sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",bprefix,bprefix); system(cmnd);
-      sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",bprefix,bprefix); system(cmnd);
-   }
 
    ibTPIL= inv4(bTPIL);
 
    if(verbose) printf("Computing follow-up image PIL transformation ...\n");
    orient[0]='\0';
    new_PIL_transform(ffile, flmfile, orient, fTPIL, 0);
-   if(opt_png && opt_ppm)
-   {
-      sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",fprefix,fprefix); system(cmnd);
-      sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",fprefix,fprefix); system(cmnd);
-      sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",fprefix,fprefix); system(cmnd);
-   }
 
    ifTPIL= inv4(fTPIL);
 
@@ -1501,7 +1487,6 @@ int main(int argc, char **argv)
    char dummystring[DEFAULT_STRING_LENGTH];
 
    short *tmp;
-   char cmnd[1024]=""; // stores the command to run with system
 
    FILE *fp;
    char filename[1024]="";  // a generic filename for reading/writing stuff
@@ -1725,14 +1710,6 @@ int main(int argc, char **argv)
       if(opt_v) printf("Computing PIL transformation ...\n");
       orient[0]='\0';
       new_PIL_transform(imagefile[0],lmfile, orient, TPIL[0], 0);
-
-      if(opt_png && opt_ppm)
-      {
-         sprintf(filename,"%s/%s",imagedir[0],imagefileprefix[0]);
-         sprintf(cmnd,"pnmtopng %s_orion.ppm > %s_orion.png",filename, filename); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_axial.ppm > %s_ACPC_axial.png",filename, filename); system(cmnd);
-         sprintf(cmnd,"pnmtopng %s_ACPC_sagittal.ppm > %s_ACPC_sagittal.png",filename,filename); system(cmnd);
-      }
 
       invT = inv4(TPIL[0]);
       aimpil.v = resliceImage(im[0].v, im_dim[0], PILbraincloud_dim, invT, LIN);

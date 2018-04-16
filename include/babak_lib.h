@@ -313,6 +313,7 @@ extern void find_pil_transformation(char *imfile, DIM dim, float4 *pilT, float4 
 extern void find_pil_transformation(char *imfile, DIM dim, float4 *pilT);
 extern void update_qsform(nifti_1_header &hdr, const char *orientationcode);
 extern char opt_ppm;
+extern char opt_png;
 extern char opt_txt;
 extern char opt_AC; // if YES AC will be detected automatically
 extern char opt_PC; // if YES PC will be detected automatically

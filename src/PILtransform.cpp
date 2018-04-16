@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <landmarks.h>
 #include <stats.h>
+#include <string.h>
 
 double searchradius[3]={50.0, 15.0, 15.0}; // in units of mm
 int opt_CENTER_AC=NO;
@@ -103,6 +104,27 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
    }
 
    fclose(fp);
+
+  if(opt_png)
+  {
+    char *pngfilename;
+    char *cmnd;
+    int L;
+
+    L = strlen(ppmfile);
+    pngfilename = (char *)calloc(L,sizeof(char));
+    cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
+    stpcpy(pngfilename, ppmfile);
+    pngfilename[L-1]='g';
+    pngfilename[L-2]='n';
+    pngfilename[L-3]='p';
+
+    sprintf(cmnd,"pnmtopng %s > %s",ppmfile,pngfilename); 
+    if(opt_png) system(cmnd);
+
+    free(pngfilename);
+    free(cmnd);
+  }
 
    delete imgTemp;
 }
