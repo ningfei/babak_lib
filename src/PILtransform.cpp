@@ -126,7 +126,9 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
     free(cmnd);
   }
 
-   delete imgTemp;
+  if(opt_ppm==NO) remove(ppmfile);
+
+  delete imgTemp;
 }
 
 void convert_to_xyz(float *P, int n, SHORTIM im)
@@ -507,7 +509,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    multi(TLM,4,4,TPIL0,4,4,TPIL);
 
    // create the *LM.ppm image
-   if(opt_ppm)
+   if(opt_ppm || opt_png)
    {
       int *lmx, *lmy;
       float lm[4]; 

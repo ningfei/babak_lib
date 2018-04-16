@@ -409,7 +409,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
    sprintf(fullpath,"%s/%s_ACPC_sagittal.ppm",dirname,filename);
    //sprintf(fullpath,"%s_ACPC_sagittal.ppm",filename);
 
-   if(opt_ppm)
+   if(opt_ppm || opt_png)
    {
       save_as_ppm((const char *)fullpath, HR.nx, HR.ny, Rchannel, Gchannel, Bchannel);
    }
@@ -471,7 +471,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
    sprintf(fullpath,"%s/%s_ACPC_axial.ppm",dirname,filename);
    //sprintf(fullpath,"%s_ACPC_axial.ppm",filename);
 
-   if(opt_ppm)
+   if(opt_ppm || opt_png)
    {
       save_as_ppm((const char *)fullpath, HR.nx, HR.ny, Rchannel, Gchannel, Bchannel);
    }
@@ -2289,6 +2289,8 @@ int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned
     free(pngfilename);
     free(cmnd);
   }
+
+  if(opt_ppm == NO ) remove(filename);
 
   return(0);
 }

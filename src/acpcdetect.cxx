@@ -43,6 +43,7 @@ static struct option options[] =
 //   {"-sform",0,'s'},
 //   {"-qform",0,'q'},
    {"-noppm",0,'N'},
+   {"-nopng",0,'g'},
    {"-notxt",0,'t'},
    {"-V",0,'V'},
    {"-version",0,'V'},
@@ -226,6 +227,9 @@ int main(int argc, char **argv)
             break;
          case 't':
             opt_txt = NO;
+            break;
+         case 'g':
+            opt_png = NO;
             break;
          case 'N':
             opt_ppm = NO;
