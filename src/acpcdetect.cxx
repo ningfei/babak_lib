@@ -19,8 +19,6 @@ int opt;
 
 static struct option options[] =
 {
-   {"-o",1,'o'},
-   {"-output",1,'o'},
    {"-nx",1,'x'},
    {"-ny",1,'y'},
    {"-nz",1,'z'},
@@ -69,7 +67,7 @@ void print_help_and_exit()
 {
    printf("\nUsage: acpcdetect [-V/-version -h/-help -v/-verbose -rvsps <r> -rac <r> -rpc <r>]\n"
    "[-o/-output <output volume> -oo <output orientation code>]\n"
-   "[-nx <int> -ny <int> -nz <int> -dx <float> -dy <float> -dz <float> -noppm -notxt]\n"
+   "[-nx <int> -ny <int> -nz <int> -dx <float> -dy <float> -dz <float> -noppm -notxt -nopng]\n"
    "[-do-not-reorient]\n"
    "-i/-image <input volume>\n\n"
    "Required arguments:\n"
@@ -83,9 +81,7 @@ void print_help_and_exit()
    "-rvsps <r>: Search radius for VSPS (default = 50 mm)\n"
    "-rac <r>: Search radius for AC (default = 15 mm)\n"
    "-rpc <r>: Search radius for PC (default = 15 mm)\n"
-   "-o or -output <filename>: If this option is present, the program outputs an AC/PC and MSP aligned image\n"
-   "with the given filename.\n"
-   "-oo <output orientation code>: Three-letter orientation code of the output image.  If this is not\n"
+   "-output-orient <output orientation code>: Three-letter orientation code of the output image.  If this is not\n"
    "specified, then the output image will have the same orientation as the input image. Ex:\n"
    "\t\tPIL for Posterior-Inferior-Left\n"
    "\t\tRAS for Right-Anterior-Superior\n"
@@ -266,9 +262,6 @@ int main(int argc, char **argv)
             break;
          case 'L':
             sprintf(landmarksfilepath,"%s",optarg);
-            break;
-         case 'o':
-            sprintf(opimagepath,"%s",optarg);
             break;
          case 'i':
             sprintf(ipimagepath,"%s",optarg);
