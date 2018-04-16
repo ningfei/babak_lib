@@ -50,10 +50,7 @@ static struct option options[] =
 //   {"-T2",0,'T'},
 //   {"-T2",0,'T'},
    {"-rvsps",1,'0'},
-   {"-rvsps",1,'0'},
    {"-rac",1,'1'},
-   {"-rac",1,'1'},
-   {"-rpc",1,'2'},
    {"-rpc",1,'2'},
 //   {"-m",1,'m'},
 //   {"-model",1,'m'},
@@ -440,9 +437,9 @@ int main(int argc, char **argv)
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  if(searchradius[0]<=0 || searchradius[0]>200.0) searchradius[0]=50.0;
-  if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
-  if(searchradius[2]<=0 || searchradius[2]>100.0) searchradius[2]=15.0;
+  if(searchradius[0]<=0.0 || searchradius[0]>200.0) searchradius[0]=50.0;
+  if(searchradius[1]<=0.0 || searchradius[1]>100.0) searchradius[1]=15.0;
+  if(searchradius[2]<=0.0 || searchradius[2]>100.0) searchradius[2]=15.0;
 
   if(opt_v && landmarksfilepath[0]!='\0') 
   {
