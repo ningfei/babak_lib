@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 //            opt_qform = YES;
 //            break;
          case 'V':
-            printf("April 10, 2018\n");
+            printf("acpcdetect v2.0, April 19, 2018 release\n");
             exit(0);
          case 'x':
             nx = atoi(optarg);
