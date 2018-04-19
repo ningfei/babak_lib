@@ -35,7 +35,7 @@ static struct option options[] =
    {"-nn",0,'n'}, // does nearest neighbor interpolation
    {"-standard", 0, 'S'},
    {"-s", 0, 'S'},
-   {"-do-not-reorient", 0, 'R'},
+   {"-no-tilt-correction", 0, 'R'},
    {"-lm", 1, 'L'},
    {"-landmarks", 1, 'L'},
 //   {"-sform",0,'s'},
@@ -174,15 +174,22 @@ void computeSiemensVisionOffsets(float *Tmsp, float *AC, float *PC)
 
 int main(int argc, char **argv)
 {
-  char opt_reorient=YES;
+  float PIL2RAS[16];
+  float IPORIENT2PIL[16];
+  float PIL2IPORIENT[16];
+  float OPORIENT2PIL[16];
+  float PIL2OPORIENT[16];
+  float Tijk2xyz[16];
+  float *invT;
+  short *opimage;
+  short *ipimage;
+  char opt_tiltcorrect=YES;
   int nPA, nLR, nIS;
   float dPA, dLR, dIS;
   char opt_standard=NO;
   FILE *fp;
-  short *ipimage;
   DIM ipdim, opdim;  // input (ip) and output (op) dimension structures (dim)
   nifti_1_header iphdr, ophdr; // 348 bytes
-  float PIL2RAS[16];
 //  int opt_T2=NO;
   char optransformationpath[1024]="";
   char landmarksfilepath[512]="";
@@ -192,7 +199,7 @@ int main(int argc, char **argv)
   char ipimagedir[512]="";  // important to initialize to ""
   char opimagepath[1024]="";
   char iporient[4]="";
-  char oporient[4]="";
+  char oporient[4]="RAS";
   float Tout[16]; // transforms ipimage to the specified output orientation
   float TPIL[16]; // transforms ipimage to PIL orientation
 
@@ -258,7 +265,7 @@ int main(int argc, char **argv)
 //            opt_T2=YES;
 //            break;
          case 'R':
-            opt_reorient=NO;
+            opt_tiltcorrect=NO;
             break;
          case 'L':
             sprintf(landmarksfilepath,"%s",optarg);
@@ -283,9 +290,16 @@ int main(int argc, char **argv)
             break;
          case 'O':
             sprintf(iporient,"%s",optarg);
+            iporient[0]=(char)toupper((int)iporient[0]);
+            iporient[1]=(char)toupper((int)iporient[1]);
+            iporient[2]=(char)toupper((int)iporient[2]);
             break;
          case 'u':
             sprintf(oporient,"%s",optarg);
+            oporient[0]=(char)toupper((int)oporient[0]);
+            oporient[1]=(char)toupper((int)oporient[1]);
+            oporient[2]=(char)toupper((int)oporient[2]);
+
             break;
 //         case 'm':
 //            sprintf(modelfile,"%s",optarg);
@@ -327,11 +341,6 @@ int main(int argc, char **argv)
     getNiftiImageOrientation(ipimagepath, iporient);
   }
 
-  // change iporient to upper case letters, just in case
-  iporient[0]=(char)toupper((int)iporient[0]);
-  iporient[1]=(char)toupper((int)iporient[1]);
-  iporient[2]=(char)toupper((int)iporient[2]);
-
   if(opt_v) printf("Input image orientation: %s\n",iporient);
 
   ipimage = (short  *)read_nifti_image(ipimagepath, &iphdr);
@@ -365,27 +374,26 @@ int main(int argc, char **argv)
   if(iporient[2]=='P' || iporient[2]=='A') { nPA=ipdim.nz; dPA=ipdim.dz; }
   if(iporient[2]=='I' || iporient[2]=='S') { nIS=ipdim.nz; dIS=ipdim.dz; }
   if(iporient[2]=='L' || iporient[2]=='R') { nLR=ipdim.nz; dLR=ipdim.dz; }
+
+  PILtransform(iporient, IPORIENT2PIL);
+  inversePILtransform(iporient, PIL2IPORIENT);
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
   // This block of code sets the following variables: oporient, opdim, opimagepath
 
   // if ouput orientation is specified using -oo option, make sure it's valid
-  if(oporient[0]!='\0' && isOrientationCodeValid(oporient)==0 )
+  if(isOrientationCodeValid(oporient)==0 )
   {
     printf("%s is not a valid orientation code, aborting ...\n",oporient);
     exit(0);
   }
 
   // if output orientation is not specified using -oo option, make it same as input image
-  if(oporient[0]=='\0')
-  {
-    stpcpy(oporient, iporient);
-  }
-
-  oporient[0]=(char)toupper((int)oporient[0]);
-  oporient[1]=(char)toupper((int)oporient[1]);
-  oporient[2]=(char)toupper((int)oporient[2]);
+//  if(oporient[0]=='\0')
+//  {
+//    stpcpy(oporient, iporient);
+//  }
 
   if(oporient[0]=='P' || oporient[0]=='A') { opdim.nx=nPA; opdim.dx=dPA; }
   if(oporient[0]=='I' || oporient[0]=='S') { opdim.nx=nIS; opdim.dx=dIS; }
@@ -407,18 +415,7 @@ int main(int argc, char **argv)
   opdim.np=opdim.nx*opdim.ny; 
   opdim.nv=opdim.np*opdim.nz; 
 
-  // if this option is selected, the output image size and orientation will be the same as
-  // the input image, over-ridding all other settings
-  if(opt_reorient==NO)
-  {
-    set_dim(opdim, iphdr);
-    stpcpy(oporient, iporient);
-  }
-
-  if( opimagepath[0]=='\0' )
-  {
-    sprintf(opimagepath,"%s/%s_%s.nii",ipimagedir,ipimagename,oporient);
-  }
+  sprintf(opimagepath,"%s/%s_%s.nii",ipimagedir,ipimagename,oporient);
 
   if(opt_v) 
   {
@@ -427,6 +424,42 @@ int main(int argc, char **argv)
     printf("Output image voxel size: %6.4f x %6.4f x %6.4f\n",opdim.dx,opdim.dy,opdim.dz);
     printf("Output image orientation: %s\n",oporient);
   }
+
+  // PIL2OPORIENT takes points from PIL space to oporient space
+  inversePILtransform(oporient, PIL2OPORIENT);
+
+  // OPORIENT2PIL takes points from oporient space to PIL space
+  PILtransform(oporient, OPORIENT2PIL);
+
+  // (i,j,k) -> (x,y,z) in oporient
+  ijk2xyz(Tijk2xyz, opdim);
+
+  ophdr.sizeof_hdr = 348;
+  ophdr.datatype = 4;
+  ophdr.bitpix= 16;
+  ophdr.pixdim[1]=opdim.dx; 
+  ophdr.pixdim[2]=opdim.dy; 
+  ophdr.pixdim[3]=opdim.dz;
+  ophdr.dim[0] = 4;
+  ophdr.dim[1]=opdim.nx; 
+  ophdr.dim[2]=opdim.ny; 
+  ophdr.dim[3]=opdim.nz;
+  ophdr.dim[4] = 1;
+  ophdr.vox_offset = 352;
+  ophdr.scl_slope = 1.0;
+  ophdr.scl_inter = 0.0;
+  ophdr.xyzt_units = 0;
+  ophdr.cal_max = 0.0;
+  ophdr.cal_min = 0.0;
+  ophdr.toffset = 0.0;
+  ophdr.descrip[0] = '\0';
+  ophdr.aux_file[0] = '\0';
+  ophdr.intent_name[0] = '\0';
+  ophdr.magic[0]='n';
+  ophdr.magic[1]='+';
+  ophdr.magic[2]='1';
+  ophdr.magic[3]='\0';
+  sprintf(ophdr.descrip,"Created by ART acpcdetect");
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -439,7 +472,7 @@ int main(int argc, char **argv)
     printf("Manually specified landmarks: %s\n",landmarksfilepath);
   }
 
-  // find TPIL which transforms the input image to PIL orientation
+  // find TPIL which transforms the input image in iporient to tilt-corrected PIL
   if(opt_standard)
   {
     standard_PIL_transformation(ipimagepath, landmarksfilepath, iporient, 0, TPIL);
@@ -451,18 +484,15 @@ int main(int argc, char **argv)
   ///////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////
+  //save Tout and Tout_FSL
   {
     float Tout_FSL[16];
-    float PIL2OUT[16];
 
     sprintf(optransformationpath,"%s/%s.mrx",ipimagedir,ipimagename);
     if(opt_v) printf("Output transformation matrix: %s\n",optransformationpath);
 
-    // PIL2OUT takes points from PIL space to oporient space
-    inversePILtransform(oporient, PIL2OUT);
-
-    //Tout transforms points from the input space to the output space
-    multi(PIL2OUT, 4, 4,  TPIL, 4,  4, Tout);
+    //Tout transforms points from the input iporient to tilt-corrected oporient 
+    multi(PIL2OPORIENT, 4, 4,  TPIL, 4,  4, Tout);
 
     fp = fopen(optransformationpath,"w");
     if(fp==NULL) file_open_error(optransformationpath);
@@ -483,86 +513,54 @@ int main(int argc, char **argv)
   // (x,y,z) in PIL -> (x,y,z) in RAS
   inversePILtransform("RAS", PIL2RAS);
 
-  if( opt_reorient == YES)
+  if( opt_tiltcorrect == YES)
   {
-    short *opimage;
-    float *invT;
-    float Tijk2xyz[16];
     float Ttmp[16];
-    float OUT2PIL[16];
 
     ////////////////////////////////////////////////////////////////////
-    // setup ophdr
-    ophdr = iphdr;
-    ophdr.pixdim[1]=opdim.dx; 
-    ophdr.pixdim[2]=opdim.dy; 
-    ophdr.pixdim[3]=opdim.dz;
-    ophdr.dim[1]=opdim.nx; 
-    ophdr.dim[2]=opdim.ny; 
-    ophdr.dim[3]=opdim.nz;
-    sprintf(ophdr.descrip,"Created by ART acpcdetect");
+    // setup ophdr sform and qform
 
-    // NOTE: PIL orientation is a stepping stone here
-    // (i,j,k) -> (x,y,z) in oporient -> (x,y,z) in PIL -> (x,y,z) in RAS
-    // = (i,j,k) -> (x,y,z) in RAS
-    // set Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
-
-    // (i,j,k) -> (x,y,z) in oporient
-    ijk2xyz(Tijk2xyz, opdim);
-
-    // OUT2PIL takes points from oporient space to PIL space
-    // (x,y,z) in oporient -> (x,y,z) in PIL -> (x,y,z) in RAS
-    PILtransform(oporient, OUT2PIL);
-
-    // set Ttmp = PIL2RAS * OUT2PIL 
-    multi(PIL2RAS, 4, 4,  OUT2PIL, 4,  4, Ttmp);
-
-    // Ttmp = PIL2RAS * OUT2PIL * Tijk2xyx
+    multi(PIL2RAS, 4, 4,  OPORIENT2PIL, 4,  4, Ttmp);
     multi(Ttmp, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
 
     update_qsform(ophdr, Ttmp);
     ////////////////////////////////////////////////////////////////////
 
     invT = inv4(Tout);
-    if(!opt_nn)
-    {
-      opimage = resliceImage(ipimage,ipdim,opdim,invT,LIN);
-    }
-    else
-    {
-      opimage = resliceImage(ipimage,ipdim,opdim,invT,NEARN);
-    }
-    free(invT);
-
-    save_nifti_image(opimagepath, opimage, &ophdr);
-    
-    delete opimage;
   }
 
-  if( opt_reorient == NO)
+  if( opt_tiltcorrect == NO)
   {
-    float Tijk2xyz[16];
     float Ttmp[16];
+    float IPORIENT2OPORIENT[16];
+    float OPORIENT2IPORIENT[16];
 
     ////////////////////////////////////////////////////////////////////
-    // setup ophdr
-    ophdr = iphdr;
-    sprintf(ophdr.descrip,"Created by ART acpcdetect");
+    // setup ophdr sform and qform
 
-    // Tijk2xyz: (i,j,k) -> (x,y,z) in oporient
-    ijk2xyz(Tijk2xyz, ipdim);
-
-    // Ttmp = TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in PIL
-    multi(TPIL, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
-
-    // Ttmp = PIL2RAS * TPIL * Tijk2xyz : (i,j,k) -> (x,y,z) in RAS
-    multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp);
-
+    multi(PIL2IPORIENT, 4, 4,  OPORIENT2PIL, 4,  4, OPORIENT2IPORIENT);
+    multi(OPORIENT2IPORIENT, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
+    multi(TPIL, 4, 4,  Ttmp, 4,  4, Ttmp);
+    multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp); 
     update_qsform(ophdr, Ttmp);
     ////////////////////////////////////////////////////////////////////
 
-    save_nifti_image(opimagepath, ipimage, &ophdr);
+    multi(PIL2OPORIENT, 4, 4,  IPORIENT2PIL, 4,  4, IPORIENT2OPORIENT);
+    invT = inv4(IPORIENT2OPORIENT);
   }
 
+  if(!opt_nn)
+  {
+    opimage = resliceImage(ipimage,ipdim,opdim,invT,LIN);
+  }
+  else
+  {
+    opimage = resliceImage(ipimage,ipdim,opdim,invT,NEARN);
+  }
+  free(invT);
+
+  save_nifti_image(opimagepath, opimage, &ophdr);
+
   delete ipimage;
+  delete opimage;
 }
