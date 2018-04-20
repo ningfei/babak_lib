@@ -69,9 +69,10 @@ void print_help_and_exit()
   "\tEnables verbose mode\n\n"
 
   "-lm <landmarks-file>\n"
-  "\tA text file containing the (i, j, k) coordinates\n"
-  "\tof the AC, PC, and VSPS, respectively. This file is usually supplied to\n"
-  "\tthe program when automatic detection of these landmarks fails.\n\n"
+  "\tA text file containing manually determined (i, j, k) coordinates\n"
+  "\tof the AC, PC and VSPS, respectively. When this file is supplied,\n"
+  "\tautomatic detection of these landmarks is suppressed. This is useful\n" 
+  "\tin cases when automatic landmark detection fails.\n\n"
 
   "-no-tilt-correction\n"
   "\tDoes not tilt-correct the output, but the SFORM and QFORM are set\n"
@@ -80,9 +81,10 @@ void print_help_and_exit()
   "\tstep without applying interpolation at this stage.\n\n"
 
   "-center-AC\n"
-  "\tMake AC the center of the output volume's FOV.\n\n"
+  "\tPlaces the output volume's FOV center at AC\n\n"
 
   "-standard\n"
+  "\tTilt-correction is performed without using the Orion landmarks.\n"
   "\tTilt-correction is done using the AC, PC and MSP only. This is the\n"
   "\tmethod used in version 1.0 of acpcdetect.  In the current version, the\n"
   "\t8 orion landmarks are also used to stabilize the standardization of the\n"
@@ -90,7 +92,7 @@ void print_help_and_exit()
   "\tof version 1.0 without using the additional Orion landmarks.\n\n"
 
   "-output-orient <orientation-code>\n"
-  "\tThree-letter orientation code of the output volume (default: RAS)\n"
+  "\tSpecifies the orientation of the output volume (default: RAS).\n"
   "\tIn ART, orientation codes are 3-letter codes consisting of 6 letters:\n"
   "\tA, P, I, S, L, R.  There are 48 possible combinations. For example\n"
   "\tPIL for Posterior-Inferior-Left or RAS for Right-Anterior-Superior.\n\n"
