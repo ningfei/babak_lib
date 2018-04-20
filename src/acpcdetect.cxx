@@ -25,9 +25,7 @@ static struct option options[] =
    {"-dy",1,'Y'},
    {"-dz",1,'Z'},
    {"-i",1,'i'},
-   {"-input",1,'i'},
    {"-v",0,'v'},
-   {"-verbose",0,'v'},
    {"-center-AC", 0, 'M'},
    {"-output-orient",1,'u'},
    {"-oo",1,'u'},
@@ -36,13 +34,11 @@ static struct option options[] =
    {"-s", 0, 'S'},
    {"-no-tilt-correction", 0, 'R'},
    {"-lm", 1, 'L'},
-   {"-landmarks", 1, 'L'},
 //   {"-sform",0,'s'},
 //   {"-qform",0,'q'},
    {"-noppm",0,'N'},
    {"-nopng",0,'g'},
    {"-notxt",0,'t'},
-   {"-V",0,'V'},
    {"-version",0,'V'},
 //   {"-T2",0,'T'},
 //   {"-T2",0,'T'},
@@ -53,7 +49,6 @@ static struct option options[] =
 //   {"-model",1,'m'},
 //   {"-model",1,'m'},
    {"-input-orient",1,'O'}, // secret option
-   {"-h",0,'h'},
    {"-help",0,'h'},
    {0,0,0}
 };
@@ -63,114 +58,142 @@ static struct option options[] =
 void print_help_and_exit()
 {
   printf(
-  "\nUsage: acpcdetect [-V/-version -h/-help -v/-verbose -noppm -nopng -notxt\n"
-  "-rvsps <float> -rac <float> -rpc <float> -output-orient/-oo <orientation code>\n"
-  "-nx <int> -ny <int> -nz <int> -dx <float> -dy <float> -dz <float> -center-AC\n"
-  "-nn -no-tilt-correction -standard -lm/-landmarks <landmarks-file>]\n"
-  "-i/-input <input-file>\n\n"
+  "\nUsage: acpcdetect [options] -i <input-volume>.nii\n\n"
 
-  "Required argument:\n"
-  "-i/-input <input-file>.nii: Input volume\n"
-  "Must be in NIFTI format of type short or unsigned short.\n\n"
+  "-i <input-volume>.nii\n"
+  "\t3D T1W MRI brain volume in NIFTI format of type short or unsigned short\n\n"
 
-  "Optional arguments:\n"
-  "-V/-version: Prints software version\n\n"
+  "Options:\n\n"
 
-  "-h/-help: Prints help information\n\n"
+  "-v\n"
+  "\tEnables verbose mode\n\n"
 
-  "-v/-verbose: Enables verbose mode\n\n"
+  "-lm <landmarks-file>\n"
+  "\tA text file containing the (i, j, k) coordinates\n"
+  "\tof the AC, PC, and VSPS, respectively. This file is usually supplied to\n"
+  "\tthe program when automatic detection of these landmarks fails.\n\n"
 
-  "-noppm: Prevents outputting *.ppm images\n\n"
+  "-no-tilt-correction\n"
+  "\tDoes not tilt-correct the output, but the SFORM and QFORM are set\n"
+  "\tcorrectly in the output volume header. This is useful for applications\n"
+  "\tthat would like to use acpcdetect as a preprocessing tilt-correction\n"
+  "\tstep without applying interpolation at this stage.\n\n"
 
-  "-nopng: Prevents outputting *.png images\n\n"
+  "-center-AC\n"
+  "\tMake AC the center of the output volume's FOV.\n\n"
 
-  "-notxt: Prevents outputting *.txt files\n\n"
+  "-standard\n"
+  "\tTilt-correction is done using the AC, PC and MSP only. This is the\n"
+  "\tmethod used in version 1.0 of acpcdetect.  In the current version, the\n"
+  "\t8 orion landmarks are also used to stabilize the standardization of the\n"
+  "\torientation. Using this option, therefore, reverts back to the method\n"
+  "\tof version 1.0 without using the additional Orion landmarks.\n\n"
 
-  "-rvsps <r>: Search radius for VSPS (default = 50 mm)\n\n"
+  "-output-orient <orientation-code>\n"
+  "\tThree-letter orientation code of the output volume (default: RAS)\n"
+  "\tIn ART, orientation codes are 3-letter codes consisting of 6 letters:\n"
+  "\tA, P, I, S, L, R.  There are 48 possible combinations. For example\n"
+  "\tPIL for Posterior-Inferior-Left or RAS for Right-Anterior-Superior.\n\n"
 
-  "-rac <r>: Search radius for AC (default = 15 mm)\n\n"
+  "-nx <int>\n"
+  "\tNumber of voxels in i direction (the fastest varying index) of the\n"
+  "\toutput volume. The default value is determined from the input volume.\n\n"
 
-  "-rpc <r>: Search radius for PC (default = 15 mm)\n\n"
+  "-ny <int>\n"
+  "\tNumber of voxels in j direction (the 2nd fastest varying index) of the\n"
+  "\toutput volume. The default value is determined from the input volume.\n\n"
 
-  "-output-orient/-oo <orientation code>: Three-letter orientation code of the\n"
-  "output volume (default: RAS). In ART, orientation codes are 3-letter codes\n"
-  "consisting of 6 letters: A, P, I, S, L, R.  There are 48 possible\n"
-  "combinations. For example: PIL for Posterior-Inferior-Left or RAS for\n"
-  "Right-Anterior-Superior.\n\n"
+  "-nz <int>\n"
+  "\tNumber of voxels in k direction (the slowest varying index) of the\n"
+  "\toutput volume. The default value is determined from the input volume.\n\n"
 
-  "-nx <int>: Number of voxels in i direction (the fastest varying index) of the\n"
-  "output volume. The default value is determined from the input volume.\n\n"
+  "-dx <float>\n"
+  "\tVoxel dimension of the output volume in i direction. The default\n"
+  "\tvalue is determined from the input volume.\n\n"
 
-  "-ny <int>: Number of voxels in j direction (the 2nd fastest varying index) of the\n"
-  "output volume. The default value is determined from the input volume.\n\n"
+  "-dy <float>\n"
+  "\tVoxel dimension of the output volume in j direction. The default\n"
+  "\tvalue is determined from the input volume.\n\n"
 
-  "-nz <int>: Number of voxels in k direction (the slowest varying index) of the\n"
-  "output volume. The default value is determined from the input volume.\n\n"
+  "-dz <float>\n"
+  "\tVoxel dimension of the output volume in k direction. The default\n"
+  "\tvalue is determined from the input volume.\n\n"
 
-  "-dx <float>: Voxel dimension of the output volume in i direction. The default\n"
-  "value is determined from the input volume.\n\n"
+  "-version\n"
+  "\tPrints software version\n\n"
 
-  "-dy <float>: Voxel dimension of the output volume in j direction. The default\n"
-  "value is determined from the input volume.\n\n"
+  "-help\n"
+  "\tPrints help information\n\n"
 
-  "-dz <float>: Voxel dimension of the output volume in k direction. The default\n"
-  "value is determined from the input volume.\n\n"
+  "-noppm\n"
+  "\tPrevents outputting *.ppm images\n\n"
 
-  "-center-AC: Make AC the center of the output volume's FOV.\n\n"
+  "-nopng\n"
+  "\tPrevents outputting *.png images\n\n"
 
-  "-nn: Uses the nearest neighbor interpolation for tilt-correction.\n\n"
+  "-notxt\n"
+  "\tPrevents outputting *.txt files\n\n"
 
-  "-no-tilt-correction: Does not tilt-correct the output, but the SFORM and QFORM\n"
-  "are set correctly in the output volume header. This is useful for applications\n"
-  "that would like to use acpcdetect as a preprocessing tilt-correction step\n"
-  "without applying interpolation at this stage.\n\n"
+  "-rvsps <r>\n"
+  "\tSearch radius for VSPS (default = 50 mm)\n\n"
 
-  "-standard: Tilt-correction is done using the AC, PC and MSP only. This is the\n"
-  "method used in version 1.0 of acpcdetect.  In the current version, the 8 Orion\n"
-  "landmarks are also used to stabilize the standardization of the orientation.\n"
-  "Using this option, therefore, reverts back to the method of version 1.0 without\n"
-  "using the additional Orion landmarks.\n\n"
+  "-rac <r>\n"
+  "\tSearch radius for AC (default = 15 mm)\n\n"
 
-  "-lm/-landmarks <landmarks-file>: A text file containing the (i, j, k) coordinates\n"
-  "of the AC, PC, and VSPS, respectively. This file is usually supplied to the\n"
-  "program when automatic detection of these landmarks fails.\n\n"
+  "-rpc <r>\n"
+  "\tSearch radius for PC (default = 15 mm)\n\n"
 
-  "Outputs:\n"
-  "<output-file>.nii: Where the output volume is saved. The default is\n"
-  "<input-file>_<output-orientation-code>, where the default\n"
-  "<output-orientation-code> is RAS. This volume will be the tilt-corrected version\n"
-  "of the input volume. However, if the -no-tilt-correction option is selected,\n"
-  "the output volume will not be resliced (only reoriented). The tilt-correction\n"
-  "information, however, are still written in the QFORM and SFORM entries of the\n"
-  "image header as well as in the *.mrx and *.mat files (described below).\n\n"
+  "-nn\n"
+  "\tUses the nearest neighbor interpolation for tilt-correction.\n\n"
 
-  "<input-file>.mrx: Transformation matrix for tilt-correction in ART format\n\n"
+  "Outputs:\n\n"
+  "<output-volume>.nii\n"
+  "\tWhere the output volume is saved. The default filename is\n"
+  "\t<input-volume>_<output-orientation-code> (default\n"
+  "\t<output-orientation-code> is RAS). This volume will be the tilt-corrected\n"
+  "\tversion of the input volume. However, if the -no-tilt-correction option is\n"
+  "\tselected, the output volume will not be resliced (only reoriented). The\n"
+  "\ttilt-correction information, however, are still written in the QFORM and\n"
+  "\tSFORM entries of the image header as well as in the *.mrx and *.mat files\n"
+  "\t(described below).\n\n"
 
-  "<input-file>_FSL.mat: Transformation matrix for tilt-correction in FSL format\n\n"
+  "<input-volume>.mrx\n"
+  "\tTransformation matrix for tilt-correction in ART format\n\n"
 
-  "<input-file>_ACPC_sagittal.ppm: Sagittal view of the detected AC/PC locations\n"
-  "in PPM format (output suppressed by -noppm option)\n\n"
+  "<input-volume>_FSL.mat\n"
+  "\tTransformation matrix for tilt-correction in FSL format\n\n"
 
-  "<input-file>_ACPC_sagittal.png: Sagittal view of the detected AC/PC locations\n"
-  "in PNG format (output suppressed by -nopng option)\n\n"
+  "<input-volume>_ACPC_sagittal.ppm\n"
+  "\tSagittal view of the detected AC/PC locations in\n"
+  "\tPPM format (output suppressed by -noppm option)\n\n"
 
-  "<input-file>_ACPC_axial.ppm: Axial view of the detected AC/PC locations in PPM\n"
-  "format (output suppressed by -noppm option)\n\n"
+  "<input-volume>_ACPC_sagittal.png\n"
+  "\tSagittal view of the detected AC/PC locations in\n"
+  "\tPNG format (output suppressed by -nopng option)\n\n"
 
-  "<input-file>_ACPC_axial.png: Axial view of the detected AC/PC locations in PNG\n"
-  "format (output suppressed by -nopng option)\n\n"
+  "<input-volume>_ACPC_axial.ppm\n"
+  "\tAxial view of the detected AC/PC locations in PPM\n"
+  "\tformat (output suppressed by -noppm option)\n\n"
 
-  "<input-file>_orion.ppm: Mid-sagittal view of the detected Orion landmarks in\n"
-  "PPM format (output suppressed by -noppm option)\n\n"
+  "<input-volume>_ACPC_axial.png\n"
+  "\tAxial view of the detected AC/PC locations in PNG\n"
+  "\tformat (output suppressed by -nopng option)\n\n"
 
-  "<input-file>_orion.png: Mid-sagittal view of the detected Orion landmarks in\n"
-  "PNG format (output suppressed by -nopng option)\n\n"
+  "<input-volume>_orion.ppm\n"
+  "\tMid-sagittal view of the detected Orion landmarks in\n"
+  "\tPPM format (output suppressed by -noppm option)\n\n"
 
-  "<input-file>_ACPC.txt: Stores the detected AC, PC and VSPS (i, j, k) coordinates\n"
-  "and the estimated mid-sagittal plane (output suppressed by -notxt option)\n\n"
+  "<input-volume>_orion.png\n"
+  "\tMid-sagittal view of the detected Orion landmarks in\n"
+  "\tPNG format (output suppressed by -nopng option)\n\n"
 
-  "<input-file>_orion.txt: Stores (i, j, k) coordinates of the 8 detected Orion\n"
-  "landmarks (output suppressed by -notxt option)\n\n"
+  "<input-volume>_ACPC.txt\n"
+  "\tStores the detected AC, PC and VSPS (i, j, k) coordinates and the\n"
+  "\testimated mid-sagittal plane (output suppressed by -notxt option)\n\n"
+
+  "<input-volume>_orion.txt\n"
+  "\tStores (i, j, k) coordinates of the 8 detected Orion\n"
+  "\tlandmarks (output suppressed by -notxt option)\n\n"
   );
 
   exit(0);
