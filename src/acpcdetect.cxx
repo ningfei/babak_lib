@@ -69,20 +69,20 @@ void print_help_and_exit()
   "-nn -no-tilt-correction -standard -lm/-landmarks <landmarks-file>]\n"
   "-i/-input <input-file>\n\n"
 
-  "Required arguments:\n"
-  "-i/-input <input-file>.nii: Input (test) image volume in NIFTI format of type\n"
-  "short or unsigned short\n\n"
+  "Required argument:\n"
+  "-i/-input <input-file>.nii: Input volume\n"
+  "Must be in NIFTI format of type short or unsigned short.\n\n"
 
   "Optional arguments:\n"
   "-V/-version: Prints software version\n\n"
 
   "-h/-help: Prints help information\n\n"
 
-  "-v/-verbose : Enables verbose mode\n\n"
+  "-v/-verbose: Enables verbose mode\n\n"
 
-  "-noppm : Prevents outputting *.ppm images\n\n"
+  "-noppm: Prevents outputting *.ppm images\n\n"
 
-  "-nopng : Prevents outputting *.png images\n\n"
+  "-nopng: Prevents outputting *.png images\n\n"
 
   "-notxt: Prevents outputting *.txt files\n\n"
 
@@ -94,26 +94,26 @@ void print_help_and_exit()
 
   "-output-orient/-oo <orientation code>: Three-letter orientation code of the\n"
   "output volume (default: RAS). In ART, orientation codes are 3-letter codes\n"
-  "consisting of one 6 letters: A, P, I, S, L, R.  There are 48 possible\n"
+  "consisting of 6 letters: A, P, I, S, L, R.  There are 48 possible\n"
   "combinations. For example: PIL for Posterior-Inferior-Left or RAS for\n"
-  "Right-Anterior-Superior\n\n"
+  "Right-Anterior-Superior.\n\n"
 
-  "-nx <int>: Number of voxels in i direction (the fastest varying index). The\n"
-  "default value is determined from the input volume.\n\n"
+  "-nx <int>: Number of voxels in i direction (the fastest varying index) of the\n"
+  "output volume. The default value is determined from the input volume.\n\n"
 
-  "-ny <int>: Number of voxels in j direction (the 2nd fastest varying index). The\n"
-  "default value is determined from the input volume.\n\n"
+  "-ny <int>: Number of voxels in j direction (the 2nd fastest varying index) of the\n"
+  "output volume. The default value is determined from the input volume.\n\n"
 
-  "-nz <int>: Number of voxels in k direction (the slowest varying index). The\n"
-  "default value is determined from the input volume.\n\n"
+  "-nz <int>: Number of voxels in k direction (the slowest varying index) of the\n"
+  "output volume. The default value is determined from the input volume.\n\n"
 
-  "-dx <float>: voxel dimension of the output volume in i direction. The default\n"
+  "-dx <float>: Voxel dimension of the output volume in i direction. The default\n"
   "value is determined from the input volume.\n\n"
 
-  "-dy <float>: voxel dimension of the output volume in j direction. The default\n"
+  "-dy <float>: Voxel dimension of the output volume in j direction. The default\n"
   "value is determined from the input volume.\n\n"
 
-  "-dz <float>: voxel dimension of the output volume in k direction. The default\n"
+  "-dz <float>: Voxel dimension of the output volume in k direction. The default\n"
   "value is determined from the input volume.\n\n"
 
   "-center-AC: Make AC the center of the output volume's FOV.\n\n"
@@ -123,54 +123,54 @@ void print_help_and_exit()
   "-no-tilt-correction: Does not tilt-correct the output, but the SFORM and QFORM\n"
   "are set correctly in the output volume header. This is useful for applications\n"
   "that would like to use acpcdetect as a preprocessing tilt-correction step\n"
-  "witout applying interpolation at this stage.\n\n"
+  "without applying interpolation at this stage.\n\n"
 
   "-standard: Tilt-correction is done using the AC, PC and MSP only. This is the\n"
-  "method used in version 1.0 of acpcdetect.  In this version, the 8 Orion\n"
-  "landmarks also used to stabilize the standarization of the orientation.\n"
+  "method used in version 1.0 of acpcdetect.  In the current version, the 8 Orion\n"
+  "landmarks are also used to stabilize the standardization of the orientation.\n"
   "Using this option, therefore, reverts back to the method of version 1.0 without\n"
   "using the additional Orion landmarks.\n\n"
 
-  "-lm/-landmarks <landmarks-file>: A text file containing the (i,j,k) coordinates\n"
+  "-lm/-landmarks <landmarks-file>: A text file containing the (i, j, k) coordinates\n"
   "of the AC, PC, and VSPS, respectively. This file is usually supplied to the\n"
   "program when automatic detection of these landmarks fails.\n\n"
 
   "Outputs:\n"
-  "<output-file>.nii: Filename where the ouptut volume is saved. The default\n"
-  "<outpu-file>=<input-file>_<output-orientation-code>, where the default\n"
-  "<output-orientation-code>=RAS. This volume will be the tilt-corrected version\n"
+  "<output-file>.nii: Where the output volume is saved. The default is\n"
+  "<input-file>_<output-orientation-code>, where the default\n"
+  "<output-orientation-code> is RAS. This volume will be the tilt-corrected version\n"
   "of the input volume. However, if the -no-tilt-correction option is selected,\n"
-  "The output volume will not be touched (only reoriented). The tilt-correction\n"
-  "information, however, are still written ithe QFORM and SFORM entries of the\n"
-  "image hearder as well as in the *.mrx and *.mat files (described below).\n\n"
+  "the output volume will not be resliced (only reoriented). The tilt-correction\n"
+  "information, however, are still written in the QFORM and SFORM entries of the\n"
+  "image header as well as in the *.mrx and *.mat files (described below).\n\n"
 
   "<input-file>.mrx: Transformation matrix for tilt-correction in ART format\n\n"
 
   "<input-file>_FSL.mat: Transformation matrix for tilt-correction in FSL format\n\n"
 
   "<input-file>_ACPC_sagittal.ppm: Sagittal view of the detected AC/PC locations\n"
-  "in PPM image format (output supressed by -noppm option)\n\n"
+  "in PPM format (output suppressed by -noppm option)\n\n"
 
   "<input-file>_ACPC_sagittal.png: Sagittal view of the detected AC/PC locations\n"
-  "in PNG image format (output supressed by -nopng option)\n\n"
+  "in PNG format (output suppressed by -nopng option)\n\n"
 
   "<input-file>_ACPC_axial.ppm: Axial view of the detected AC/PC locations in PPM\n"
-  "image format (output supressed by -noppm option)\n\n"
+  "format (output suppressed by -noppm option)\n\n"
 
   "<input-file>_ACPC_axial.png: Axial view of the detected AC/PC locations in PNG\n"
-  "image format (output supressed by -nopng option)\n\n"
+  "format (output suppressed by -nopng option)\n\n"
 
   "<input-file>_orion.ppm: Mid-sagittal view of the detected Orion landmarks in\n"
-  "PPM image format (output supressed by -noppm option)\n\n"
+  "PPM format (output suppressed by -noppm option)\n\n"
 
   "<input-file>_orion.png: Mid-sagittal view of the detected Orion landmarks in\n"
-  "PNG image format (output supressed by -nopng option)\n\n"
+  "PNG format (output suppressed by -nopng option)\n\n"
 
-  "<input-file>_ACPC.txt: Stores the detected AC, PC and VSPS (i,j,k) coordinates\n"
-  "and the estimated mid-sagittal plane (output supressed by -notxt option)\n\n"
+  "<input-file>_ACPC.txt: Stores the detected AC, PC and VSPS (i, j, k) coordinates\n"
+  "and the estimated mid-sagittal plane (output suppressed by -notxt option)\n\n"
 
-  "<input-file>_orion.txt: Stores (i,j,k) coordinates of the 8 detected Orion\n"
-  "landmarks (output supressed by -notxt option)\n\n"
+  "<input-file>_orion.txt: Stores (i, j, k) coordinates of the 8 detected Orion\n"
+  "landmarks (output suppressed by -notxt option)\n\n"
   );
 
   exit(0);
