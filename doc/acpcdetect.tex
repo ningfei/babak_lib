@@ -13,14 +13,14 @@
 %\setcitestyle{authoryear}
 \setcitestyle{numbers,square}
 
-\title{Reference sheet for acpcdetect usage}
+\title{Reference sheet for {\it acpcdetect} version 2.0 usage}
 \author{Babak A. Ardekani, PhD}
 %\date{Spring 2015}
 
 \begin{document}
 \maketitle
 \noindent {\large \bf Introduction:} 
-The acpcdetect program is a module of the Automatic Registration Toolbox (ART). 
+The {\it acpcdetect} program is a module of the Automatic Registration Toolbox (ART). 
 The program takes a 3D T1-weighted structural MRI of the human brain as input. 
 It automatically detects the mid-sagittal plane (MSP) using the method described in \citep{pmid9533596}.
 It then detects the AC and PC intersection points on the MSP using the method described in \citep{pmid19264138}. 
@@ -32,20 +32,22 @@ In this orientation: (1) the MSP is precisely aligned with the central plane of 
 (3) the inferior-superior (IS) axis is on the MSP and perpendicular to the AC-PC line; 
 (4) the left-right (LR) axis is perpendicular to the MSP; and 
 (5) the FOV center is approximately the mid-point between the AC and the PC on the MSP. 
-The FOV center can alternatively be placed on the AC point using the -center-AC option.  \\
+The FOV center can alternatively be placed on the AC point using the -center-AC option.  
+\vspace{3mm}
 
 \noindent {\large \bf Installation on Linux and MacOS systems:}
-A video demonstration of installing a module of ART can be found here:
-
+A video demonstration of installing ART software can be found here:
 https://www.youtube.com/watch?v=xCawMFQr50M\&t=26s \\
-Althought I made this video for installing ATRA, the steps are similar.
-You may need to be logged in as root, depending on the permissions of the directory in which
-you are installing acpcdetect. Let's assume that acpcdetect will be installed in
+Althought I made this video for installing {\it atra}, a different module of ART, the steps are similar.
+
+To install {\it acpcdetect}, you may need 
+to be logged in as root, depending on the permissions of the directory in which
+you are installing {\it acpcdetect}. Let's assume that {\it acpcdetect} will be installed in
 /usr/local/art.
 \begin{itemize}
-\item[(a)] Set the \$ARTHOME environment variable to /usr/local/art. If \$ARTHOME is already
+\item[(a)] Set the ARTHOME environment variable to /usr/local/art. If ARTHOME is already
 defined on your system, then you can skip this step. Otherwise, ``sh'' or ``bash'' users may define
-\$ARTHOME using the following command: 
+ARTHOME using the following command: 
 
 export ARTHOME=/usr/local/art 
 
@@ -56,15 +58,14 @@ setenv ARTHOME /usr/local/art
 
 and add it to their ``.cshrc'' or ``.tcshrc'' file.
 
-\item[(b)] Download the Linux (acpcdetect2.0\_LinuxCensOS6.7.tar.gz) or MacOS \\
-(acpcdetect2.0\_macOS10.12.6.tar.gz) version of the software from www.nitrc.org/projects/art and
+\item[(b)] Download the Linux or MacOS version of the software from www.nitrc.org/projects/art and
 move it to \$ARTHOME.
 
 \item[(c)] Unpack the package:
 
 cd \$ARTHOME
 
-tar -xvzf acpcdetect2.0\_*.tar.gz
+tar -xvzf acpcdetect2.0*.tar.gz
 
 \item[(d)] Move the executable program \$ARTHOME/bin/acpcdetect to a bin directory in your PATH, or
 preferably, add the directory \$ARTHOME/bin to your PATH. This can be done by executing the
@@ -78,20 +79,22 @@ export PATH=\$ARTHOME/bin:\$PATH
 In ART, the anatomical orientation of 3D volumes is specified by a 3-letter orientation 
 code consisting of a combination of letters A, P, L, R, S and I, denoting anterior, 
 posterior, left, right, superior and inferior directions, respectively.  For example, 
-the orientation code PIL indicates the volume's $(i, j, k)$ voxel coordinates point 
-towards posterior, inferior and left directions. Similarly, the orientation 
-code RAS indicates $(i, j, k)$ point to right, anterior and superior directions. 
-There are 48 possible orientation codes. \\
+the orientation code PIL indicates that the volume's $(i, j, k)$ voxel coordinates point 
+towards posterior, inferior and left directions, respectively. Similarly, the orientation 
+code RAS indicates that $(i, j, k)$ point to right, anterior and superior directions. 
+There are 48 possible orientation codes. 
+\vspace{3mm}
 
 \noindent {\large \bf Usage:} 
 
-acpcdetect [options] -i \textless input-volume\textgreater.nii \\
+acpcdetect [options] -i \textless input-volume\textgreater.nii
+\vspace{3mm}
 
 \noindent {\large \bf Required argument:}
 
 \begin{longtable}{p{0.25\textwidth}p{0.68\textwidth}}
 -i \textless input-volume\textgreater.nii &
-3D T1W MRI brain volume in NIFTI format of type short or unsigned short 
+3D T1-weighted MRI brain volume in NIFTI format of type short or unsigned short 
 \end{longtable}
 
 \noindent {\large \bf Options:}
@@ -101,14 +104,15 @@ acpcdetect [options] -i \textless input-volume\textgreater.nii \\
 
 -lm \textless landmarks-file \textgreater &
 A text file containing manually determined $(i, j, k)$ coordinates
-of the AC, PC and VSPS, respectively. When this file is supplied,
+of the AC, PC and VSPS (vertex of the superior pontine sulcus) landmarks in that order. 
+When this file is supplied,
 automatic detection of these landmarks is suppressed. This is useful
 in cases when automatic landmark detection fails.\\
 
 -no-tilt-correction & 
 Does not tilt-correct the output, but the SFORM and QFORM are set
 correctly in the output volume header. This is useful for applications
-that would like to use acpcdetect as a preprocessing tilt-correction
+that would like to use {\it acpcdetect} as a preprocessing tilt-correction
 step without applying interpolation at this stage.  \\ 
 
 -center-AC &
@@ -117,10 +121,10 @@ Places the output volume's FOV center at AC \\
 -standard &
 Tilt-correction is performed without using the Orion landmarks.
 Tilt-correction is done using the AC, PC and MSP only. This is the
-method used in version 1.0 of acpcdetect.  In the current version, the
+method used in version 1.0 of {\it acpcdetect}.  In the current version 2.0, the
 8 Orion landmarks are also used to stabilize the standardization of the
-orientation. Using this option, therefore, reverts back to the method
-of version 1.0 without using the additional Orion landmarks. \\
+orientation. Using the -standard option, therefore, reverts back to the method
+used by {\it acpcdetect} version 1.0 without using the additional Orion landmarks. \\
 
 -output-orient \textless code\textgreater  &
 Specifies the orientation of the output volume (default: RAS). 
@@ -181,13 +185,14 @@ PIL for Posterior-Inferior-Left or RAS for Right-Anterior-Superior. \\
 \end{longtable}
 \newpage
 
-\noindent {\large \bf Outputs:}
+\noindent {\large \bf Output files:}
 
 \begin{longtable}{p{0.4\textwidth}p{0.53\textwidth}}
 \textless output-volume\textgreater.nii &
-	Where the output volume is saved. The default filename is
-	\textless input-volume\textgreater \_\textless output-orientation-code\textgreater  (default
-	\textless output-orientation-code\textgreater  is RAS). This volume will be the tilt-corrected
+	The output volume is saved here. The default filename is
+	\textless input-volume\textgreater\_RAS.nii. If a different orientation code is
+specified using -output-orient, then this code replaces RAS in the output volume filename.
+The output volume will be the tilt-corrected
 	version of the input volume. However, if the -no-tilt-correction option is
 	selected, the output volume will not be resliced (only reoriented). The
 	tilt-correction information, however, are still written in the QFORM and
@@ -235,21 +240,23 @@ PIL for Posterior-Inferior-Left or RAS for Right-Anterior-Superior. \\
 
 \noindent {\large \bf The -no-tilt-correction option:} 
 
-When this option is selected, the output volume is not tilt-corrected.  IF the
+When this option is selected, the output volume is not tilt-corrected.  If the
 orientation of the input and output volumes are different, the voxel 
-order will just be reoriented without any interpolation.  However, 
-but the SFORM and QFORM matrices of the output volume are adjusted to store
-the information necessary for tilt-correction.  This option is makes it
-possible for other applications, e.g., image registration methods,
-to use acpcdetect as a preprocessing method for tilt-correction
-without applying interpolation at this stage.  \\ 
+order will just be rearranged without any interpolation.  However, 
+both the SFORM and QFORM matrices of the output volume are adjusted to store
+the information necessary for tilt-correction.  This option makes it
+possible for other applications, e.g., image registration algorithms \citep{ardekani2018},
+to use {\it acpcdetect} as a preprocessing method for tilt-correction
+without applying interpolation at this stage. 
+\vspace{3mm}
 
-\noindent {\large \bf Example 1:} The default behavior of the program is demonstrated in this example.\\
-Command:
+\noindent {\large \bf Example 1:} The default behavior of the program is demonstrated in this example.
+A number of test volumes are supplied in the \$ARTHOME/example1 and \$ARTHOME/example2 directories. To run
+{\it acpcdetect} on one of these volumes, type the following command:
 
 acpcdetect -i \$ARTHOME/example1/v1.nii -v
 
-\noindent {Program printout:}
+\noindent {With the -v (verbose) option, the program prints out the following:}
 
 Input image: /Users/ardekb01/babak\_lib/example1/v1.nii
 
@@ -272,11 +279,10 @@ Output transformation matrix: /Users/ardekb01/babak\_lib/example1/v1.mrx
 Output transformation matrix (FSL format): /Users/ardekb01/babak\_lib/example1/v1\_FSL.mat 
 
 \noindent
-Note that in my case the \$ARTHOME environment variable is set to 
-``/Users/ardekb01/babak\_lib''. In your case the outputs' path will depend on your 
-\$ARTHOME directory.
-The program prints the names of the input volume, its orientation code as determined from the file header,
-and its matrix and voxels size.  
+Note that in my case the ARTHOME environment variable is set to 
+``/Users/ardekb01/babak\_lib''. 
+The program prints the name of the input volume, its orientation code as determined from the image header,
+and its matrix and voxel dimensions.  
 
 The name of the output volume in this case will be the same as the input volume, i.e., ``v1'' with the additional
 suffix ``RAS'' which is the default orientation of output volume.  This a resliced tilt-corrected
@@ -285,15 +291,15 @@ version of the input volume with the following properties:
 \item The FOV center is approximately the mid-point between the AC and PC landmarks. However, if the -center-AC
 option is selected, the FOV center will be placed on the AC.
 \item The MSP bisects the FOV.
-\item The fastest voxel index $i$ increases from left to right direction.
-\item The second fastest voxel index $j$ increases from posterior to anterior direction.
-\item The slowest voxel index $k$ increases from inferior to superior direction.
+\item The fastest voxel index $i$ increases from left to {\bf R}ight direction.
+\item The second fastest voxel index $j$ increases from posterior to {\bf A}nterior direction.
+\item The slowest voxel index $k$ increases from inferior to {\bf S}uperior direction.
 \end{itemize}
 Note that the default orientation of the output FOV (i.e., RAS) can be changed using the -output-orient
 option.  For example, if -output-orient PIR is specified, then 
-$i$ increases from anterior to posterior direction,
-$j$ increases from superior to inferior direction,
-and $k$ increases from left to right. 
+$i$ increases from anterior to {\bf P}osterior direction,
+$j$ increases from superior to {\bf I}nferior direction,
+and $k$ increases from left to {\bf R}ight. 
 
 The tilt-correction matrix 
 will be written to ``v1.mrx'' in ART format and ``v1\_FSL.mat'' in FSL format.  The output volume's
@@ -316,9 +322,10 @@ v1\_ACPC.txt
 
 v1\_orion.txt
 
-\noindent The *.ppm and *.png images are the same written in two different formats.  To suppress outputting them use the
--noppm and -nopng options as described above.  Similarly, use -notxt option to suppress outputting the *.txt 
-files.  The v1\_ACPC\_sagittal.png image indicates the detected MSP and detected AC, PC and VSPS landmarks on the
+\noindent The *.ppm and *.png images are the same images 
+written in two different formats.  To suppress outputting them use the
+-noppm and -nopng options as described above.  Similarly, use the -notxt option to suppress outputting the *.txt 
+files.  The v1\_ACPC\_sagittal.png image shows the detected MSP and the detected AC, PC and VSPS landmarks on the
 MSP (Figure \ref{fig:sagittal}).  The $(i,j,k)$ coordinates of the AC, PC and VSPS as detected on the input 
 volume are stored in v1\_ACPC.txt.  The equation of the automatically detected MSP is also saved in this file.
 \begin{figure}
@@ -334,7 +341,12 @@ can be changes using the -rac, -rpc and -rvsps options described above.
 
 The v1\_ACPC\_axial.png image (Figure \ref{fig:axial}) shows a tilt-corrected axial slice through the AC-PC.
 Finally, v1\_orion.png (Figure \ref{fig:orion}) shows the 8 automatically detected Orion landmarks on the
-MSP.  The $(i,j,k)$ coordinates of the Orion landmarks on the input volume are saved in v1\_orion.txt. \\
+MSP.  The $(i,j,k)$ coordinates of the Orion landmarks on the input volume are saved in v1\_orion.txt.
+
+It is strongly recommended that the *png image be viewed to ensure that the automatics MSP, AC, PC and VSPS 
+detections were successful.  If there is a failure in this process, the AC, PC and VSPS landmarks can be
+manually supplied to the program  using the -lm argument. 
+\vspace{3mm}
 
 \begin{figure}
 \begin{center}
@@ -355,14 +367,13 @@ MSP.  The $(i,j,k)$ coordinates of the Orion landmarks on the input volume are s
 \end{figure}
 
 \noindent {\large \bf Example 2:} In this example we customize the size and orientation of
-the tilt-corrected output volume.\\
-\noindent Command: 
+the tilt-corrected output volume as follows:
 
 acpcdetect -i \$ARTHOME/example1/v1.nii -v -nx 255 -ny 255 -nz 189 -dx 1.0 -dy 1.0 -dz 1.0 
 
 -output-orient PIL
 
-\noindent {Program printout:}
+\noindent {In this case, the program prints out the following:}
 
 Input image: /Users/ardekb01/babak\_lib/example1/v1.nii
 
@@ -386,25 +397,28 @@ Output transformation matrix (FSL format): /Users/ardekb01/babak\_lib/example1/v
 
 \noindent Note that is this example the program printout changes to reflect the customized output volume dimensions
 and orientation.  Incidentally, this custom dimensions specified in this example match those of
-the volume \$ARTHOME/PILbrain.nii which represents the frequency that after tilt-correction using
-acpcdetect an $(i,j,k)$ voxel coincides with intra-cranial space \citep{ardekani2018}. \\
+the volume \$ARTHOME/PILbrain.nii which represents the frequency that, after tilt-correction using
+{\it acpcdetect}, an $(i,j,k)$ voxel coincides with intra-cranial space \citep{ardekani2018}. 
+This can be used to quickly determine a good estimate of the intra-cranial region on the input volume
+which may be useful in different applications \citep{ardekani2018}.
+\vspace{3mm}
 
 \noindent {\large \bf Example 3:} Occasionally the automatic detection of MSP, AC, PC and/or VSPS
 fails. Failures would be apparent by viewing the *.png images.
-Such is a case for image \$ARTHOME/example2/v1.nii.  For these cases, the $(i,j,k)$ coordinates
+Such is a case for volume \$ARTHOME/example2/v1.nii.  In these cases, the $(i,j,k)$ coordinates
 of the AC, PC and VSPS landmarks on the input volume must be supplied to the program manually.  I recommend
-using the AFNI software for manual identification of these landmarks. A video instruction for how this is
-done can be found here: 
+using the AFNI software for manual identification of these landmarks. A video instruction for this 
+can be found here: 
 
 https://www.youtube.com/watch?v=q5GBaNnjOa8 
 
-\noindent The manually identfied landmarks would be supplied to acpcdetect using the -lm argument.  For 
+\noindent The manually identified landmarks are supplied to {\it acpcdetect} using the -lm argument.  For 
 \$ARTHOME/example2/v1.nii we have found these landmarks and saved them in \\
-\$ARTHOME/example2/v1.lm.  The acpcdetect program can then be run as follows:
+\$ARTHOME/example2/v1.lm.  The {\it acpcdetect} program can then be run as follows:
 
 acpcdetect -i \$ARTHOME/example2/v1.nii -lm \$ARTHOME/example2/v1.lm -v
 
-\noindent {Program printout:}
+\noindent {The program prints the following:}
 
 Input image: /Users/ardekb01/babak\_lib/example2/v1.nii
 
@@ -428,7 +442,7 @@ Output transformation matrix: /Users/ardekb01/babak\_lib/example2/v1.mrx
 
 Output transformation matrix (FSL format): /Users/ardekb01/babak\_lib/example2/v1\_FSL.mat 
 
-\noindent Note that the printout indicates that the landmarks are manually specified.
+\noindent Note that the printout indicates the use of manually specified landmarks.
 \bibliography{references}
 
 \end{document}
