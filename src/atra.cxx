@@ -112,6 +112,7 @@ static struct option options[] =
    {"-dy",1,'Y'},
    {"-dz",1,'Z'},
    {"-noppm",0,'N'},
+   {"-nopng",0,'g'},
    {"-notxt",0,'n'},
    {"-v", 0, 'v'},
    {"-imlist", 1, 'i'},
@@ -128,12 +129,13 @@ static struct option options[] =
 
 void print_help_and_exit()
 {
-   printf("\nUsage: atra [-v -nx <n> -ny <n> -nz <n> -dx <f> -dy <f> -dz <f> -orient <code> -o <OutputPrefix> -noppm -notxt] -i <volume list>\n\n"
+   printf("\nUsage: atra [-v -nx <n> -ny <n> -nz <n> -dx <f> -dy <f> -dz <f> -orient <code> -o <OutputPrefix> -nopng -noppm -notxt] -i <volume list>\n\n"
    "Required:\n"
    "\t-i <volume list>: A text file containing the list of 3D T1W volumes to be registered.\n"
    "\tThe input volumes are required to be in NIFTI-1 format of type 'short int'.\n\n"
    "Options:\n"
-   "\t-noppm Prevents outputting *ppm images\n\n" 
+   "\t-noppm Prevents outputting *.png images\n\n" 
+   "\t-noppm Prevents outputting *.ppm images\n\n" 
    "\t-notxt Prevents outputting *ACPC.txt\n\n" 
    "\t-v Enables verbose mode\n\n" 
    "\t-nx <int> -ny <int> -nz <int>: Output matrix size (default: 255x255x189)\n\n"
@@ -1007,6 +1009,9 @@ int main(int argc, char **argv)
             break;
          case 'N':
             opt_ppm = NO;
+            break;
+         case 'g':
+            opt_png = NO;
             break;
          case 'n':
             opt_txt = NO;
