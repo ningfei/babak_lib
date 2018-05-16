@@ -8,7 +8,7 @@ INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
 LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc
 
-all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo
+all: createDir libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D
 
 createDir:
 	mkdir -p ../lib
@@ -271,3 +271,7 @@ multiplyTransformation: multiplyTransformation.cxx
 niftiinfo: niftiinfo.cxx
 	$(CC) $(CFLAGS) -o niftiinfo niftiinfo.cxx $(INC) $(LESSLIBS)
 	mv niftiinfo ${ARTHOME}/bin
+
+break4D: break4D.cxx
+	$(CC) $(CFLAGS) -o break4D break4D.cxx $(INC) $(LIBS)
+	mv break4D ${ARTHOME}/bin
