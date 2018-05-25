@@ -1223,11 +1223,10 @@ void find_roi(nifti_1_header *subimhdr, SHORTIM pilim, float4 pilT[],const char 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-float8 compute_hi(char *imfile, char *roifile)
+void compute_hi(char *imfile, char *roifile, float4 &parenchymasize, int &voisize)
 {
    int binw; // histogram bin width
    int gm_pk_srch_strt;
-   int roisize; // number of non-zero voxels in roi
    int2 *roi;
    int2 *im;
    nifti_1_header hdr;
@@ -1267,13 +1266,13 @@ float8 compute_hi(char *imfile, char *roifile)
    for(int i=0; i<nv; i++)
       if( im[i] > I_alpha ) roi[i]=0;
 
-   roisize = 0;
+   voisize = 0;
    for(int i=0; i<nv; i++) 
    {
-      if( roi[i]>0 ) roisize++;
+      if( roi[i]>0 ) voisize++;
    }
 
-//   if(opt_v) printf("ROI size = %d voxels\n", roisize);
+//   if(opt_v) printf("ROI size = %d voxels\n", voisize);
 
    /////////////////////////////////////////////////////////////
    int im_min, im_max;
@@ -1332,7 +1331,7 @@ float8 compute_hi(char *imfile, char *roifile)
    if(opt_v) printf("Histogram bin width = %d\n",binw);
 
    // normalize hist
-   for(int i=0; i<nbin; i++) hist[i]/=roisize;
+   for(int i=0; i<nbin; i++) hist[i]/=voisize;
 
    gm_pk_srch_strt = (MXFRAC*I_alpha/binw);
    if( gm_pk_srch_strt < 0) gm_pk_srch_strt=0;
@@ -1460,7 +1459,7 @@ float8 compute_hi(char *imfile, char *roifile)
       printf("HPF = %6.4f\n",1.0-csfvol);
    }
 
-   return(1.0-csfvol);
+   parenchymasize = (float)((1.0 - csfvol)*voisize);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1476,7 +1475,10 @@ int main(int argc, char **argv)
    nifti_1_header im_hdr[MAXIM];
    DIM PILbraincloud_dim;
    float TPIL[MAXIM][16];
-   float4 RHI0[MAXIM], RHI1[MAXIM], LHI0[MAXIM], LHI1[MAXIM];
+   float4 RHI0, RHI1, LHI0, LHI1;
+   float RHI, LHI, BHI, HIasymm;
+   int Rvoisize0[MAXIM], Rvoisize1[MAXIM], Lvoisize0[MAXIM], Lvoisize1[MAXIM];
+   float Rparenchymasize0[MAXIM], Rparenchymasize1[MAXIM], Lparenchymasize0[MAXIM], Lparenchymasize1[MAXIM];
 
    int nim; // number of input images
    char **imagefile; // the nim input image files
@@ -1737,13 +1739,13 @@ int main(int argc, char **argv)
       //sprintf(roifile,"%s_RHROI1.nii",imagefileprefix[i]);
       sprintf(roifile,"%s/%s_RHROI1.nii",imagedir[i],imagefileprefix[i]);
       find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", roifile, Tright0);
-      RHI0[i]=compute_hi(imagefile[i], roifile);
+      compute_hi(imagefile[i], roifile, Rparenchymasize0[i], Rvoisize0[i]);
 
       //find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", imagefileprefix[i], Tleft0);
       //sprintf(roifile,"%s_LHROI1.nii",imagefileprefix[i]);
       sprintf(roifile,"%s/%s_LHROI1.nii",imagedir[i],imagefileprefix[i]);
       find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", roifile, Tleft0);
-      LHI0[i]=compute_hi(imagefile[i], roifile);
+      compute_hi(imagefile[i], roifile, Lparenchymasize0[i], Lvoisize0[i]);
    }
 
    if(opt_flip) 
@@ -1771,25 +1773,58 @@ int main(int argc, char **argv)
          //sprintf(roifile,"%s_RHROI2.nii",imagefileprefix[i]);
          sprintf(roifile,"%s/%s_RHROI2.nii",imagedir[i],imagefileprefix[i]);
          find_roi(&im_hdr[i], aimpil, TPIL[i], "lhc3", roifile,Tright1);
-         RHI1[i]=compute_hi(imagefile[i], roifile);
+         compute_hi(imagefile[i], roifile, Rparenchymasize1[i], Rvoisize1[i]);
 
          //find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", imagefileprefix[i],Tleft1);
          //sprintf(roifile,"%s_LHROI2.nii",imagefileprefix[i]);
          sprintf(roifile,"%s/%s_LHROI2.nii",imagedir[i],imagefileprefix[i]);
          find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", roifile,Tleft1);
-         LHI1[i]=compute_hi(imagefile[i], roifile);
+         compute_hi(imagefile[i], roifile, Lparenchymasize1[i], Lvoisize1[i]);
       }
    }
    else
    {
       for(int i=0; i<nim; i++)
       {
-         RHI1[i]=RHI0[i]; LHI1[i]=LHI0[i];
+         Rvoisize1[i]=Rvoisize0[i]; Lvoisize1[i]=Lvoisize0[i];
+         Rparenchymasize1[i]=Rparenchymasize0[i]; Lparenchymasize1[i]=Lparenchymasize0[i];
       }
    }
 
-   for(int i=0; i<nim; i++) fprintf(fp,"%s,Right,%lf\n",imagefile[i],(RHI1[i]+RHI0[i])/2.0);
-   for(int i=0; i<nim; i++) fprintf(fp,"%s,Left,%lf\n",imagefile[i],(LHI1[i]+LHI0[i])/2.0);
+   for(int i=0; i<nim; i++) 
+   {
+      //RHI1 = Rparenchymasize1[i]/Rvoisize1[i];
+      //RHI0 = Rparenchymasize0[i]/Rvoisize0[i];
+      //fprintf(fp,"%s,Right,%f*\n",imagefile[i],(RHI1+RHI0)/2.0);
+      RHI = (Rparenchymasize1[i]+Rparenchymasize0[i])/(Rvoisize1[i]+Rvoisize0[i]);
+      fprintf(fp,"%s,Right,%f\n",imagefile[i],RHI);
+   }
+
+   for(int i=0; i<nim; i++) 
+   {
+      //LHI1 = Lparenchymasize1[i]/Lvoisize1[i];
+      //LHI0 = Lparenchymasize0[i]/Lvoisize0[i];
+      //fprintf(fp,"%s,Left,%f*\n",imagefile[i],(LHI1+LHI0)/2.0);
+      LHI = (Lparenchymasize1[i]+Lparenchymasize0[i])/(Lvoisize1[i]+Lvoisize0[i]);
+      fprintf(fp,"%s,Left,%f\n",imagefile[i],LHI);
+   }
+
+   for(int i=0; i<nim; i++) 
+   {
+      BHI = (Lparenchymasize1[i]+Lparenchymasize0[i]+Rparenchymasize1[i]+Rparenchymasize0[i]);
+      BHI /= (Rvoisize1[i]+Rvoisize0[i]+Lvoisize1[i]+Lvoisize0[i]);
+      fprintf(fp,"%s,Bilateral,%f\n",imagefile[i],BHI);
+   }
+
+   for(int i=0; i<nim; i++) 
+   {
+      RHI = (Rparenchymasize1[i]+Rparenchymasize0[i])/(Rvoisize1[i]+Rvoisize0[i]);
+      LHI = (Lparenchymasize1[i]+Lparenchymasize0[i])/(Lvoisize1[i]+Lvoisize0[i]);
+      BHI = (Lparenchymasize1[i]+Lparenchymasize0[i]+Rparenchymasize1[i]+Rparenchymasize0[i]);
+      BHI /= (Rvoisize1[i]+Rvoisize0[i]+Lvoisize1[i]+Lvoisize0[i]);
+      HIasymm = 100.0*(RHI-LHI)/BHI;
+      fprintf(fp,"%s,Asymm,%f\n",imagefile[i],HIasymm);
+   }
 
    delete aimpil.v;
 
