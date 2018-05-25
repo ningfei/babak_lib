@@ -97,6 +97,8 @@ int main(int argc, char **argv)
    if(argc==1) print_help_and_exit();
 
    printf("CC threshold = %d\n",ccthresh);
+   printf("Thresh 1 = %f\n",thresh1);
+   printf("Thresh 2 = %f\n",thresh2);
 
    ip_image = (float *)read_nifti_image(inputfile, &hdr);
    nx = hdr.dim[1]; ny = hdr.dim[2]; nz = hdr.dim[3];
@@ -111,7 +113,6 @@ int main(int argc, char **argv)
 	   else if(ip_image[i]<0 && ip_image[i]>=thresh2)
          ip_image[i]=0.0;
     }
-
 
    if(ccthresh>0) 
    {
