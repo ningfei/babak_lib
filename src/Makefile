@@ -8,7 +8,7 @@ INC= -I../include
 LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
 LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc
 
-all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D vancova gambling_vancova_setup medianImage threshold
+all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D gambling_vancova_setup medianImage threshold
 
 # because of functions in matrixops, linking the libbabak will possibly require lapack libs.
 

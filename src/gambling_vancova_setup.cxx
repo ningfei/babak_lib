@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <malloc.h>  
 #include <math.h>
 #include <strings.h>
 #include <string.h>		// required by strlen()
