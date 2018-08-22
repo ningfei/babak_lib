@@ -20,40 +20,39 @@ int opt;
 
 static struct option options[] =
 {
-        {"-cc", 1, 'c'},
-        {"-t1", 1, '1'},
-        {"-t2", 1, '2'},
-        {"-o", 1, 'o'},
-        {"-i", 1, 'i'},
-        {0, 0, 0}
+  {"-v", 0, 'v'},
+  {"-cc", 1, 'c'},
+  {"-t1", 1, '1'},
+  {"-t2", 1, '2'},
+  {"-o", 1, 'o'},
+  {"-i", 1, 'i'},
+  {0, 0, 0}
 };
-
-int opt_log=NO;
-int opt_t=NO;
-int opt_d=NO;
-
-int opt_o=NO;
-int opt_p=NO;
-int opt_P=NO;
-int opt_cc=NO;
 
 void print_help_and_exit()
 {
 	exit(0);
 }
 
+char opt_t1=NO;
+char opt_t2=NO;
+
 int main(int argc, char **argv)
 {
-   int ccthresh=0;
+  char *im;
+  int ccthresh=0;
+  float thresh1=0, thresh2=0;
+  char op_image_file[1024]="";
+  int n1=0; 
+  int n2=0;
+  float *ip_image;
+  float *op_image;
 
-   nifti_1_header hdr;
+  nifti_1_header hdr;
 
 	int ncc, ntcc;
 
 	char inputfile[512];
-	char outputfile[1024];
-	float *ip_image;
-	float thresh1, thresh2;
 
 	char dfFile[512];
 	short *dfmap;
@@ -70,66 +69,95 @@ int main(int argc, char **argv)
 	char prefix[1024];
 	double alpha, alpha2;
 
-	while( (opt=getoption(argc, argv, options)) != -1)
-	{
-		switch (opt) {
-			case 'c':
-				ccthresh=atoi(optarg);
-				break;
-			case 'i':
-				sprintf(inputfile,"%s",optarg);
-				break;
-			case 'o':
-				sprintf(outputfile,"%s",optarg);
-				break;
-			case '1':
-				thresh1 = atof(optarg);
-				break;
-			case '2':
-				thresh2 = atof(optarg);
-				break;
-			case '?':
-				print_help_and_exit();
-		}
-	}
-
-   if(argc==1) print_help_and_exit();
-
-   printf("CC threshold = %d\n",ccthresh);
-   printf("Thresh 1 = %f\n",thresh1);
-   printf("Thresh 2 = %f\n",thresh2);
-
-   ip_image = (float *)read_nifti_image(inputfile, &hdr);
-   nx = hdr.dim[1]; ny = hdr.dim[2]; nz = hdr.dim[3];
-   dx = hdr.pixdim[1]; dy = hdr.pixdim[2]; dz = hdr.pixdim[3];
-
-   nv = nx*ny*nz;
-
-	for(int i=0; i<nv; i++)
-    {
-	   if(ip_image[i]>=0 && ip_image[i]<=thresh1)
-         ip_image[i]=0.0;
-	   else if(ip_image[i]<0 && ip_image[i]>=thresh2)
-         ip_image[i]=0.0;
+  while( (opt=getoption(argc, argv, options)) != -1)
+  {
+    switch (opt) {
+      case 'v':
+        opt_v=YES;
+        break;
+      case 'c':
+        ccthresh=atoi(optarg);
+        break;
+      case 'i':
+        sprintf(inputfile,"%s",optarg);
+        break;
+      case 'o':
+        sprintf(op_image_file,"%s",optarg);
+        break;
+      case '1':
+        opt_t1=YES;
+        thresh1 = atof(optarg);
+        break;
+      case '2':
+        opt_t2=YES;
+        thresh2 = atof(optarg);
+        break;
+      case '?':
+        print_help_and_exit();
     }
+  }
 
-   if(ccthresh>0) 
-   {
-      char *im;
-      int ncc, ntcc;
+  if(argc==1) print_help_and_exit();
 
-      im = (char *)calloc(nv, sizeof(char));
+  if(opt_v)
+  {
+    printf("CC threshold = %d\n",ccthresh);
+    if(opt_t1) printf("Thresh 1 = %f\n",thresh1);
+    if(opt_t2) printf("Thresh 2 = %f\n",thresh2);
+    if(op_image_file[0] != '\0') printf("Output image = %s\n", op_image_file);
+  }
+   
+  ip_image = (float *)read_nifti_image(inputfile, &hdr);
+  nx = hdr.dim[1]; ny = hdr.dim[2]; nz = hdr.dim[3];
+  dx = hdr.pixdim[1]; dy = hdr.pixdim[2]; dz = hdr.pixdim[3];
 
-      for(int i=0; i<nv; i++) if(ip_image[i]!=0.0) im[i]=1; else im[i]=0;
+  nv = nx*ny*nz;
+  op_image = (float *)calloc(nv, sizeof(float));
+  im = (char *)calloc(nv, sizeof(char));
 
-      thr_Connected_Component(im, ccthresh, nx, ny, nz, &ncc, &ntcc);
+  for(int i=0; i<nv; i++) im[i]=0;
 
-      for(int i=0; i<nv; i++) if(im[i]==0) ip_image[i]=0.0;
+  n1=0;
+  if(opt_t1)
+  {
+    for(int i=0; i<nv; i++)
+    {
+      if(ip_image[i]>thresh1)
+      {
+        im[i]=1;
+        n1++;
+      }
+    }
+  }
 
-      free(im);
+  n2=0;
+  if(opt_t2)
+  {
+    for(int i=0; i<nv; i++)
+    {
+      if(ip_image[i]<thresh2)
+      {
+        im[i]=1;
+        n2++;
+      }
+    }
+  }
 
-      printf("\n%d clusters of %d had size >= %d\n",ntcc,ncc,ccthresh);
-   }
+  if(ccthresh>0) 
+  {
+    int ncc, ntcc;
 
-   save_nifti_image(outputfile, ip_image, &hdr);
+    thr_Connected_Component(im, ccthresh, nx, ny, nz, &ncc, &ntcc);
+    printf("\n%d clusters of %d had size >= %d\n",ntcc,ncc,ccthresh);
+  }
+
+  for(int i=0; i<nv; i++) if(im[i]==1) op_image[i]=ip_image[i];
+
+  if(op_image_file[0] != '\0') save_nifti_image(op_image_file, op_image, &hdr);
+
+  if(opt_t1) printf("%d\n",n1);
+  if(opt_t2) printf("%d\n",n2);
+
+  free(op_image);
+  free(im);
 }

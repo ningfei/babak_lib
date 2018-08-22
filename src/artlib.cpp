@@ -2276,7 +2276,11 @@ int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned
     int L;
 
     L = strlen(filename);
-    pngfilename = (char *)calloc(L,sizeof(char));
+    // there was bug here: I had length L instead of L+1 for pngfilename
+    // this was simple to fix but very hard to find
+    // as a result free(pngfilename) was failing
+    pngfilename = (char *)calloc(L+1,sizeof(char)); 
+
     cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
     stpcpy(pngfilename, filename);
     pngfilename[L-1]='g';
