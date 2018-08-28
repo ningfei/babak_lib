@@ -1780,6 +1780,9 @@ int main(int argc, char **argv)
          sprintf(roifile,"%s/%s_LHROI2.nii",imagedir[i],imagefileprefix[i]);
          find_roi(&im_hdr[i], aimpil, TPIL[i], "rhc3", roifile,Tleft1);
          compute_hi(imagefile[i], roifile, Lparenchymasize1[i], Lvoisize1[i]);
+
+         // important: restore TPIL
+         TPIL[i][8]*=-1.0; TPIL[i][9]*=-1.0; TPIL[i][10]*=-1.0; TPIL[i][11]*=-1.0; 
       }
    }
    else
@@ -1829,4 +1832,75 @@ int main(int argc, char **argv)
    delete aimpil.v;
 
    fclose(fp);
+
+#if 0
+  for(int i=0; i<nim; i++)
+  {
+    int2 *roi1, *roi2, *roi, *roiPIL;
+    nifti_1_header hdr;
+    DIM roidim;
+    float cm[3];
+    double C[6];  
+    double L[3];
+    double UT[9];
+    float T[16];
+    float tmpT[16];
+    float alpha;
+
+    sprintf(roifile,"%s/%s_LHROI1.nii",imagedir[i],imagefileprefix[i]);
+    roi1 = (int2 *)read_nifti_image(roifile, &hdr);
+
+    sprintf(roifile,"%s/%s_LHROI2.nii",imagedir[i],imagefileprefix[i]);
+    roi2 = (int2 *)read_nifti_image(roifile, &hdr);
+   
+    set_dim(roidim, hdr);
+
+    roi = roi1;
+    for(int v=0; v<roidim.nv; v++) { roi[v] = roi1[v] + roi2[v]; }
+ 
+    invT = inv4(TPIL[i]);
+    roiPIL = resliceImage(roi, roidim, PILbraincloud_dim, invT, LIN);
+    free(invT);
+
+    compute_cov(roiPIL, PILbraincloud_dim, cm, C);
+    s3eigenval(C, L);
+    s3eigenvec(C, L, UT);
+    if(UT[0]<0.0) { UT[0]*=-1.0; UT[1]*=-1; UT[2]*=-1; }
+
+    tmpT[0]=1.0;  tmpT[1]=0.0;  tmpT[2]=0.0;  tmpT[3]=-cm[0];
+    tmpT[4]=0.0;  tmpT[5]=1.0;  tmpT[6]=0.0;  tmpT[7]=-cm[1];
+    tmpT[8]=0.0;  tmpT[9]=0.0;  tmpT[10]=1.0; tmpT[11]=-cm[2];
+    tmpT[12]=0.0; tmpT[13]=0.0; tmpT[14]=0.0; tmpT[15]=1.0;
+
+    multi(tmpT, 4, 4, TPIL[i], 4, 4, T);
+
+    if(UT[0]>1.0) UT[0]=1.0; // just in case to prevent acos from getting into trouble
+    alpha = (float)acos((double)UT[0]);
+    rotate(tmpT, alpha, 0, UT[2], -UT[1]);
+    multi(tmpT, 4, 4, T, 4, 4, T);
+
+    printf("%lf %lf %lf\n",L[0],L[1],L[2]);
+    printf("%lf %lf %lf\n",UT[0],UT[1],UT[2]);
+
+    free(roiPIL);
+    invT = inv4(T);
+    roiPIL = resliceImage(roi, roidim, PILbraincloud_dim, invT, LIN);
+    free(invT);
+
+    sprintf(roifile,"%s/%s_ROI_HC.nii",imagedir[i],imagefileprefix[i]);
+    save_nifti_image(roifile, roiPIL, &PILbraincloud_hdr);
+
+    short *im, *imHC;
+    im = (int2 *)read_nifti_image(imagefile[i], &hdr);
+    invT = inv4(T);
+    imHC = resliceImage(im, roidim, PILbraincloud_dim, invT, LIN);
+    free(invT);
+
+    sprintf(roifile,"%s/%s_HC.nii",imagedir[i],imagefileprefix[i]);
+    save_nifti_image(roifile, imHC, &PILbraincloud_hdr);
+
+    free(im); free(imHC);
+    free(roi1); free(roi2); free(roiPIL);
+  }
+#endif
 }
