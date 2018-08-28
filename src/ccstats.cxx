@@ -385,19 +385,37 @@ int main(int argc, char **argv)
    nv = nx*ny*nz;
 
    // ccim=(float *)read_analyze_image(ccFile, &nx0, &ny0, &nz0, &dx, &dy, &dz, &type, 0);
-   ccim = (float *)read_nifti_image(ccFile, &hdr);
+   {
+       char *tmp;
 
-	if(nx!=hdr.dim[1] || ny!=hdr.dim[2]|| nz!=hdr.dim[3])
-	{
-		printf("\nIncompatible matrix dimensions between the input images and the clusters image, aborting ....\n");
-		exit(0);
-	}
+       tmp = (char *)read_nifti_image(ccFile, &hdr);
 
-	if(hdr.datatype != 16)
-	{
-		printf("\nThe clusters image is not of type float, aborting ...\n");
-		exit(0);
-	}
+	   if(nx!=hdr.dim[1] || ny!=hdr.dim[2]|| nz!=hdr.dim[3])
+	   {
+	   	  printf("\nIncompatible matrix dimensions between the input images and the clusters image, aborting ....\n");
+		  exit(0);
+	   }
+
+	   if(hdr.datatype == 16)
+       {
+          ccim = (float *)tmp;
+       }
+       else if(hdr.datatype==4 || hdr.datatype==512 )
+       {
+          short *tmps;    
+          tmps = (short *)tmp;
+          ccim = (float *)calloc(nx*ny*nz, sizeof(float));
+          for(int i=0; i<nx*ny*nz; i++) ccim[i]=tmps[i];
+          free(tmp);
+       }
+       else
+	   {
+	   	   printf("\nThe clusters image is not of type 4, 16 or 512, aborting ...\n");
+		   exit(0);
+	   }
+    }
 
 	save_cluster_avg(ccim, nx, ny, nz, n, imlist);
+
+   free(ccim);    
 }
