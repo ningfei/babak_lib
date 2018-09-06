@@ -2,10 +2,10 @@
 # for makhmal
 MPICC = /usr/local/bin/mpic++ -Wall
 
-CFLAGS = -O3
+CFLAGS = -static -O3
 CC = g++
 INC= -I../include
-LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -llapack -lblas
+LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
 LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz
 
 all: niftiio libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation
@@ -182,7 +182,7 @@ libbabak.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular
 
 clean:
 	rm -f *.o
-	rm -f ../lib/*.a
+	rm -f ../lib/libbabak.a ../lib/libniftiio.a ../lib/libznz.a
 
 # compilation of executables
 PILtransform: PILtransform.cxx
