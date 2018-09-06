@@ -1,5 +1,6 @@
-src/*.o
-/lib/
+*.mk
+*.o
+*.a
 /bin/
 /example1/
 /example2/
