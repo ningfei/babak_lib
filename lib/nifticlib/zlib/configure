@@ -802,30 +802,30 @@ sed < Makefile.in "
 /^test: */s#:.*#: $TEST#
 " > Makefile
 
-# create zlib.pc with the configure results
-sed < zlib.pc.in "
-/^CC *=/s#=.*#=$CC#
-/^CFLAGS *=/s#=.*#=$CFLAGS#
-/^CPP *=/s#=.*#=$CPP#
-/^LDSHARED *=/s#=.*#=$LDSHARED#
-/^STATICLIB *=/s#=.*#=$STATICLIB#
-/^SHAREDLIB *=/s#=.*#=$SHAREDLIB#
-/^SHAREDLIBV *=/s#=.*#=$SHAREDLIBV#
-/^SHAREDLIBM *=/s#=.*#=$SHAREDLIBM#
-/^AR *=/s#=.*#=$AR#
-/^ARFLAGS *=/s#=.*#=$ARFLAGS#
-/^RANLIB *=/s#=.*#=$RANLIB#
-/^EXE *=/s#=.*#=$EXE#
-/^prefix *=/s#=.*#=$prefix#
-/^exec_prefix *=/s#=.*#=$exec_prefix#
-/^libdir *=/s#=.*#=$libdir#
-/^sharedlibdir *=/s#=.*#=$sharedlibdir#
-/^includedir *=/s#=.*#=$includedir#
-/^mandir *=/s#=.*#=$mandir#
-/^LDFLAGS *=/s#=.*#=$LDFLAGS#
-" | sed -e "
-s/\@VERSION\@/$VER/g;
-" > zlib.pc
+# # create zlib.pc with the configure results
+# sed < zlib.pc.in "
+# /^CC *=/s#=.*#=$CC#
+# /^CFLAGS *=/s#=.*#=$CFLAGS#
+# /^CPP *=/s#=.*#=$CPP#
+# /^LDSHARED *=/s#=.*#=$LDSHARED#
+# /^STATICLIB *=/s#=.*#=$STATICLIB#
+# /^SHAREDLIB *=/s#=.*#=$SHAREDLIB#
+# /^SHAREDLIBV *=/s#=.*#=$SHAREDLIBV#
+# /^SHAREDLIBM *=/s#=.*#=$SHAREDLIBM#
+# /^AR *=/s#=.*#=$AR#
+# /^ARFLAGS *=/s#=.*#=$ARFLAGS#
+# /^RANLIB *=/s#=.*#=$RANLIB#
+# /^EXE *=/s#=.*#=$EXE#
+# /^prefix *=/s#=.*#=$prefix#
+# /^exec_prefix *=/s#=.*#=$exec_prefix#
+# /^libdir *=/s#=.*#=$libdir#
+# /^sharedlibdir *=/s#=.*#=$sharedlibdir#
+# /^includedir *=/s#=.*#=$includedir#
+# /^mandir *=/s#=.*#=$mandir#
+# /^LDFLAGS *=/s#=.*#=$LDFLAGS#
+# " | sed -e "
+# s/\@VERSION\@/$VER/g;
+# " > zlib.pc
 
 # done
 leave 0
