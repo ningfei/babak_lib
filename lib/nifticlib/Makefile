@@ -39,7 +39,7 @@ NIFTI_LIBS	=	$(NIFTI_PATH) -lniftiio
 
 ## Targets
 
-all:	   znz nifti
+all:	   znz nifti install
 
 install:   znz_install nifti_install
 
