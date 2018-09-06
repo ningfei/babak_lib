@@ -1,4 +1,5 @@
 ## Projects
+Z 	 	= 	zlib
 ZNZ		=	znzlib
 NIFTI   =	niftilib
 
@@ -15,8 +16,8 @@ CFLAGS		=	$(ANSI_FLAGS)
 INSTALL_LIB_DIR	=	..
 
 ## Zlib defines
-ZLIB_INC	=
-ZLIB_PATH	=
+ZLIB_INC	=	-I../$(Z)
+ZLIB_PATH	=	-L../$(Z)
 ZLIB_LIBS 	= 	$(ZLIB_PATH) -lm -lz
 
 ## ZNZ defines
@@ -39,21 +40,29 @@ NIFTI_LIBS	=	$(NIFTI_PATH) -lniftiio
 
 ## Targets
 
-all:	   znz nifti install
+all:	   z znz nifti install
 
-install:   znz_install nifti_install
+install:   z_install znz_install nifti_install
 
-clean:	   znz_clean nifti_clean
+clean:	   z_clean znz_clean nifti_clean
 
 clean_all: clean install_clean
 
+z:
+	(cd $(Z); ./configure; make libz.a;)
+	@echo ""
 
-znz:
+znz: z
 	(cd $(ZNZ); make lib;)
 	@echo ""
 
 nifti: znz
 	(cd $(NIFTI); make depend; make lib;)
+	@echo ""
+
+z_install: $(INSTALL_LIB_DIR)
+	cp $(Z)/libz.a $(INSTALL_LIB_DIR)
+	$(RANLIB) $(INSTALL_LIB_DIR)/libz.a
 	@echo ""
 
 znz_install: $(INSTALL_LIB_DIR)
@@ -68,6 +77,9 @@ nifti_install: $(INSTALL_LIB_DIR)
 
 install_clean:
 	rm -f $(INSTALL_LIB_DIR)/libznz.a $(INSTALL_LIB_DIR)/libniftiio.a
+
+z_clean:
+	(cd $(Z); rm -f *.log *.o *.a core;)
 
 znz_clean:
 	(cd $(ZNZ); rm -f *.mk *.o *.a core;)

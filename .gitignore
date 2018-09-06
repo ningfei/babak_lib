@@ -1,6 +1,7 @@
 *.mk
 *.o
 *.a
+*.log
 /bin/
 /example1/
 /example2/
