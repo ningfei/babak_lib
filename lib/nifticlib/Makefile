@@ -11,8 +11,10 @@ GNU_ANSI_FLAGS	= 	-Wall -ansi -pedantic
 ANSI_FLAGS	= 	${GNU_ANSI_FLAGS}
 CFLAGS		=	$(ANSI_FLAGS)
 
+MACH = $(shell $(CC) -dumpmachine | awk -F - '{ printf "%s", $$2; }')
+
 ## Installation
-INSTALL_LIB_DIR	=	..
+INSTALL_LIB_DIR	=	../$(MACH)
 
 ## Zlib defines
 ZLIB_INC	=
