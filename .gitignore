@@ -1,2 +1,6 @@
 src/*.o
-lib
+/lib/
+/bin/
+/example1/
+/example2/
+
