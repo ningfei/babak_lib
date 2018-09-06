@@ -2,7 +2,6 @@
 *.o
 /lib/nifticlib/znzlib/libznz.a
 /lib/nifticlib/niftilib/libniftiio.a
-/bin/
 /example1/
 /example2/
 
