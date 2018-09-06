@@ -1,9 +1,7 @@
 *.mk
 *.o
-*.a
-*.log
-/lib/nifticlib/zlib/Makefile
-/lib/nifticlib/zlib/zconf.h
+/lib/nifticlib/znzlib/libznz.a
+/lib/nifticlib/niftilib/libniftiio.a
 /bin/
 /example1/
 /example2/
