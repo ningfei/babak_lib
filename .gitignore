@@ -2,6 +2,8 @@
 *.o
 *.a
 *.log
+/lib/nifticlib/zlib/Makefile
+/lib/nifticlib/zlib/zconf.h
 /bin/
 /example1/
 /example2/
