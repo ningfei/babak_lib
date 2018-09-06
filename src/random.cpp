@@ -5,6 +5,11 @@
 #include <sys/types.h>  //      required by time(), stat()
 #include <time.h>       //      required by time()
 
+#ifdef __MINGW32__
+  #define srand48(x) srand((unsigned)(x))
+  #define drand48() (rand()/(RAND_MAX + 1.0))
+#endif
+
 void initializeRandomNumberGenerator()
 {
 	time_t  random_seed;    // for random number generation
@@ -25,6 +30,6 @@ void sampleWithReplacementIndex(int *I, int N)
 	for(int i=0; i<N; i++)
 	{
 		// generates a random interger from [0,N-1]
-		I[i] = (int)(drand48()*N);   
+		I[i] = (int)(drand48()*N);
 	}
 }

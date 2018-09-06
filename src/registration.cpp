@@ -10,6 +10,11 @@
 #define MCC     2048 /* maximum number of allowed 2D connected components */
 #define MINSIZE  101 /* minimum size of a 2D connected components */
 
+#ifdef __MINGW32__
+  #define srand48(x) srand((unsigned)(x))
+  #define drand48() (rand()/(RAND_MAX + 1.0))
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // babak_lib global variables
 
@@ -40,7 +45,7 @@ static float f1dim(short *KMI, float x, struct im_params *IP);
 static float optimize(short *KMI, float ax,float bx,float cx,float tol, float *xmin, struct im_params *IP);
 static float minimize1D(short *KMI, float *X, int ndim, struct im_params *IP);
 static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params *IP);
-float *transformation(float x, float y, float z, float ax, float ay, 
+float *transformation(float x, float y, float z, float ax, float ay,
 float az, float sx, float sy, float sz, int rX, int rY, int rZ, char *code);
 unsigned char linearInterpolatorUC(float x, float y, float z, unsigned char *array, int nx, int ny, int nz, int np);
 static float costFunction1(short *KMI, float *P, struct im_params *IP);
@@ -68,7 +73,7 @@ static int size[MCC];
 static int nclass=8;
 static int maxiter=500;
 
-float *findTransMatrix(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz, 
+float *findTransMatrix(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
 short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 {
    char transcode[5]="ZXYT";
@@ -80,7 +85,7 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
    float *T;
 
    int Tnp,Tnv,Onv;
-	
+
    for(int i=0; i<6; i++) P[i]=0.0;
 
    IP.FROM = 1;
@@ -99,7 +104,7 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
    IP.xc2=IP.dx2*(IP.nx2-1)/2.0; /* +---+---+ */
    IP.yc2=IP.dy2*(IP.ny2-1)/2.0;
    IP.zc2=IP.dz2*(IP.nz2-1)/2.0;
-	
+
    IP.sf = 1;
 
    IP.nx1=Onx;
@@ -241,7 +246,7 @@ int loadTransformation( char *filename, float *T)
    }
 
    i=0;
-   while( fgets(line,1000,fp) != NULL  && i != 4 ) 
+   while( fgets(line,1000,fp) != NULL  && i != 4 )
    {
       if(line[0]!='#' && line[0]!='\n' && strpbrk(line,s)!=NULL )
       {
@@ -263,13 +268,13 @@ int loadTransformation( char *filename, float *T)
 int findThresholdLevel(short *image_in, int nv)
 {
 	int j;
-	double histmax1, histmax2; 
+	double histmax1, histmax2;
 	int histmin;
 	int delta;		/* histogram bin width */
 	int thresh;
 	int jmax1, jmax2,jmin;
 
-	
+
 	printf("\nAutomatic Thresholding ...\n");
 
 	// from the image header, find the lower and upper limits of the image grey levels
@@ -300,7 +305,7 @@ int findThresholdLevel(short *image_in, int nv)
 	for(j=jmax1;j<=jmax2;j++)
 	if( hist[j]<histmin )
 	{
-		jmin=j;	
+		jmin=j;
 		histmin=hist[j];
 	}
 
@@ -392,7 +397,7 @@ void cca(short *im, int nx, int ny, int nz)
 
    for(i=0;i<nv;i++)
    {
-      if( im[i] ) 
+      if( im[i] )
       {
          if( codebook[ im[i] ]==k )
          {
@@ -469,7 +474,7 @@ void cca(short *im, int nx, int ny, int nz)
       }
 
 		for(i=nx;i<(np-nx);i++)
-		if( dumptr[i]==0 && ( dumptr[i-1]==2 || dumptr[i+1]==2 || 
+		if( dumptr[i]==0 && ( dumptr[i-1]==2 || dumptr[i+1]==2 ||
 		dumptr[i-nx]==2 || dumptr[i+nx]==2 ) )
 		{
 			size[0]=0;
@@ -519,7 +524,7 @@ static void delete_small_ccs(short *im, int nc, int nr, int nz)
 		}
 	}
 
-	// printf("Number of labels = %d\n",label); 
+	// printf("Number of labels = %d\n",label);
 }
 
 static void label_2d_cc(short *im,int nc,int np,int i,short oldlabel, short newlabel, int *size)
@@ -573,7 +578,7 @@ static short PB2d(short *im, int nc, int np, int i)
 short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , int Low, int High, int nv)
 {
    int i,n;
-   int h; // h=hist[n] as n varies 
+   int h; // h=hist[n] as n varies
 
    int converge; // converge is set to 1 when the algorithm has converged.
 
@@ -582,26 +587,26 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
    int v;
    int   iter; // iter=current Kmeans iteration.
    short *im_out;
-	
+
    char    db[NBIN];
    double *mean;
    double *oldmean;
    double *PR;
 
-   int clss;   // the class with minimum distance from a given pixel value 
+   int clss;   // the class with minimum distance from a given pixel value
 
-   float d;    // square distance between a given pixel value and a class mean 
+   float d;    // square distance between a given pixel value and a class mean
 
-   float dmin; // minimum square distance between a given pixel value and a class mean 
+   float dmin; // minimum square distance between a given pixel value and a class mean
 
-   float dmax; // dmax=maximum possible square distance between a given pixel value and class mean 
+   float dmax; // dmax=maximum possible square distance between a given pixel value and class mean
 
    mean = (double *)calloc(nclass,sizeof(double));
    oldmean = (double *)calloc(nclass,sizeof(double));
    PR = (double *)calloc(nclass,sizeof(double));
    im_out = (short *)calloc(nv,sizeof(short));
 
-   // from the image header, find the lower and upper limits of the image grey levels 
+   // from the image header, find the lower and upper limits of the image grey levels
    low  = Low;
    high = High;
 
@@ -612,7 +617,7 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
    for(i=0;i<NBIN;i++)
       db[i]=0;
 
-   // initialize class means 
+   // initialize class means
    for(i=0;i<nclass;i++)
       mean[i]=(i+1)*NBIN*1.0/(nclass+1.0);
 
@@ -631,14 +636,14 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
       }
 
 		for(n=0;n<NBIN;n++)
-      if( (h=hist[n])!=0) 
+      if( (h=hist[n])!=0)
 		{
             dmin=dmax;
-            for(i=0;i<nclass;i++) 
+            for(i=0;i<nclass;i++)
 				{
                d=oldmean[i]-n;
                d *= d;
-               if(d<dmin) 
+               if(d<dmin)
 					{
                   dmin=d;
                   clss=i;
@@ -653,10 +658,10 @@ short *KMcluster(short *ccImage, short *im_in, int nclass, int maxiter, int , in
 		}
 
       // Check for convergence. Set converge=1 if the means
-      // didn't chage from the previous iteration. 
+      // didn't chage from the previous iteration.
 		converge = 1;
 		for (i = 0 ; i < nclass; i++)
-		if(PR[i]!=0.0) 
+		if(PR[i]!=0.0)
 		{
 			mean[i]/=PR[i];
 			if (mean[i] != oldmean[i])
@@ -687,9 +692,9 @@ int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels)
 {
    int i,j,k;
    unsigned short label;
-   int size, maxsize; 
-   int NCC; 	 // number of connected components in CCI 
-   short CC; 
+   int size, maxsize;
+   int NCC; 	 // number of connected components in CCI
+   short CC;
 
    label=0;
    NCC=0;
@@ -705,24 +710,24 @@ int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels)
       for(int jj=0; jj<IP->ny2; jj++) KMI[kk*IP->np2+jj*IP->nx2+(IP->nx2-1)]=0;
    }
 
-   for(k=0;k<(IP->TO-IP->FROM+1);k++) 
+   for(k=0;k<(IP->TO-IP->FROM+1);k++)
    for(j=0;j<IP->ny2;j++)
-   for(i=0;i<IP->nx2;i++) 
-   if( (CC=KMI[k*IP->np2+j*IP->nx2+i]) && !IP->CCI[k*IP->np2+j*IP->nx2+i] ) 
-   {  
+   for(i=0;i<IP->nx2;i++)
+   if( (CC=KMI[k*IP->np2+j*IP->nx2+i]) && !IP->CCI[k*IP->np2+j*IP->nx2+i] )
+   {
       label++;
       size=0;
       label_3d_cc(KMI,label,i,j,k,&size,CC,IP);
-      if(size<=size_thresh) 
+      if(size<=size_thresh)
       {
          resetCC(KMI,i,j,k,CC,IP);
          label--;
-      } 
-      else 
+      }
+      else
       {
          NCC++;
          IP->NP += size;
-         if(size>maxsize) 
+         if(size>maxsize)
          {
             maxsize=size;
          }
@@ -733,9 +738,9 @@ int label_CCI(short *KMI, int size_thresh,struct im_params * IP, int nvoxels)
 
    j=0;
 	for(i=0;i<nvoxels;i++)
-	if(KMI[i]) 
+	if(KMI[i])
 	{
-			if( (j%IP->sf)!=0 ) 
+			if( (j%IP->sf)!=0 )
 				KMI[i]=0;
 			j++;
 	}
@@ -787,7 +792,7 @@ void scale_short_minmax(short *imagein, unsigned char **imageout, int np, int mi
    short value;
    int tmp;
 
-   if(min>max) 
+   if(min>max)
    {
       tmp=min; min=max; max=tmp;
    }
@@ -816,7 +821,7 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP)
 	float Az,Bz;
 
 	int i,j,k;
-	int q;	
+	int q;
 
 	float  	F;
 	float  	*T;
@@ -828,11 +833,11 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP)
 
 	int jj;
 
-	float   x,y,z;	 
+	float   x,y,z;
 	float   xx,yy,zz;
-	unsigned char VAL1; 
+	unsigned char VAL1;
 
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 	{
 		IP->S[j]=IP->SS[j]=0.0;
 		IP->Size[j]=0;
@@ -861,22 +866,22 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP)
 
 	npixels=0;
 	q=0;
-	for(k=IP->FROM-1;k<IP->TO;k++) 
+	for(k=IP->FROM-1;k<IP->TO;k++)
 	{
 		zz=k*IP->dz2-IP->zc2;
 		Bx=T[2]*zz+T[3];
 		By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<IP->ny2;j++) 
+		for(j=0;j<IP->ny2;j++)
 		{
 			yy=j*IP->dy2-IP->yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-			for(i=0;i<IP->nx2;i++) 
+			for(i=0;i<IP->nx2;i++)
 			{
-		   		if(KMI[q]) 
+		   		if(KMI[q])
 				{
             		xx=i*IP->dx2-IP->xc2;
 
@@ -886,7 +891,7 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP)
 
 		        	VAL1=linearInterpolatorUC(x,y,z,IP->data1,IP->nx1,IP->ny1,IP->nz1,IP->np1);
 
-		        	if(VAL1>0) 
+		        	if(VAL1>0)
 					{
 		         		npixels++;
 			    		if(VAL1 > IP->max1) VAL1=IP->max1;
@@ -904,20 +909,20 @@ static float costFunction1(short *KMI, float *P, struct im_params *IP)
 	free(T);
 
 	F=0.0;
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 		if(IP->Size[j])
 			F +=  ( IP->SS[j] - IP->S[j]*IP->S[j]/IP->Size[j] );
 
 	if(F>FMAX)
 		FMAX=F;
 
-	if(npixels<IP->NP/(IP->sf*20)) 
+	if(npixels<IP->NP/(IP->sf*20))
 	{
 		//printf("\t%10.3f",FMAX);
 		fflush(NULL);
   		return(FMAX);
-	} 
-	else 
+	}
+	else
 	{
 		//printf("\t%10.3f",F/npixels);
 		fflush(NULL);
@@ -937,7 +942,7 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 	float Az,Bz;
 
 	int i,j,k;
-	int q;	
+	int q;
 
 	float  	F;
 	float  	*T;
@@ -949,11 +954,11 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 
 	int jj;
 
-	float   x,y,z;	 
+	float   x,y,z;
 	float   xx,yy,zz;
-	float VAL1; 
+	float VAL1;
 
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 	{
 		IP->S[j]=IP->SS[j]=0.0;
 		IP->Size[j]=0;
@@ -982,22 +987,22 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 
 	npixels=0;
 	q=0;
-	for(k=IP->FROM-1;k<IP->TO;k++) 
+	for(k=IP->FROM-1;k<IP->TO;k++)
 	{
 		zz=(k + zjit[q])*IP->dz2-IP->zc2;
 		Bx=T[2]*zz+T[3];
 		By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<IP->ny2;j++) 
+		for(j=0;j<IP->ny2;j++)
 		{
 			yy=(j + yjit[q])*IP->dy2-IP->yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-			for(i=0;i<IP->nx2;i++) 
+			for(i=0;i<IP->nx2;i++)
 			{
-		   		if(KMI[q]) 
+		   		if(KMI[q])
 				{
             		xx=(i + xjit[q])*IP->dx2-IP->xc2;
 
@@ -1009,7 +1014,7 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 					// VAL1 = (float)PNN(x, y, z, IP->data1, IP->nx1, IP->ny1, IP->nz1);
 					// VAL1 = (float)nearestNeighbor(x, y, z, IP->data1, IP->nx1, IP->ny1, IP->nz1, IP->np1);
 
-		        	if(VAL1>0.0) 
+		        	if(VAL1>0.0)
 					{
 		         		npixels++;
 			    		if(VAL1 > IP->max1) VAL1=IP->max1;
@@ -1028,7 +1033,7 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 	free(T);
 
 	F=0.0;
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 	if(IP->Size[j]>0)
 	{
 		mu = IP->S[j]/IP->Size[j];
@@ -1039,13 +1044,13 @@ static float newCostFunction(short *KMI, float *P, struct im_params *IP)
 
 	if(F>FMAX) FMAX=F;
 
-	if(npixels<IP->NP/(IP->sf*20)) 
+	if(npixels<IP->NP/(IP->sf*20))
 	{
 		//printf("\t%10.3f",FMAX);
 		fflush(NULL);
   		return(FMAX);
-	} 
-	else 
+	}
+	else
 	{
 		//printf("\t%10.3f",F/npixels);
 		fflush(NULL);
@@ -1066,7 +1071,7 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 	float Az,Bz;
 
 	int i,j,k;
-	int q;	
+	int q;
 
 	float  	F;
 	float  	*T;
@@ -1078,15 +1083,15 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 
 	int jj;
 
-	float   x,y,z;	 
+	float   x,y,z;
 	float   xx,yy,zz;
-	unsigned char VAL1; 
+	unsigned char VAL1;
 
 	sum1 = (double *)calloc( IP->NCC, sizeof(double));
 	sum2 = (double *)calloc( IP->NCC, sizeof(double));
 	sum3 = (double *)calloc( IP->NCC, sizeof(double));
 
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 	{
 		IP->S[j]=IP->SS[j]=0.0;
 		IP->Size[j]=0;
@@ -1116,22 +1121,22 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 
 	npixels=0;
 	q=0;
-	for(k=IP->FROM-1;k<IP->TO;k++) 
+	for(k=IP->FROM-1;k<IP->TO;k++)
 	{
 		zz=k*IP->dz2-IP->zc2;
 		Bx=T[2]*zz+T[3];
 		By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<IP->ny2;j++) 
+		for(j=0;j<IP->ny2;j++)
 		{
 			yy=j*IP->dy2-IP->yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-			for(i=0;i<IP->nx2;i++) 
+			for(i=0;i<IP->nx2;i++)
 			{
-		   		if(KMI[q]) 
+		   		if(KMI[q])
 				{
             				xx=i*IP->dx2-IP->xc2;
 
@@ -1141,7 +1146,7 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 
 		        		VAL1=linearInterpolator(x,y,z,IP->data1,IP->nx1,IP->ny1,IP->nz1,IP->np1,&alpha);
 
-		        		if(VAL1>0) 
+		        		if(VAL1>0)
 					{
 		         			npixels++;
 			    			if(VAL1 > IP->max1) VAL1=IP->max1;
@@ -1151,12 +1156,12 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 			    			IP->SS[jj] += (float)(VAL1)*VAL1;
 			    			IP->Size[jj]++;
 
-						if(alpha>0.0) 
+						if(alpha>0.0)
 						{
 							sum1[jj] += VAL1*VAL1/alpha;
 							sum2[jj] += VAL1/alpha;
 							sum3[jj] += 1.0/alpha;
-						}		
+						}
 		       			}
 				}
 		    		q++;
@@ -1167,7 +1172,7 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 	free(T);
 
 	F=0.0;
-	for(j=0;j<IP->NCC;j++) 
+	for(j=0;j<IP->NCC;j++)
 	if(IP->Size[j]>1 && sum3[j]>0.0)
 	{
 		mu = sum2[j]/sum3[j];
@@ -1184,13 +1189,13 @@ static float costFunction2(short *KMI, float *P, struct im_params *IP)
 
 	if(F>FMAX) FMAX=F;
 
-	if(npixels<IP->NP/(IP->sf*20)) 
+	if(npixels<IP->NP/(IP->sf*20))
 	{
 		//printf("\t%10.3f",FMAX);
 		fflush(NULL);
   		return(FMAX);
-	} 
-	else 
+	}
+	else
 	{
 		//printf("\t%10.3f",F/npixels);
 		fflush(NULL);
@@ -1202,7 +1207,7 @@ unsigned char linearInterpolatorUC(float x, float y, float z, unsigned char *arr
 {
 	int     i,j,k,n;
 	float   u,uu;
-	
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -1251,12 +1256,12 @@ unsigned char linearInterpolatorUC(float x, float y, float z, unsigned char *arr
 }
 
 /* nine parameter version */
-/* x,y,z translations in mm */ 
+/* x,y,z translations in mm */
 /* ax,ay,az rotations in degrees */
 /* sx,sy,sz scaling parameters */
 /* rX,rY,rZ reflection parameters */
 /* code determines order of transformations */
-float *transformation(float x, float y, float z, float ax, float ay, 
+float *transformation(float x, float y, float z, float ax, float ay,
 float az, float sx, float sy, float sz, int rX, int rY, int rZ, char *code)
 {
 	int i;
@@ -1441,7 +1446,7 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 	float	fret,fp;
 	float   sum;
 
-	fp=(*obj_fnc)(KMI,P,IP); 
+	fp=(*obj_fnc)(KMI,P,IP);
 
 	global_min=fp;
 
@@ -1516,8 +1521,8 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 		for(i=0;i<ndim;i++)
 			sum+= (XIT[i]*XIT[i]);
 
-		sum=(float)sqrt( (double)sum);				
-		//printf("Search Direction: "); 
+		sum=(float)sqrt( (double)sum);
+		//printf("Search Direction: ");
 		for(i=0;i<ndim;i++) {
 			XIT[i]/=sum;
 			//printf("   %5.2f",XIT[i]);
@@ -1531,7 +1536,7 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 			global_min = fret;
 			for(i=0;i<6;i++) Pmin[i]=P[i];
 		}
-		else 
+		else
 		{
 			fret = global_min;
 			for(i=0;i<6;i++) P[i]=Pmin[i];
@@ -1554,7 +1559,7 @@ static float Gradient_Descent(short *KMI, int	ndim, float ftol, struct im_params
 
 		if(2.0*fabs((double)fp-fret)<= ftol*(fabs((double)fp)+fabs((double)fret)))
 		break;
-		
+
 		fp=fret;
 
 	} while(1);
@@ -1585,8 +1590,8 @@ static float minimize1D(short *KMI, float *X, int ndim, struct im_params *IP)
 	findInterval(KMI,&ax,&xx,&bx,&fa,&fx,&fb,IP);
 
 	fret=optimize(KMI,ax,xx,bx,tol,&xmin,IP);
-	
-	for(i=0;i<ndim;i++) { 
+
+	for(i=0;i<ndim;i++) {
 		X[i]*=xmin;
 		P[i]+=X[i];
 	}
@@ -1624,7 +1629,7 @@ static float optimize(short *KMI, float ax,float bx,float cx,float tol, float *x
 		if( fabs((double)e) > tol1) {
 			r=(x-w)*(fx-fv);
 			q=(x-v)*(fx-fw);
-			p=(x-v)*q-(x-w)*r;	
+			p=(x-v)*q-(x-w)*r;
 			q=2.0*(q-r);
 			if(q>0.0) p=-p;
 			q=(float)fabs((double)q);
@@ -1634,7 +1639,7 @@ static float optimize(short *KMI, float ax,float bx,float cx,float tol, float *x
 				goto ONE;
 			d=p/q;
 			u=x+d;
-			if( (u-a)<tol2 || (b-u)<tol2) 
+			if( (u-a)<tol2 || (b-u)<tol2)
 				d= ( (xm-x)>0.0 ) ? tol1 : -tol1;
 			goto TWO;
 		}
@@ -1692,10 +1697,10 @@ static float f1dim(short *KMI, float x, struct im_params *IP)
 	int i;
 	float   XT[6];
 
-	for(i=0;i<ncom;i++) 
+	for(i=0;i<ncom;i++)
 		XT[i]=PCOM[i]+x*XICOM[i];
-	
-	return((*obj_fnc)(KMI,XT,IP)); 
+
+	return((*obj_fnc)(KMI,XT,IP));
 }
 
 static void  findInterval(short *KMI, float *ax,float *bx,float *cx, float *fa, float *fb, float *fc, struct im_params *IP)
@@ -1721,9 +1726,9 @@ static void  findInterval(short *KMI, float *ax,float *bx,float *cx, float *fa, 
 	*cx= *bx + 1.618034*(*bx - *ax);
 	*fc=f1dim(KMI,*cx,IP);
 
-	while(*fb >= *fc) {	
-		r = (*bx - *ax) * (*fb - *fc);	
-		q = (*bx - *cx) * (*fb - *fa);	
+	while(*fb >= *fc) {
+		r = (*bx - *ax) * (*fb - *fc);
+		q = (*bx - *cx) * (*fb - *fa);
 		dum=(float)fabs((double)q-r);
 		dum= (dum>1.0e-20) ? dum : 1.0e-20;
 		dum= ( (q-r)>=0 ) ? dum : -dum;
@@ -1770,7 +1775,7 @@ static void  findInterval(short *KMI, float *ax,float *bx,float *cx, float *fa, 
 	}
 }
 
-void testCostFunc1(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz, 
+void testCostFunc1(short *trg, int Tnx, int Tny, int Tnz, float Tdx, float Tdy, float Tdz,
 short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 {
 	FILE *fp;
@@ -1783,7 +1788,7 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 	float *T;
 
 	int Tnp,Tnv,Onv;
-	
+
 	for(int i=0; i<6; i++) P[i]=0.0;
 
 	IP.FROM = 1;
@@ -1802,7 +1807,7 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 	IP.xc2=IP.dx2*(IP.nx2-1)/2.0; /* +---+---+ */
 	IP.yc2=IP.dy2*(IP.ny2-1)/2.0;
 	IP.zc2=IP.dz2*(IP.nz2-1)/2.0;
-	
+
 	IP.sf = 1;
 
 	IP.nx1=Onx;
@@ -1895,10 +1900,10 @@ short *obj, int Onx, int Ony, int Onz, float Odx, float Ody, float Odz)
 
 		// P[0]=i*1.0/100.0;
 		P[5]=i*1.0/20.0;
-		cost=newCostFunction(ccImage,P,&IP); 
-	
-		// fprintf(fp,"%f %f\n",i*1.0/100.0, cost);	
-		fprintf(fp,"%f %f\n",i*1.0/20.0, cost);	
+		cost=newCostFunction(ccImage,P,&IP);
+
+		// fprintf(fp,"%f %f\n",i*1.0/100.0, cost);
+		fprintf(fp,"%f %f\n",i*1.0/20.0, cost);
 	}
 	fclose(fp);
 
