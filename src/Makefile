@@ -2,13 +2,19 @@
 # for makhmal
 MPICC = /usr/local/bin/mpic++ -Wall
 
-CFLAGS = -O3
+CFLAGS = -static -O3
 CC = g++
-INC= -I../include
-LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -llapack -lblas
-LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz
 
-all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D gambling_vancova_setup medianImage threshold ccstats
+MACH = $(shell $(CC) -dumpmachine | awk -F - '{ printf "%s", $$2; }')
+
+INC= -I../include
+LIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
+LESSLIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz
+
+all: niftiio libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D gambling_vancova_setup medianImage threshold ccstats
+
+niftiio:
+	(cd ../lib/nifticlib; make all)
 
 # because of functions in matrixops, linking the libbabak will possibly require lapack libs.
 
@@ -175,63 +181,65 @@ update_qsform.o: update_qsform.cpp
 	$(CC) -O2 -c $(INC) update_qsform.cpp
 
 libbabak.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
-	ar -ru ../lib/libbabak.a leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
+	ar -ru ../lib/$(MACH)/libbabak.a leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
 
 clean:
 	rm -f *.o
+	rm -f ../lib/$(MACH)/libbabak.a ../lib/$(MACH)/libniftiio.a ../lib/$(MACH)/libznz.a
 
 # compilation of executables
 PILtransform: PILtransform.cxx
 	$(CC) $(CFLAGS) -o PILtransform PILtransform.cxx $(INC) $(LIBS)
-	mv PILtransform ${ARTHOME}/bin
+	mv PILtransform ${ARTHOME}/bin/$(MACH)
 
 brainwash: brainwash.cxx
 	$(CC) $(CFLAGS) -o brainwash brainwash.cxx $(LIBS) $(INC)
-	mv brainwash ${ARTHOME}/bin
+	mv brainwash ${ARTHOME}/bin/$(MACH)
 
 3dwarper: 3dwarper.cxx
 	$(CC) $(CFLAGS) -o 3dwarper 3dwarper.cxx $(LIBS) $(INC)
-	mv 3dwarper ${ARTHOME}/bin
+	mv 3dwarper ${ARTHOME}/bin/$(MACH)
 
 acpcdetect: acpcdetect.cxx
 	$(CC) $(CFLAGS) -o acpcdetect acpcdetect.cxx $(LIBS) $(INC)
-	mv acpcdetect ${ARTHOME}/bin
+	mv acpcdetect ${ARTHOME}/bin/$(MACH)
 
 applywarp3d: applywarp3d.cxx
 	$(CC) $(CFLAGS) -o applywarp3d applywarp3d.cxx $(INC) $(LESSLIBS)
-	mv applywarp3d ${ARTHOME}/bin
+	mv applywarp3d ${ARTHOME}/bin/$(MACH)
 
 scaleImage: scaleImage.cxx
 	$(CC) $(CFLAGS) -o scaleImage scaleImage.cxx $(INC) $(LIBS)
-	mv scaleImage ${ARTHOME}/bin
+	mv scaleImage ${ARTHOME}/bin/$(MACH)
 
 avgImage: avgImage.cxx
 	$(CC) $(CFLAGS) -o avgImage avgImage.cxx $(INC) $(LESSLIBS)
-	mv avgImage ${ARTHOME}/bin
+	mv avgImage ${ARTHOME}/bin/$(MACH)
 
 one_sample_t: one_sample_t.cxx
 	$(CC) $(CFLAGS) -o one_sample_t one_sample_t.cxx $(INC) $(LIBS)
-	mv one_sample_t ${ARTHOME}/bin
+	mv one_sample_t ${ARTHOME}/bin/$(MACH)
 
 ivf: ivf.cxx
 	$(CC) $(CFLAGS) -o ivf ivf.cxx $(INC) $(LIBS)
-	mv ivf ${ARTHOME}/bin
+	mv ivf ${ARTHOME}/bin/$(MACH)
 
 unwarp2d: unwarp2d.cxx
 	$(CC) $(CFLAGS) -o unwarp2d unwarp2d.cxx $(INC) $(LIBS)
-	mv unwarp2d ${ARTHOME}/bin
+	mv unwarp2d ${ARTHOME}/bin/$(MACH)
 
 cphdr: cphdr.cxx
 	$(CC) $(CFLAGS) -o cphdr cphdr.cxx $(INC) $(LESSLIBS)
-	mv cphdr ${ARTHOME}/bin
+	mv cphdr ${ARTHOME}/bin/$(MACH)
 
 reslice: reslice.cxx
 	$(CC) $(CFLAGS) -o reslice reslice.cxx $(INC) $(LIBS)
-	mv reslice ${ARTHOME}/bin
+	mv reslice ${ARTHOME}/bin/$(MACH)
 
 kaiba: kaiba.cxx
 	$(CC) $(CFLAGS) -o kaiba kaiba.cxx $(INC) $(LIBS)
-	mv kaiba ${ARTHOME}/bin
+	mv kaiba ${ARTHOME}/bin/$(MACH)
+
 #Example: $(CC) $(CFLAGS) -o kaiba kaiba.cxx -DBETA_PARAM=0.3 $(INC) $(LIBS)
 # If we used the option -DBETA_PARAM=0.3 as in the above example, it will be the same as
 # having the following statement in kaiba.cxx
@@ -239,56 +247,56 @@ kaiba: kaiba.cxx
 
 oi: oi.cxx
 	$(CC) $(CFLAGS) -o oi oi.cxx $(INC) $(LIBS)
-	mv oi ${ARTHOME}/bin
+	mv oi ${ARTHOME}/bin/$(MACH)
 
 atra: atra.cxx
 	$(CC) $(CFLAGS) -o atra atra.cxx $(INC) $(LIBS)
-	mv atra ${ARTHOME}/bin
+	mv atra ${ARTHOME}/bin/$(MACH)
 
 art2fsl: art2fsl.cxx
 	$(CC) $(CFLAGS) -o art2fsl art2fsl.cxx $(INC) $(LIBS)
-	mv art2fsl ${ARTHOME}/bin
+	mv art2fsl ${ARTHOME}/bin/$(MACH)
 
 fsl2art: fsl2art.cxx
 	$(CC) $(CFLAGS) -o fsl2art fsl2art.cxx $(INC) $(LIBS)
-	mv fsl2art ${ARTHOME}/bin
+	mv fsl2art ${ARTHOME}/bin/$(MACH)
 
 yuki: yuki.cxx
 	$(MPICC) $(CFLAGS) -o yuki yuki.cxx $(INC) $(LIBS)
-	mv yuki ${ARTHOME}/bin
+	mv yuki ${ARTHOME}/bin/$(MACH)
 
 analyze2nii: analyze2nii.cxx
 	$(CC) $(CFLAGS) -o analyze2nii analyze2nii.cxx $(INC) $(LIBS)
-	mv analyze2nii ${ARTHOME}/bin
+	mv analyze2nii ${ARTHOME}/bin/$(MACH)
 
 multiplyTransformation: multiplyTransformation.cxx
 	$(CC) $(CFLAGS) -o multiplyTransformation multiplyTransformation.cxx $(INC) $(LESSLIBS)
-	mv multiplyTransformation ${ARTHOME}/bin
+	mv multiplyTransformation ${ARTHOME}/bin/$(MACH)
 
 niftiinfo: niftiinfo.cxx
 	$(CC) $(CFLAGS) -o niftiinfo niftiinfo.cxx $(INC) $(LESSLIBS)
-	mv niftiinfo ${ARTHOME}/bin
+	mv niftiinfo ${ARTHOME}/bin/$(MACH)
 
 break4D: break4D.cxx
 	$(CC) $(CFLAGS) -o break4D break4D.cxx $(INC) $(LIBS)
-	mv break4D ${ARTHOME}/bin
+	mv break4D ${ARTHOME}/bin/$(MACH)
 
 vancova: vancova.cxx
 	$(CC) $(CFLAGS) -o vancova vancova.cxx $(INC) $(LIBS) -ldcdf  -lf2c
-	mv vancova ${ARTHOME}/bin
+	mv vancova ${ARTHOME}/bin/$(MACH)
 
 gambling_vancova_setup: gambling_vancova_setup.cxx
 	$(CC) $(CFLAGS) -o gambling_vancova_setup gambling_vancova_setup.cxx $(INC) $(LIBS)
-	mv gambling_vancova_setup ${ARTHOME}/bin
+	mv gambling_vancova_setup ${ARTHOME}/bin/$(MACH)
 
 medianImage: medianImage.cxx
 	$(CC) $(CFLAGS) -o medianImage medianImage.cxx $(INC) $(LIBS)
-	mv medianImage ${ARTHOME}/bin
+	mv medianImage ${ARTHOME}/bin/$(MACH)
 
 threshold: threshold.cxx
 	$(CC) $(CFLAGS) -o threshold threshold.cxx $(INC) $(LIBS)
-	mv threshold ${ARTHOME}/bin
+	mv threshold ${ARTHOME}/bin/$(MACH)
 
 ccstats: ccstats.cxx
 	$(CC) $(CFLAGS) -o ccstats ccstats.cxx $(INC) $(LIBS)
-	mv ccstats ${ARTHOME}/bin
+	mv ccstats ${ARTHOME}/bin/$(MACH)
