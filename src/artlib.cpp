@@ -37,7 +37,7 @@ void getDirectoryName(const char *pathname, char *dirname);
 void orig_ijk_to_pil_xyz(float *Tmsp, DIM orig_dim, float *AC, float *PC);
 void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg);
 void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, int ny, int sx, int sy, int L1, int L2, unsigned char Rvalue, unsigned char Gvalue, unsigned char Bvalue);
-void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,  
+void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,
 float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp);
 void compute_MSP_parameters_from_Tmsp(float *Tmsp, float *n, float *d);
 void compute_Tmsp_from_MSP_parameters(const char *orientation, float *Tmsp, float *n, float d);
@@ -65,7 +65,7 @@ void combine_warps_and_trans(int nx, int ny, int nz, float dx, float dy, float d
 ///////////////////////////////////////////////////////////////////////////////////
 void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, const char *trgfile)
 {
-   nifti_1_header trg_hdr; 
+   nifti_1_header trg_hdr;
    nifti_1_header sub_hdr;
 
    // Takes a point (x, y, z) in the original orientation of the subject volume
@@ -73,14 +73,14 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
    float sub_xyz2ijk[16];
 
    // Takes a point (i, j, k) in the original orientation of the subject volume
-   // to point (x, y, z) in RAS orientation. 
+   // to point (x, y, z) in RAS orientation.
    float sub_ijk2RAS[16];
 
    // Takes a point (i, j, k) in the original orientation of the trg volume
    // to point (x, y, z) in RAS orientation.
    float trg_ijk2RAS[16];
 
-   // Takes a point (x, y, z) in RAS orientation 
+   // Takes a point (x, y, z) in RAS orientation
    // to point (i, j, k) in the original orientation of the trg volume
    float *trg_RAS2ijk;  // inverse of trg_ijk2RAS;
 
@@ -99,15 +99,15 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
    sub_hdr = read_NIFTI_hdr(subfile);
    trg_hdr = read_NIFTI_hdr(trgfile);
 
-   xyz2ijk(sub_xyz2ijk, sub_hdr.dim[1], sub_hdr.dim[2], sub_hdr.dim[3], 
+   xyz2ijk(sub_xyz2ijk, sub_hdr.dim[1], sub_hdr.dim[2], sub_hdr.dim[3],
    sub_hdr.pixdim[1], sub_hdr.pixdim[2], sub_hdr.pixdim[3]);
 
    if(sub_hdr.qform_code > 0)
    {
       mat44 R;
 
-      R = nifti_quatern_to_mat44(sub_hdr.quatern_b, sub_hdr.quatern_c, sub_hdr.quatern_d, 
-      sub_hdr.qoffset_x, sub_hdr.qoffset_y, sub_hdr.qoffset_z, sub_hdr.pixdim[1], sub_hdr.pixdim[2], 
+      R = nifti_quatern_to_mat44(sub_hdr.quatern_b, sub_hdr.quatern_c, sub_hdr.quatern_d,
+      sub_hdr.qoffset_x, sub_hdr.qoffset_y, sub_hdr.qoffset_z, sub_hdr.pixdim[1], sub_hdr.pixdim[2],
       sub_hdr.pixdim[3], sub_hdr.pixdim[0]);
 
       sub_ijk2RAS[0]= R.m[0][0];
@@ -127,17 +127,17 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
    }
    else if(sub_hdr.sform_code > 0)
    {
-      sub_ijk2RAS[0]= sub_hdr.srow_x[0]; 
+      sub_ijk2RAS[0]= sub_hdr.srow_x[0];
       sub_ijk2RAS[1]= sub_hdr.srow_x[1];
       sub_ijk2RAS[2]= sub_hdr.srow_x[2];
       sub_ijk2RAS[3]= sub_hdr.srow_x[3];
 
-      sub_ijk2RAS[4]= sub_hdr.srow_y[0]; 
+      sub_ijk2RAS[4]= sub_hdr.srow_y[0];
       sub_ijk2RAS[5]= sub_hdr.srow_y[1];
       sub_ijk2RAS[6]= sub_hdr.srow_y[2];
       sub_ijk2RAS[7]= sub_hdr.srow_y[3];
 
-      sub_ijk2RAS[8]= sub_hdr.srow_z[0]; 
+      sub_ijk2RAS[8]= sub_hdr.srow_z[0];
       sub_ijk2RAS[9]= sub_hdr.srow_z[1];
       sub_ijk2RAS[10]= sub_hdr.srow_z[2];
       sub_ijk2RAS[11]= sub_hdr.srow_z[3];
@@ -148,17 +148,17 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
       return;
    }
 
-   sub_ijk2RAS[12]= 0.0; 
+   sub_ijk2RAS[12]= 0.0;
    sub_ijk2RAS[13]= 0.0;
-   sub_ijk2RAS[14]= 0.0; 
+   sub_ijk2RAS[14]= 0.0;
    sub_ijk2RAS[15]= 1.0;
 
    if(trg_hdr.qform_code > 0)
    {
       mat44 R;
 
-      R = nifti_quatern_to_mat44(trg_hdr.quatern_b, trg_hdr.quatern_c, trg_hdr.quatern_d, 
-      trg_hdr.qoffset_x, trg_hdr.qoffset_y, trg_hdr.qoffset_z, trg_hdr.pixdim[1], trg_hdr.pixdim[2], 
+      R = nifti_quatern_to_mat44(trg_hdr.quatern_b, trg_hdr.quatern_c, trg_hdr.quatern_d,
+      trg_hdr.qoffset_x, trg_hdr.qoffset_y, trg_hdr.qoffset_z, trg_hdr.pixdim[1], trg_hdr.pixdim[2],
       trg_hdr.pixdim[3], trg_hdr.pixdim[0]);
 
       trg_ijk2RAS[0]= R.m[0][0];
@@ -178,17 +178,17 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
    }
    else if(trg_hdr.sform_code > 0)
    {
-      trg_ijk2RAS[0]= trg_hdr.srow_x[0]; 
+      trg_ijk2RAS[0]= trg_hdr.srow_x[0];
       trg_ijk2RAS[1]= trg_hdr.srow_x[1];
       trg_ijk2RAS[2]= trg_hdr.srow_x[2];
       trg_ijk2RAS[3]= trg_hdr.srow_x[3];
 
-      trg_ijk2RAS[4]= trg_hdr.srow_y[0]; 
+      trg_ijk2RAS[4]= trg_hdr.srow_y[0];
       trg_ijk2RAS[5]= trg_hdr.srow_y[1];
       trg_ijk2RAS[6]= trg_hdr.srow_y[2];
       trg_ijk2RAS[7]= trg_hdr.srow_y[3];
 
-      trg_ijk2RAS[8]= trg_hdr.srow_z[0]; 
+      trg_ijk2RAS[8]= trg_hdr.srow_z[0];
       trg_ijk2RAS[9]= trg_hdr.srow_z[1];
       trg_ijk2RAS[10]= trg_hdr.srow_z[2];
       trg_ijk2RAS[11]= trg_hdr.srow_z[3];
@@ -199,12 +199,12 @@ void sub2trg_rigid_body_transformation(float *sub2trg, const char *subfile, cons
       return;
    }
 
-   trg_ijk2RAS[12]= 0.0; 
+   trg_ijk2RAS[12]= 0.0;
    trg_ijk2RAS[13]= 0.0;
-   trg_ijk2RAS[14]= 0.0; 
+   trg_ijk2RAS[14]= 0.0;
    trg_ijk2RAS[15]= 1.0;
 
-   ijk2xyz(trg_ijk2xyz, trg_hdr.dim[1], trg_hdr.dim[2], trg_hdr.dim[3], 
+   ijk2xyz(trg_ijk2xyz, trg_hdr.dim[1], trg_hdr.dim[2], trg_hdr.dim[3],
    trg_hdr.pixdim[1], trg_hdr.pixdim[2], trg_hdr.pixdim[3]);
 
    float temp_mat[16];
@@ -268,7 +268,7 @@ void ACPCtransform(float *Tacpc, float *Tmsp, float *AC, float *PC, char flg)
    // determined the AC-PC vector (a vector pointing from AC to PC)
    ACPC[0]=PC[0]-AC[0];
    ACPC[1]=PC[1]-AC[1];
-		
+
    normalizeVector(ACPC,2);
 
    // determine the rotation vector necessary to align the AC-PC vector to the +x axis
@@ -319,14 +319,14 @@ void brandImage(unsigned char *R, unsigned char *G, unsigned char *B, int nx, in
    }
 }
 
-void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,  
+void saveACPCimages(const char *imagefilename, char *ACregion, char *PCregion, char *RPregion,
 float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 {
    char filename[1024]; // filename variable for reading/writing data files
    unsigned char *Rchannel, *Gchannel, *Bchannel;
    int npHR;
    float TPIL2LPS[16];
-   float Tacpc[16], *invT; 
+   float Tacpc[16], *invT;
    float R[16],T[16];
    float ACPC[2];
    float X2I[16]; // 4x4 matrix that transforms a vector from xyz-coordinates to ijk-coordinates
@@ -347,7 +347,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
    multi(X2I, 4, 4,  RP, 4,  1, rp);
    multi(X2I, 4, 4,  PC, 4,  1, pc);
    multi(X2I, 4, 4,  AC, 4,  1, ac);
-		
+
    invT = inv4(Tmsp);
    im=resliceImage(volOrig,Orig.nx,Orig.ny,Orig.nz,Orig.dx,Orig.dy,Orig.dz,HR.nx,HR.ny,1, HR.dx,HR.dy,HR.dz,invT,LIN);
    free(invT);
@@ -368,10 +368,10 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 	for(int i=1; i<HR.nx-1; i++)
 	for(int j=1; j<HR.ny-1; j++)
 	{
-		if( ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i]==1 && 
-		(ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i + 1]==0 || 
-		ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i - 1]==0 || 
-		ACregion[npHR*(HR.nz-1)/2 + (j+1)*HR.nx + i ]==0 || 
+		if( ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i]==1 &&
+		(ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i + 1]==0 ||
+		ACregion[npHR*(HR.nz-1)/2 + j*HR.nx + i - 1]==0 ||
+		ACregion[npHR*(HR.nz-1)/2 + (j+1)*HR.nx + i ]==0 ||
 		ACregion[npHR*(HR.nz-1)/2 + (j-1)*HR.nx + i ]==0) )
 		{
 			Rchannel[j*HR.nx + i]=0;
@@ -379,10 +379,10 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 			Bchannel[j*HR.nx + i]=0;
 		}
 
-		if( PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i]==1 && 
-		(PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i + 1]==0 || 
-		PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i - 1]==0 || 
-		PCregion[npHR*(HR.nz-1)/2 + (j+1)*HR.nx + i ]==0 || 
+		if( PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i]==1 &&
+		(PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i + 1]==0 ||
+		PCregion[npHR*(HR.nz-1)/2 + j*HR.nx + i - 1]==0 ||
+		PCregion[npHR*(HR.nz-1)/2 + (j+1)*HR.nx + i ]==0 ||
 		PCregion[npHR*(HR.nz-1)/2 + (j-1)*HR.nx + i ]==0) )
 		{
 			Rchannel[j*HR.nx + i]=255;
@@ -390,10 +390,10 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 			Bchannel[j*HR.nx + i]=0;
 		}
 
-		if( RPregion[j*HR.nx + i]==1 && 
-		(RPregion[j*HR.nx + i + 1]==0 || 
-		RPregion[j*HR.nx + i - 1]==0 || 
-		RPregion[(j+1)*HR.nx + i ]==0 || 
+		if( RPregion[j*HR.nx + i]==1 &&
+		(RPregion[j*HR.nx + i + 1]==0 ||
+		RPregion[j*HR.nx + i - 1]==0 ||
+		RPregion[(j+1)*HR.nx + i ]==0 ||
 		RPregion[(j-1)*HR.nx + i ]==0) )
 		{
 			Rchannel[j*HR.nx + i]=0;
@@ -401,7 +401,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 			Bchannel[j*HR.nx + i]=255;
 		}
 	}
-   
+
    char dirname[512]; // name of the directory only
    char fullpath[512]; // directory + filename
    getDirectoryName(imagefilename, dirname);
@@ -421,7 +421,7 @@ float *AC, float *PC, float *RP, DIM HR, DIM Orig, short *volOrig, float *Tmsp)
 	// determined the AC-PC vector (a vector pointing from AC to PC)
 	ACPC[0]=PC[0]-AC[0];
 	ACPC[1]=PC[1]-AC[1];
-		
+
 	normalizeVector(ACPC,2);
 
 	// determine the rotation vector necessary to align the AC-PC vector to the +x axis
@@ -485,7 +485,7 @@ void saveACPClocation(const char *imagefilename, float *Tmsp, DIM Orig, float *A
 {
    FILE *fp;
    float ac[4], pc[4], rp[4];
-   float *invT; 
+   float *invT;
    float acpc_distance;
    float X2I[16]; // 4x4 matrix that transforms a vector from xyz-coordinates to ijk-coordinates
    char filename[1024];
@@ -498,14 +498,14 @@ void saveACPClocation(const char *imagefilename, float *Tmsp, DIM Orig, float *A
    multi(invT, 4, 4,  PC, 4,  1, pc);
    multi(invT, 4, 4,  RP, 4,  1, rp);
    free(invT);
- 
+
    xyz2ijk(X2I, Orig);
 
    multi(X2I, 4, 4,  ac, 4,  1, ac);
    multi(X2I, 4, 4,  pc, 4,  1, pc);
    multi(X2I, 4, 4,  rp, 4,  1, rp);
 
-   if(opt_v) 
+   if(opt_v)
    {
       printf("\n%s\n",imagefilename);
       printf("\tVSPS detected at (i,j,k) = (%5.1f, %5.1f, %5.1f)\n",rp[0],rp[1],rp[2]);
@@ -562,7 +562,7 @@ void compute_MSP_parameters_from_Tmsp(float *Tmsp, float *n, float *d)
    float *invTmsp;
 
    // a point on the MSP in the original image xyz coordinate system
-   float p[3]; 
+   float p[3];
 
    invTmsp = inv4(Tmsp);
 
@@ -627,7 +627,7 @@ void updateTmsp(const char *imagefilename, float *Tmsp, float *RP, float *AC, fl
 
    // Assume that the AC and PC points are projected onto the zx-plane. Let `ACPC_zx[3]' be a vector that goes
    // from the projected AC to the projected PC on the zx-plane.
-   float ACPC_zx[3]; 
+   float ACPC_zx[3];
 
    ACPC_zx[0] = PC[0]-AC[0];
    ACPC_zx[1] = 0.0; // projection onto the zx-plane
@@ -648,7 +648,7 @@ void updateTmsp(const char *imagefilename, float *Tmsp, float *RP, float *AC, fl
 
    // Note: when rotation R is applied to the AC and PC vectors, their y-coordinates do not
    // change, since the rotation is about the y-axis.
-   // The z-coordinate will be equal since the rotation makes the AC-PC vector horizontal 
+   // The z-coordinate will be equal since the rotation makes the AC-PC vector horizontal
    // in the zx-plate
 
    multi(R, 4, 4,  AC, 4,  1, AC);
@@ -702,14 +702,14 @@ void updateTmsp(const char *imagefilename, float *Tmsp, float *RP, float *AC, fl
          fprintf(fp,"# Input volume: %s\n\n",imagefilename);
          fprintf(fp,"# Estimated mid-sagittal plane: (%8.7fx) + (%8.7fy) + (%8.7fz) = %8.5f (mm)\n", n[0],n[1],n[2],d);
          fprintf(fp,"%8.7f %8.7f %8.7f %8.5f\n\n", n[0],n[1],n[2],d);
-      
+
          fclose(fp);
       }
    }
 }
 
 float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, short *xPC, short *yPC, short *zPC, int opt_T2)
-{	
+{
    model_file_hdr mhdr;
    DIM HR, LR;
    float *pc_template; // PC template, array of dimension PCtemplatesize
@@ -720,7 +720,7 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
    float I2X[16]; // 4x4 matrix that transfomrs a vector from ijk-coordinates to xyz-coordinates
    int PCint[3]; // variables storing PC ijk coordinates
    int npHR, nvHR;
-   int *x, *y, *z; 
+   int *x, *y, *z;
    int n;
    FILE *fp;
 
@@ -731,16 +731,16 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
       exit(1);
    }
 
-   fread(&mhdr, sizeof(mhdr), 1, fp); 
+   fread(&mhdr, sizeof(mhdr), 1, fp);
 
-   if(bigEndian()) 
+   if(bigEndian())
    {
       swap_model_file_hdr(&mhdr);
    }
 
    HR.nx=HR.ny=mhdr.nxHR;
    LR.nz=HR.nz=mhdr.nzHR;
-   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR; 
+   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR;
    LR.nx=LR.ny=mhdr.nxLR;
    LR.dy=LR.dx=2.0*HR.dx;
 
@@ -790,7 +790,7 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
 
    {
       int ns;
-			
+
       ns = mhdr.PCtemplatesize*mhdr.nangles;
 
       for(int s=0; s<ns; s++)
@@ -820,7 +820,7 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
 
 			if(cc>ccmax) ccmax=cc;
 		}
-		
+
 		ccmap[npHR*z[v] + y[v]*HR.nx + x[v]] = ccmax;
 	}
 
@@ -828,7 +828,7 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
 	for(int v=0; v<n; v++)
 	{
 		cc = ccmap[npHR*z[v] + y[v]*HR.nx + x[v]];
-		if(cc>ccmax) 
+		if(cc>ccmax)
 		{
 			ccmax=cc;
 			PCint[0]=x[v]; PCint[1]=y[v]; PCint[2]=z[v];
@@ -858,7 +858,7 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
    FILE *fp;
    DIM HR, LR;
    int npHR, nvHR;
-   int *x, *y, *z; 
+   int *x, *y, *z;
    int n;
    int ACint[3]; // variables storing AC ijk coordinates
    float *ac_template; // AC template, array of dimension ACtemplatesize
@@ -875,16 +875,16 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
       exit(1);
    }
 
-   fread(&mhdr, sizeof(mhdr), 1, fp); 
+   fread(&mhdr, sizeof(mhdr), 1, fp);
 
-   if(bigEndian()) 
+   if(bigEndian())
    {
       swap_model_file_hdr(&mhdr);
    }
 
    HR.nx=HR.ny=mhdr.nxHR;
    LR.nz=HR.nz=mhdr.nzHR;
-   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR; 
+   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR;
    LR.nx=LR.ny=mhdr.nxLR;
    LR.dy=LR.dx=2.0*HR.dx;
 
@@ -935,7 +935,7 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
 
 	{
 		int ns;
-			
+
 		ns = mhdr.ACtemplatesize*mhdr.nangles;
 
 		for(int s=0; s<ns; s++)
@@ -964,7 +964,7 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
             if(opt_T2) cc *= -1.0;
 			if(cc>ccmax) ccmax=cc;
 		}
-		
+
 		ccmap[z[v]*npHR + y[v]*HR.nx + x[v]] = ccmax;
 	}
 
@@ -972,7 +972,7 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
 	for(int v=0; v<n; v++)
 	{
 		cc = ccmap[z[v]*npHR + y[v]*HR.nx + x[v]];
-		if(cc>ccmax) 
+		if(cc>ccmax)
 		{
 			ccmax=cc;
 			ACint[0]=x[v]; ACint[1]=y[v]; ACint[2]=z[v];
@@ -1001,11 +1001,11 @@ void initialAC(float Ax, float Ay, float Bx, float By, float *Cx, float *Cy, flo
 
 	AB = sqrt( (double) ((Ax-Bx)*(Ax-Bx) + (Ay-By)*(Ay-By)) );
 
-	*Cx = (float)( Ax + parcomMean*(Bx-Ax)/AB + percomMean*(By-Ay)/AB); 
+	*Cx = (float)( Ax + parcomMean*(Bx-Ax)/AB + percomMean*(By-Ay)/AB);
 	*Cy = (float)( Ay + parcomMean*(By-Ay)/AB - percomMean*(Bx-Ax)/AB);
 }
 
-char *defineACregion(DIM dim, float *RP, float *PC, float parcomMean, float percomMean, double ACsr) 
+char *defineACregion(DIM dim, float *RP, float *PC, float parcomMean, float percomMean, double ACsr)
 {
    double r;
    char *ACregion;
@@ -1035,11 +1035,11 @@ char *defineACregion(DIM dim, float *RP, float *PC, float parcomMean, float perc
    return(ACregion);
 }
 
-char *definePCregion(DIM HR, float *RP, float *RPPCmean, double PCsr) 
+char *definePCregion(DIM HR, float *RP, float *RPPCmean, double PCsr)
 {
    char *PCregion;
    float rp[4];
-   float x, y; 
+   float x, y;
    float X2I[16]; // 4x4 matrix that transforms a vector from xyz-coordinates to ijk-coordinates
    double r;
    int np;
@@ -1068,7 +1068,7 @@ char *definePCregion(DIM HR, float *RP, float *RPPCmean, double PCsr)
    return(PCregion);
 }
 
-void detectRP(float *RP1, float *RP2, char *modelfile, short *volumeMSP_LR, short *mask_LR, short *xRP, 
+void detectRP(float *RP1, float *RP2, char *modelfile, short *volumeMSP_LR, short *mask_LR, short *xRP,
 short *yRP, short *zRP, int opt_T2)
 {
    FILE *fp;
@@ -1091,16 +1091,16 @@ short *yRP, short *zRP, int opt_T2)
       exit(1);
    }
 
-   fread(&mhdr, sizeof(mhdr), 1, fp); 
+   fread(&mhdr, sizeof(mhdr), 1, fp);
 
-   if(bigEndian()) 
+   if(bigEndian())
    {
       swap_model_file_hdr(&mhdr);
    }
 
    HR.nx=HR.ny=mhdr.nxHR;
    LR.nz=HR.nz=mhdr.nzHR;
-   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR; 
+   LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR;
    LR.nx=LR.ny=mhdr.nxLR;
    LR.dy=LR.dx=2.0*HR.dx;
 
@@ -1134,7 +1134,7 @@ short *yRP, short *zRP, int opt_T2)
 
    {
 		int ns;
-			
+
 		ns = mhdr.RPtemplatesize*mhdr.nangles;
 
 		for(int s=0; s<ns; s++)
@@ -1166,7 +1166,7 @@ short *yRP, short *zRP, int opt_T2)
 
 			if(cc>ccmax) ccmax=cc;
 		}
-		
+
 		ccmap_LR[y*LR.nx + x] = ccmax;
 	}
 
@@ -1175,7 +1175,7 @@ short *yRP, short *zRP, int opt_T2)
 	for(int y=mhdr.RPtemplateradius; y<LR.ny-mhdr.RPtemplateradius; y++)
 	{
 		cc = ccmap_LR[y*LR.nx + x];
-		if(cc>ccmax) 
+		if(cc>ccmax)
 		{
 			ccmax=cc;
 			RPint[0]=x; RPint[1]=y;
@@ -1198,7 +1198,7 @@ short *yRP, short *zRP, int opt_T2)
 	for(int y=mhdr.RPtemplateradius; y<LR.ny-mhdr.RPtemplateradius; y++)
 	{
 		cc = ccmap_LR[y*LR.nx + x];
-		if(cc>ccmax) 
+		if(cc>ccmax)
 		{
 			ccmax=cc;
 			RPint[0]=x; RPint[1]=y;
@@ -1260,13 +1260,13 @@ char *expandMask(short *mask_HR, DIM HR, float *RPmean, double RPsr)
       r2 *= r2;
       r = sqrt(r1 + r2);
 
-      if(r >= RPsr) 
-      {	
+      if(r >= RPsr)
+      {
          mask_HR[k*npHR + j*HR.nx + i]=0;
          RPregion[j*HR.nx + i]=0;
       }
       else
-      {	
+      {
          RPregion[j*HR.nx + i]=1;
       }
    }
@@ -1299,13 +1299,13 @@ short *thresholdImageOtsu(short *im, int nv, int *nbv)
 	thresh = low + k*bw;
 
 	*nbv = 0;
-	for(int i=0; i<nv; i++) 
-	if(im[i]<=thresh) 
-		msk[i]=0; 
-	else 
-	{ 
-		msk[i]=1; 
-		(*nbv)++; 
+	for(int i=0; i<nv; i++)
+	if(im[i]<=thresh)
+		msk[i]=0;
+	else
+	{
+		msk[i]=1;
+		(*nbv)++;
 	}
 
 	free(h);
@@ -1330,8 +1330,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
 
    model_file_hdr mhdr;
    model_file_tail mtail;
-   DIM HR; 
-   DIM LR; 
+   DIM HR;
+   DIM LR;
    DIM Orig;
    short *volOrig; // original input volume from the training set
    short *mask_HR;
@@ -1340,7 +1340,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
    char *PCregion1, *PCregion2, *PCregion;
    char *ACregion1, *ACregion2, *ACregion;
    char *RPregion;
-   float *invT; 
+   float *invT;
    int nbv;
 
    if(ARTHOME==NULL) getARTHOME();
@@ -1351,7 +1351,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       errorMessage("No input image filename in detect_AC_PC_MSP().");
    }
 
-   // ensure that the specified image has either a .hdr or a .nii extension 
+   // ensure that the specified image has either a .hdr or a .nii extension
    if( !checkNiftiFileExtension((const char *)imagefilename) )
    {
       errorMessage("The image filename in detect_AC_PC_MSP() must have a `.hdr' or `.nii' extension.");
@@ -1373,8 +1373,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       errorMessage("Invalid orientation code in detect_AC_PC_MSP(). The code is not one of the 48 legal ones.");
    }
 
-   // If a specific model is not specified, 
-   // then use the standard model (T1acpc.mdl) in ARTHOME directory. 
+   // If a specific model is not specified,
+   // then use the standard model (T1acpc.mdl) in ARTHOME directory.
 
    if(modelfile[0]=='\0')
    {
@@ -1389,7 +1389,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       // read information from the model file and initialize some variables
 
       // file pointer for opening the model file
-      FILE *fp; 
+      FILE *fp;
 
       fp = fopen(modelfilepath,"r"); // open setup file for reading
       if( fp == NULL )
@@ -1398,16 +1398,16 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
          exit(1);
       }
 
-      fread(&mhdr, sizeof(mhdr), 1, fp); 
+      fread(&mhdr, sizeof(mhdr), 1, fp);
 
-      if(bigEndian()) 
+      if(bigEndian())
       {
          swap_model_file_hdr(&mhdr);
       }
 
       HR.nx=HR.ny=mhdr.nxHR;
       LR.nz=HR.nz=mhdr.nzHR;
-      LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR; 
+      LR.dz=HR.dz=HR.dy=HR.dx=mhdr.dxHR;
       LR.nx=LR.ny=mhdr.nxLR;
       LR.dy=LR.dx=2.0*HR.dx;
 
@@ -1417,7 +1417,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
 
       fread(&mtail, sizeof(mtail), 1, fp);
 
-      if(bigEndian()) 
+      if(bigEndian())
       {
          swap_model_file_tail(&mtail);
       }
@@ -1524,7 +1524,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
          for(int i=0; i<4; i++) RP1[i]=RP2[i]=RP[i];
       }
 
-      PCregion1=definePCregion(HR, RP1, mtail.RPPCmean, searchradius[2]); 
+      PCregion1=definePCregion(HR, RP1, mtail.RPPCmean, searchradius[2]);
       if(opt_PC)
       {
          PCccmax[0] = detectPC(PC1, modelfilepath, volumeMSP_HR, PCregion1, xPC, yPC, zPC, opt_T2);
@@ -1546,7 +1546,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
          ACccmax[0]=0.0;
       }
 
-      PCregion2=definePCregion(HR, RP2, mtail.RPPCmean, searchradius[2]); 
+      PCregion2=definePCregion(HR, RP2, mtail.RPPCmean, searchradius[2]);
       if(opt_PC)
       {
          PCccmax[1] = detectPC(PC2, modelfilepath, volumeMSP_HR, PCregion2, xPC, yPC, zPC, opt_T2);
@@ -1568,18 +1568,18 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
          ACccmax[1]=0.0;
       }
 
-      if((ACccmax[0]+PCccmax[0])>(ACccmax[1]+PCccmax[1])) 
-      { 
-         PC[0]=PC1[0]; PC[1]=PC1[1]; PC[2]=PC1[2]; PC[3]=PC1[3]; 
-         AC[0]=AC1[0]; AC[1]=AC1[1]; AC[2]=AC1[2]; AC[3]=AC1[3]; 
-         RP[0]=RP1[0]; RP[1]=RP1[1]; RP[2]=RP1[2]; RP[3]=RP1[3]; 
+      if((ACccmax[0]+PCccmax[0])>(ACccmax[1]+PCccmax[1]))
+      {
+         PC[0]=PC1[0]; PC[1]=PC1[1]; PC[2]=PC1[2]; PC[3]=PC1[3];
+         AC[0]=AC1[0]; AC[1]=AC1[1]; AC[2]=AC1[2]; AC[3]=AC1[3];
+         RP[0]=RP1[0]; RP[1]=RP1[1]; RP[2]=RP1[2]; RP[3]=RP1[3];
          ACregion=ACregion1; PCregion=PCregion1;
       }
-      else 
-      { 
-         PC[0]=PC2[0]; PC[1]=PC2[1]; PC[2]=PC2[2]; PC[3]=PC2[3]; 
-         AC[0]=AC2[0]; AC[1]=AC2[1]; AC[2]=AC2[2]; AC[3]=AC2[3]; 
-         RP[0]=RP2[0]; RP[1]=RP2[1]; RP[2]=RP2[2]; RP[3]=RP2[3]; 
+      else
+      {
+         PC[0]=PC2[0]; PC[1]=PC2[1]; PC[2]=PC2[2]; PC[3]=PC2[3];
+         AC[0]=AC2[0]; AC[1]=AC2[1]; AC[2]=AC2[2]; AC[3]=AC2[3];
+         RP[0]=RP2[0]; RP[1]=RP2[1]; RP[2]=RP2[2]; RP[3]=RP2[3];
          ACregion=ACregion2; PCregion=PCregion2;
       }
 
@@ -1590,8 +1590,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
    }
 
    /////////////////////////////////////////////////////////////////////////////////////////////////
-	
-   // save the results 
+
+   // save the results
    updateTmsp(imagefilename, Tmsp, RP, AC, PC);
 
    saveACPClocation(imagefilename, Tmsp, Orig, AC, PC, RP, opt_v);
@@ -1602,7 +1602,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       // the code in this block changes the AC and PC cooridnates from the (x,y,z) system in MSP aligned PIL
       // orientation to (x,y,z) system in the original image orientation
 
-      float *invT; 
+      float *invT;
 
       invT = inv4(Tmsp);
 
@@ -1697,8 +1697,8 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       u[i] = pc[i] - ac[i];
    }
 
-   n[0] = v[2]*u[1]-v[1]*u[2]; 
-   n[1] = v[0]*u[2]-v[2]*u[0]; 
+   n[0] = v[2]*u[1]-v[1]*u[2];
+   n[1] = v[0]*u[2]-v[2]*u[0];
    n[2] = v[1]*u[0]-v[0]*u[1];
 
    normalizeVector(n,3);
@@ -1745,17 +1745,17 @@ float reflectVertex(int pmax, float fac)
 	newV=-reflection_cross_correlation2(gimage,gdim,VertexNew[0],VertexNew[1],
 	VertexNew[2]);
 
-	if (newV < value[pmax]) 
+	if (newV < value[pmax])
 	{
 		value[pmax]=newV;
 
-		vertexSum[0] += VertexNew[0]-vertex[pmax][0]; 
+		vertexSum[0] += VertexNew[0]-vertex[pmax][0];
 		vertex[pmax][0]=VertexNew[0];
 
-		vertexSum[1] += VertexNew[1]-vertex[pmax][1]; 
+		vertexSum[1] += VertexNew[1]-vertex[pmax][1];
 		vertex[pmax][1]=VertexNew[1];
 
-		vertexSum[2] += VertexNew[2]-vertex[pmax][2]; 
+		vertexSum[2] += VertexNew[2]-vertex[pmax][2];
 		vertex[pmax][2]=VertexNew[2];
 	}
 
@@ -1772,7 +1772,7 @@ int dsm(void)
    float sum,ysave;
    float newV;
 
-   for (j=0;j<3;j++) 
+   for (j=0;j<3;j++)
    {
       sum=0.0;
       for (i=0;i<4;i++) sum += vertex[i][j];
@@ -1791,14 +1791,14 @@ int dsm(void)
 		else
 		{
 			pmax=1; pnmax=0;
-		} 
+		}
 
-		for (i=0;i<4;i++) 
-		if (value[i] > value[pmax]) 
+		for (i=0;i<4;i++)
+		if (value[i] > value[pmax])
 		{
 			pnmax=pmax;
 			pmax=i;
-		} 
+		}
 		else if(value[i] > value[pnmax] && i != pmax)
 		{
 		  	pnmax=i;
@@ -1812,7 +1812,7 @@ int dsm(void)
 		tol=2.0*fabs(value[pmax]-value[pmin])/
 		(fabs(value[pmax])+fabs(value[pmin]));
 
-		if (tol < 1.0e-6 ) 
+		if (tol < 1.0e-6 )
 			break;
 
 		newV=reflectVertex(pmax,-1.0);
@@ -1821,15 +1821,15 @@ int dsm(void)
 		{
 			newV=reflectVertex(pmax,2.0);
 		}
-		else if (newV >= value[pnmax]) 
+		else if (newV >= value[pnmax])
 		{
 			ysave=value[pmax];
 			newV=reflectVertex(pmax,0.5);
-			if (newV >= ysave) 
+			if (newV >= ysave)
 			{
-				for (i=0;i<4;i++) 
+				for (i=0;i<4;i++)
 				{
-					if (i != pmin) 
+					if (i != pmin)
 					{
 
 						vertex[i][0]=vertexSum[0]=0.5*(vertex[i][0]+vertex[pmin][0]);
@@ -1841,23 +1841,23 @@ int dsm(void)
 					}
 				}
 
-   			for (j=0;j<3;j++) 
+   			for (j=0;j<3;j++)
 				{
 					sum=0.0;
    				for (i=0;i<4;i++) sum += vertex[i][j];
    				vertexSum[j]=sum;
 				}
 			}
-		} 
+		}
 	}
 
 	return(pmin);
 }
 
-/* Denote the input image by Q. If every point in Q is reflected with respect 
+/* Denote the input image by Q. If every point in Q is reflected with respect
 to the plane a*x+b*y+c*z=d,  a new image, R, will be obtained. This function
-returns the cross-correlation between Q and R 
-given by: C(Q,R) = Q.R/sqrt(Q.Q*R.R).  (a,b,c) is a unit vector perpendicular 
+returns the cross-correlation between Q and R
+given by: C(Q,R) = Q.R/sqrt(Q.Q*R.R).  (a,b,c) is a unit vector perpendicular
 to the plane. d is the perpendicular distance between the origin and the
 plane  */
 
@@ -1901,8 +1901,8 @@ float optimizeNormalVector(short *image,DIM dim, float *A, float *B, float *C)
    T[8]=0.0; T[9]=0.0; T[10]=1.0; T[11]=-z0;
    T[12]=0.0; T[13]=0.0; T[14]=0.0; T[15]=1.0;
 
-   *A /= (*C); 
-   *B /= (*C); 
+   *A /= (*C);
+   *B /= (*C);
    *C = 1.0;
 
    invT = inv4(T);
@@ -1953,7 +1953,7 @@ float reflection_cross_correlation(short *image, DIM dim, float a, float b, floa
    static int dumcount=0;
    int   i,j,k;
    float x,y,z;
-   float dp;        
+   float dp;
    float dum1,dum2,dum3;
    int q;
    int np;
@@ -1981,7 +1981,7 @@ float reflection_cross_correlation(short *image, DIM dim, float a, float b, floa
 
    Sf=Sg=0.0;
    Sff=Sfg=Sgg=0.0;
-   N=q=0; 
+   N=q=0;
    for(k=0;k<dim.nz;k++)
    {
       dum1=(k-kc)*c1;
@@ -2020,11 +2020,11 @@ float reflection_cross_correlation(short *image, DIM dim, float a, float b, floa
             }
 
             q++;
- 
+
          }
       }
    }
-   
+
    if( N==0 || ((Sff - Sf*Sf/N)*(Sgg - Sg*Sg/N))==0.0 )
       return(0.0);
    else
@@ -2041,7 +2041,7 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
    float cc;
    float ccmax;
 
-   /* Coordinates of the input image "center of gravity" in mm. 
+   /* Coordinates of the input image "center of gravity" in mm.
    Origin is taken to be the center of the image volume. */
    float x_cm,y_cm,z_cm;
 
@@ -2101,15 +2101,15 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
       }
    }
 
-   // compute x_cm,y_cm,z_cm the coordinates of the image "center of gravity" 
+   // compute x_cm,y_cm,z_cm the coordinates of the image "center of gravity"
    // in (mm) with respect to the image volume center as origin
    compute_cm(image, dim.nx, dim.ny, dim.nz, dim.dx, dim.dy, dim.dz, &x_cm, &y_cm, &z_cm);
 
-//printf("\n******x_cm=%7.3f y_cm=%7.3f z_cm=%7.3f (mm)\n",x_cm,y_cm,z_cm); 
+//printf("\n******x_cm=%7.3f y_cm=%7.3f z_cm=%7.3f (mm)\n",x_cm,y_cm,z_cm);
 //printf("i = %f\n", (x_cm + dim.dx*(dim.nx-1.0)/2.0)/1.5 );
 //printf("j = %f\n", (y_cm + dim.dy*(dim.ny-1.0)/2.0)/0.859375 );
 //printf("k = %f\n", (z_cm + dim.dz*(dim.nz-1.0)/2.0)/0.859375 );
-	
+
 	// Sff must be computed before calling reflection_cross_correlation()
 	// or reflection_cross_correlation2()
 	Sff=0.0;
@@ -2117,7 +2117,7 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
 	for(int i=0;i<dim.nx*dim.ny*dim.nz;i++)
 	{
 		dum=image[i];
-		if(dum!=0) 
+		if(dum!=0)
 		{
 			Sff += (dum*dum);
 			Sf += dum;
@@ -2126,26 +2126,26 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
 
    ccmax=0.0;
 
-   for(int i=0;i<N;i++) 
+   for(int i=0;i<N;i++)
    {
-      /* The samples theta and z define a direction in space. Find the 
+      /* The samples theta and z define a direction in space. Find the
       unit vector (a,b,c) in that direction. */
       a=(float)(sin(phi[i])*cos(theta[i]));
       b=(float)(sin(phi[i])*sin(theta[i]));
       c=(float)cos(phi[i]);
 
-      d = a*x_cm + b*y_cm + c*z_cm; 
+      d = a*x_cm + b*y_cm + c*z_cm;
 
       /* make sure d is non-negative */
-      if(d<0.0)  
+      if(d<0.0)
       {
-         a *= -1.0; 
-         b *= -1.0; 
-         c *= -1.0; 
+         a *= -1.0;
+         b *= -1.0;
+         c *= -1.0;
          d *= -1.0;
       }
 
-      /* find the cross-correlation between image and its reflection 
+      /* find the cross-correlation between image and its reflection
       about the plane ax+by+cz=d */
       cc=reflection_cross_correlation(image,dim,a,b,c,d);
 
@@ -2158,15 +2158,15 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
       }
    }
 
-   dum=(float)sqrt((double)A1*A1 + B1*B1 + C1*C1 ); 
+   dum=(float)sqrt((double)A1*A1 + B1*B1 + C1*C1 );
    a=A1/dum; b=B1/dum; c=C1/dum; d=1./dum;
 //printf("\nInitial guess:");
 //printf("\nplane of symmetry: (%7.3f,%7.3f,%7.3f).(x,y,z) = %7.3f", a,b,c,d);
 //printf("\ncross correlation = %6.4f\n",ccmax);
 
    cc=optimizeNormalVector(image,dim,&A1,&B1,&C1);
-  
-//dum=(float)sqrt((double)A1*A1 + B1*B1 + C1*C1 ); 
+
+//dum=(float)sqrt((double)A1*A1 + B1*B1 + C1*C1 );
 //a=A1/dum; b=B1/dum; c=C1/dum; d=1./dum;
 //printf("\nRefined initial guess:");
 //printf("\nplane of symmetry: (%7.3f,%7.3f,%7.3f).(x,y,z) = %7.3f", a,b,c,d);
@@ -2180,12 +2180,12 @@ void findInitialNormalVector(short *image, DIM dim, float *A, float *B,float *C)
 }
 
 // (A,B,C)=(a,b,c)/d  (Ax+By+Cz=1)  (ax+by+cz=d)
-float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, float *A, float *B, float *C) 
+float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, float *A, float *B, float *C)
 {
    int low,high;
    int nv;
    DIM dim[3];
-   short *image[3]; 
+   short *image[3];
    float newvs;      /* new voxel size in mm */
    float cc;
 
@@ -2209,7 +2209,7 @@ float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, fl
    }
 
    for(int i=0;i<nv;i++)
-   if(im_in[i] <= low || im_in[i] >= high) 
+   if(im_in[i] <= low || im_in[i] >= high)
       image[0][i]=0;
    else
       image[0][i]=im_in[i];
@@ -2235,8 +2235,8 @@ float msp(short *im_in, int nx, int ny, int nz, float dx, float dy, float dz, fl
    dim[1].nx,dim[1].ny,dim[1].nz, dim[1].dx,dim[1].dy,dim[1].dz);
 
    findInitialNormalVector(image[2],dim[2], A, B, C);
-   cc=optimizeNormalVector(image[1],dim[1], A, B, C); 
-//cc=optimizeNormalVector(image[0],dim[0], A, B, C); 
+   cc=optimizeNormalVector(image[1],dim[1], A, B, C);
+//cc=optimizeNormalVector(image[0],dim[0], A, B, C);
 
    free(image[0]);
    free(image[1]);
@@ -2276,18 +2276,14 @@ int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned
     int L;
 
     L = strlen(filename);
-    // there was bug here: I had length L instead of L+1 for pngfilename
-    // this was simple to fix but very hard to find
-    // as a result free(pngfilename) was failing
-    pngfilename = (char *)calloc(L+1,sizeof(char)); 
-
+    pngfilename = (char *)calloc(L,sizeof(char));
     cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
-    stpcpy(pngfilename, filename);
+    strcpy(pngfilename, filename);
     pngfilename[L-1]='g';
     pngfilename[L-2]='n';
     pngfilename[L-3]='p';
 
-    sprintf(cmnd,"pnmtopng %s > %s",filename,pngfilename); 
+    sprintf(cmnd,"pnmtopng %s > %s",filename,pngfilename);
     if(opt_png) system(cmnd);
 
     free(pngfilename);
@@ -2333,7 +2329,7 @@ void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp)
 /////////////////////////////////
 // Manual Intervention to correct OASIS subject 0221
 //a=0.04; b=0.006; c=0.999; d=4.168;
-//A=0.04/d; B=0.006/d; C=0.999/d; 
+//A=0.04/d; B=0.006/d; C=0.999/d;
 /////////////////////////////////
 
 //
@@ -2359,10 +2355,10 @@ void computeTmsp(char *orientation, short *volOrig, DIM dim, float *Tmsp)
 
 void combine_warps_and_trans(int nx, int ny, int nz, float dx, float dy, float dz, float *Xwarp, float *Ywarp, float *Zwarp, float *T)
 {
-   float  x,y,z;   
-   float  xx,yy,zz;   
+   float  x,y,z;
+   float  xx,yy,zz;
    float xc,yc,zc;
-   float *invT;		
+   float *invT;
    int v;
    int np;
 
@@ -2374,9 +2370,9 @@ void combine_warps_and_trans(int nx, int ny, int nz, float dx, float dy, float d
    yc=dy*(ny-1)/2.0;
    zc=dz*(nz-1)/2.0;
 
-   for(int k=0;k<nz;k++) 
-   for(int j=0;j<ny;j++) 
-   for(int i=0;i<nx;i++) 
+   for(int k=0;k<nz;k++)
+   for(int j=0;j<ny;j++)
+   for(int i=0;i<nx;i++)
    {
       v = k*np + j*nx + i;
       // (i*dx-xc) converts from image coordinates (i,j,z) to (x,y,z) coordinates
@@ -2438,7 +2434,7 @@ void forwardTCSAP(float *xvec, float *yvec, float *zvec, float *TLHC, float *ang
    TLHC_ijk[2] = -(dim.nz-1.0)/2.0;  // taking (int) is not necessary here
 
    // converting to units of mm in xyz system
-   TLHC_xyz[0] = TLHC_ijk[0]*dim.dx; 
+   TLHC_xyz[0] = TLHC_ijk[0]*dim.dx;
    TLHC_xyz[1] = TLHC_ijk[1]*dim.dy;
    TLHC_xyz[2] = TLHC_ijk[2]*dim.dz;
 
@@ -2473,7 +2469,7 @@ void  backwardTCSAP(float *xvec, float *yvec, float *angle)
 
    if ( (int)(1000.0*gamma) == (int)(1000.0*pi_over_2)  || alpha == 0.0)
       beta=0.0;
-   else 
+   else
       beta = asinf( (-xvec[1]-cosf(alpha)*sinf(gamma)) / (cosf(gamma)*sinf(alpha)) );
 
    angle[0] = alpha*180.0/pi;
@@ -2516,7 +2512,7 @@ void update_qsform(nifti_1_header &hdr, const char *neworient)
    R.m[3][0]=T[12]; R.m[3][1]=T[13]; R.m[3][2]=T[14]; R.m[3][3]=T[15];
 
    nifti_mat44_to_quatern(R,  &(hdr.quatern_b), &(hdr.quatern_c), &(hdr.quatern_d),
-   &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z), 
+   &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z),
    &(hdr.pixdim[1]), &(hdr.pixdim[2]), &(hdr.pixdim[3]), &(hdr.pixdim[0]));
 }
 
@@ -2525,7 +2521,7 @@ void update_qsform(nifti_1_header &hdr, const char *neworient)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, float *PC, float *VSPS)
 {
-   float ac[4], pc[4];  
+   float ac[4], pc[4];
    char orientation[4]="";
    char modelfile[1024]="";
 
@@ -2547,7 +2543,7 @@ void find_pil_transformation(char *imfile, DIM dim, float *pilT, float *AC, floa
 ///////////////////////////////////////////////////////////////////////////////////////////////
 void find_pil_transformation(char *imfile, DIM dim, float *pilT)
 {
-   float ac[4], pc[4];  
+   float ac[4], pc[4];
    char orientation[4]="";
    char modelfile[1024]="";
 

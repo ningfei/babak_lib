@@ -30,7 +30,7 @@ void transform_P(float *P, int nl, float *T)
 }
 
 // This function makes a ppm file from the MSP and displays 'nl' detected landmarks.
-//im: the input image 
+//im: the input image
 //lmx and lmy: are pointers to nl size arrays including the (x,y) for the nl landmarks
 //ppmfile: the output file name
 void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
@@ -43,9 +43,9 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
    FILE *fp;
 
    int kk=im.nz/2;
-   
+
    /*size of the mark*/
-   int d=4; 
+   int d=4;
 
    float temp;
 
@@ -78,22 +78,22 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
          for(int m=0;m<nl;m++)
          {
 //uncomment to save in different colours
-//            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; } 
-//            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; } 
-//            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; } 
-//            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; } 
-//            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; } 
-//            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; } 
-//            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; } 
-//            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; } 
-            
+//            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; }
+//            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; }
+//            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; }
+//            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; }
+//            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; }
+//            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; }
+//            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; }
+//            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; }
+
             if( (i==ii[m] && jj[m]-d<j && j<jj[m]+d) || (j==jj[m] && ii[m]-d<i && i<ii[m]+d) )
             {
                fwrite(colour,1,3,fp);
                colourflag=1;
             }
          }
-         if(colourflag==0) 
+         if(colourflag==0)
          {
             fwrite(imgTemp+im.np*kk+im.nx*j+i,1,1,fp);
             fwrite(imgTemp+im.np*kk+im.nx*j+i,1,1,fp);
@@ -114,12 +114,12 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
     L = strlen(ppmfile);
     pngfilename = (char *)calloc(L,sizeof(char));
     cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
-    stpcpy(pngfilename, ppmfile);
+    strcpy(pngfilename, ppmfile);
     pngfilename[L-1]='g';
     pngfilename[L-2]='n';
     pngfilename[L-3]='p';
 
-    sprintf(cmnd,"pnmtopng %s > %s",ppmfile,pngfilename); 
+    sprintf(cmnd,"pnmtopng %s > %s",ppmfile,pngfilename);
     if(opt_png) system(cmnd);
 
     free(pngfilename);
@@ -145,12 +145,12 @@ void convert_to_xyz(float *P, int n, SHORTIM im)
    for(int i=0; i<n; i++)
    {
       // note that P is (3 x n)
-      dum[0]=P[0*n + i]; 
-      dum[1]=P[1*n + i]; 
+      dum[0]=P[0*n + i];
+      dum[1]=P[1*n + i];
       dum[2]=P[2*n + i];
       multi(T,4,4,dum,4,1,dum);
-      P[0*n + i]=dum[0]; 
-      P[1*n + i]=dum[1]; 
+      P[0*n + i]=dum[0];
+      P[1*n + i]=dum[1];
       P[2*n + i]=dum[2];
    }
 }
@@ -169,17 +169,17 @@ void convert_to_ijk(float *P, int n, SHORTIM im)
    for(int i=0; i<n; i++)
    {
       // note that P is (3 x n)
-      dum[0]=P[0*n + i]; 
-      dum[1]=P[1*n + i]; 
+      dum[0]=P[0*n + i];
+      dum[1]=P[1*n + i];
       dum[2]=P[2*n + i];
       multi(T,4,4,dum,4,1,dum);
-      P[0*n + i]=dum[0]; 
-      P[1*n + i]=dum[1]; 
+      P[0*n + i]=dum[0];
+      P[1*n + i]=dum[1];
       P[2*n + i]=dum[2];
    }
 }
 
-// matches P2=(x2,y2) as closely as possible to P1=(x1,y1) 
+// matches P2=(x2,y2) as closely as possible to P1=(x1,y1)
 void point_match(float *x1, float *y1, float *x2, float *y2, int N, float *T)
 {
    float params[3];
@@ -252,7 +252,7 @@ void Procrustes(float *Q, float *Qavg, int n, float *P, float *Pavg, float *TLM)
    float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
    float Ut[9], V[9], I[9];
    float T[3]; // 3x1 translation vector
-   float R[9]; // 3x3 rotation matrix 
+   float R[9]; // 3x3 rotation matrix
    float S[3]; // 3x1 vector of singular values
 
    Pavg[0] = (float)removeVectorMean(P, n);
@@ -271,12 +271,12 @@ void Procrustes(float *Q, float *Qavg, int n, float *P, float *Pavg, float *TLM)
 
       // if(opt_v) printf("det(R) = %f\n", det3(R));
 
-      if( det3(R) < 0.0 ) 
-      {  
+      if( det3(R) < 0.0 )
+      {
          // if(opt_v) printf("Negative determinant (reflection) detected\n");
-         V[2] *= -1.0; 
-         V[5] *= -1.0; 
-         V[8] *= -1.0; 
+         V[2] *= -1.0;
+         V[5] *= -1.0;
+         V[8] *= -1.0;
          multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
 
          // if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
@@ -314,7 +314,7 @@ void Procrustes(float *Q, int n, float *P, float *TLM)
    float Ht[9]; // H=P*Q' Ht=Q*P' (' means transpose in my notation)
    float Ut[9], V[9], I[9];
    float T[3]; // 3x1 translation vector
-   float R[9]; // 3x3 rotation matrix 
+   float R[9]; // 3x3 rotation matrix
    float S[3]; // 3x1 vector of singular values
 
    Pavg[0] = (float)removeVectorMean(P, n);
@@ -333,12 +333,12 @@ void Procrustes(float *Q, int n, float *P, float *TLM)
 
       //if(opt_v) printf("det(R) = %f\n", det3(R));
 
-      if( det3(R) < 0.0 ) 
-      {  
+      if( det3(R) < 0.0 )
+      {
          //if(opt_v) printf("Negative determinant (reflection) detected\n");
-         V[2] *= -1.0; 
-         V[5] *= -1.0; 
-         V[8] *= -1.0; 
+         V[2] *= -1.0;
+         V[5] *= -1.0;
+         V[8] *= -1.0;
          multi(V,3,3,Ut,3,3,R);  // Eq. (13) Arun et al. 1987
 
          //if(opt_v) printf("Corrected det(R) = %f\n", det3(R));
@@ -373,7 +373,7 @@ void Procrustes(float *Q, int n, float *P, float *TLM)
 // i1 j1 k1
 // i2 j2 k2
 // i3 j3 k3
-// where 
+// where
 // (i1, j1, k1) are the coordinates of the AC
 // (i2, j2, k2) are the coordinates of the PC, and
 // (i3, j3, k3) are the coordinates of the RP.
@@ -389,11 +389,11 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    float *LM;  // (3 x n) matrix of detected landmarks
    float *invT;
    char filename[1024];
-   SHORTIM subimPIL; 
+   SHORTIM subimPIL;
    nifti_1_header PILbraincloud_hdr;
    // subfile without the directory structure and extension
-   char subfile_prefix[1024]; 
-   char imagedir[1024]; 
+   char subfile_prefix[1024];
+   char imagedir[1024];
    char modelfile[1024]="";
 
    if( niftiFilename(subfile_prefix, subfile)==0 ) exit(0);
@@ -402,7 +402,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    getARTHOME();
 
    // initial TPIL0 using old PIL transformation
-   char opt_CENTER_AC_old;   
+   char opt_CENTER_AC_old;
    opt_CENTER_AC_old = opt_CENTER_AC; // record opt_CENTER_AC
    opt_CENTER_AC = NO; // temporarily set opt_CENTER_AC to NO
    standard_PIL_transformation(subfile, lmfile, orient, 0, TPIL0);
@@ -410,8 +410,8 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
 
    /////////////////////////////////////////////////////////
    // Read input volume from subfile
-   SHORTIM subim; 
-   nifti_1_header subim_hdr;  
+   SHORTIM subim;
+   nifti_1_header subim_hdr;
 
    subim.v = (short *)read_nifti_image(subfile, &subim_hdr);
 
@@ -425,7 +425,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    /////////////////////////////////////////////////////////
 
    /////////////////////////////////////////////////////////
-   // Reslice subim to PIL space 
+   // Reslice subim to PIL space
    sprintf(filename,"%s/PILbrain.nii",ARTHOME);
    PILbraincloud_hdr=read_NIFTI_hdr(filename);
 
@@ -440,8 +440,8 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    LM=detect_landmarks(subimPIL, modelfile, n);
 
    convert_to_xyz(LM, n, subimPIL);
- 
-   // This block outputs the locations of the detected landmarks 
+
+   // This block outputs the locations of the detected landmarks
    // in (i,j,k) coordinates of the native space of the input volume
    if(opt_txt)
    {
@@ -512,7 +512,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
    if(opt_ppm || opt_png)
    {
       int *lmx, *lmy;
-      float lm[4]; 
+      float lm[4];
 
       invT = inv4(TPIL);
       resliceImage(subim, subimPIL, invT, LIN);
@@ -546,7 +546,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
 
   if(opt_CENTER_AC)
   {
-    float ac[4]; 
+    float ac[4];
     float Ttmp[16];
 
     ac[0] = P[1] + Pavg[0];  // landmark #1 is AC
@@ -579,7 +579,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
       float ssd1=0.0;
       float ssd3=0.0;
       float x[4], y[4];
-      
+
       x[3]=y[3]=1.0;
 
       for(int i=0; i<n; i++)
@@ -592,14 +592,14 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
          y[1] = P[i+n]+Pavg[1];
          y[2] = P[i+2*n]+Pavg[2];
 
-         ssd1 += (x[0]-y[0])*(x[0]-y[0]); 
-         ssd1 += (x[1]-y[1])*(x[1]-y[1]); 
-         ssd1 += (x[2]-y[2])*(x[2]-y[2]); 
+         ssd1 += (x[0]-y[0])*(x[0]-y[0]);
+         ssd1 += (x[1]-y[1])*(x[1]-y[1]);
+         ssd1 += (x[2]-y[2])*(x[2]-y[2]);
 
          multi(TLM,4,4,y,4,1,y);
-         ssd3 += (x[0]-y[0])*(x[0]-y[0]); 
-         ssd3 += (x[1]-y[1])*(x[1]-y[1]); 
-         ssd3 += (x[2]-y[2])*(x[2]-y[2]); 
+         ssd3 += (x[0]-y[0])*(x[0]-y[0]);
+         ssd3 += (x[1]-y[1])*(x[1]-y[1]);
+         ssd3 += (x[2]-y[2])*(x[2]-y[2]);
       }
       //if(opt_v) printf("SSD (MSP + AC/PC transformation) = %f\n",ssd1);
       //if(opt_v) printf("SSD (MSP + AC/PC + LM transformation) = %f\n",ssd3);
@@ -622,14 +622,14 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, char *o
    float rp[4]={0.0, 0.0, 0.0, 1.0};
 
    //////////////////////////////////////////////////////////////////////////////////
-   // Detect the MSP plane 
+   // Detect the MSP plane
    //////////////////////////////////////////////////////////////////////////////////
    float Tmsp[16]; // takes the image to PIL orientation -- no AC/PC alignment
 
    findMSP(imfile,orient,lmfile,Tmsp,verbose,dim);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
-   // AC/PC detection 
+   // AC/PC detection
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
    opt_AC=opt_PC=opt_RP=YES;  // by default find these automatically
@@ -637,7 +637,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, char *o
    if( lmfile[0]!='\0' )
    {
       FILE *fp;
-      
+
       fp = fopen(lmfile,"r");
       if(fp==NULL) file_open_error(lmfile);
       fscanf(fp,"%f %f %f\n", &ac[0], &ac[1], &ac[2]); ac[3]=1;
@@ -651,7 +651,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, char *o
    opt_MSP=NO;
    detect_AC_PC_MSP(imfile,orient,modelfile,ac,pc,rp,Tmsp,verbose,0);
    //restore to default state, this is important for subsequent calls to detect_AC_PC_MSP()
-   opt_MSP=YES; 
+   opt_MSP=YES;
 
    // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
    orig_ijk_to_pil_xyz(Tmsp, dim, ac, pc);
@@ -664,7 +664,7 @@ void standard_PIL_transformation(const char *imfile, const char *lmfile, char *o
 }
 
 // Matrices of type T are called "signed permutation matrices"
-// A permutation matrix is one in which there is exactly one 1 in 
+// A permutation matrix is one in which there is exactly one 1 in
 // each row and column.  In a signed permutation matrix the non-zero
 // entries can be 1 or -1.
 void PILtransform(const char *inputOrientCode, float *T)
@@ -678,7 +678,7 @@ void PILtransform(const char *inputOrientCode, float *T)
    for(int j=0; j<3; j++)
    {
       // read the jth element of the inputOrientCode vector
-      c = inputOrientCode[j];		
+      c = inputOrientCode[j];
 
       c=toupper(c);	// convert c to upper case
 
@@ -705,8 +705,8 @@ void inversePILtransform(const char *outputOrientCode, float *T)
    for(int i=0; i<3; i++)
    {
       // read the ith element of the outputOrientCode vector
-      c = outputOrientCode[i];		
-   
+      c = outputOrientCode[i];
+
       c=toupper(c);	// convert c to upper case
 
       // set the ith row of the T
