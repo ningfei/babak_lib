@@ -8,7 +8,7 @@ MACH = $(shell $(CC) -dumpmachine | awk -F - '{ printf "%s", $$2; }')
 
 INC= -I../include
 LIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
-LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz
+LESSLIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz
 
 all: niftiio libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation
 
