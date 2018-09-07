@@ -19,6 +19,10 @@ INC= -I../include
 LIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
 LESSLIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz
 
+ifeq ($(MACH), apple)
+	LIBS += -lgcc
+endif
+
 all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation
 
 # because of functions in matrixops, linking the libbabak will possibly require lapack libs.
