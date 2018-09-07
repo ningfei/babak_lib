@@ -30,7 +30,7 @@ int main(int argc, char **argv)
       exit(0);
    }
 
-   fp = fopen(argv[1],"r");
+   fp = fopen(argv[1],"rb");
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    fread(&hdr_extender, sizeof(nifti1_extender), 1, fp);
    if(hdr_extender.extension[0] == 1)
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
       }
    }
    fclose(fp);
- 
+
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
    if(hdr.dim[0]<1 || hdr.dim[0]>7)
@@ -95,9 +95,9 @@ int main(int argc, char **argv)
    }
 
    printf("sizeof_hdr = %d\n", hdr.sizeof_hdr);
-   printf("freq_dim = %d\n", DIM_INFO_TO_FREQ_DIM(hdr.dim_info)); 
-   printf("phase_dim = %d\n", DIM_INFO_TO_PHASE_DIM(hdr.dim_info)); 
-   printf("slice_dim = %d\n", DIM_INFO_TO_SLICE_DIM(hdr.dim_info)); 
+   printf("freq_dim = %d\n", DIM_INFO_TO_FREQ_DIM(hdr.dim_info));
+   printf("phase_dim = %d\n", DIM_INFO_TO_PHASE_DIM(hdr.dim_info));
+   printf("slice_dim = %d\n", DIM_INFO_TO_SLICE_DIM(hdr.dim_info));
 
    for(int i=0; i<=hdr.dim[0]; i++)
    {
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
       mat44 R;
       float dum;
 
-      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y, 
+      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y,
       hdr.qoffset_z, hdr.pixdim[1], hdr.pixdim[2], hdr.pixdim[3], hdr.pixdim[0]);
 
       orientation_code[0] = directionCode(R.m[0][0],R.m[1][0],R.m[2][0]);

@@ -9,7 +9,7 @@ nifti_1_header read_NIFTI_hdr(const char *filename)
    FILE *fp;
    nifti_1_header hdr;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -37,7 +37,7 @@ int read_NIFTI_hdr(const char *filename, nifti_1_header *hdr)
 {
    FILE *fp;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -67,7 +67,7 @@ int not_magical_nifti(const char *imagefilename)
    FILE *fp;
    nifti_1_header hdr;
 
-   fp = fopen(imagefilename,"r");
+   fp = fopen(imagefilename,"rb");
 
    if(fp == NULL)
    {
@@ -99,7 +99,7 @@ int not_magical_nifti(const char *imagefilename, int verbose)
    FILE *fp;
    nifti_1_header hdr;
 
-   fp = fopen(imagefilename,"r");
+   fp = fopen(imagefilename,"rb");
 
    if(fp == NULL)
    {
@@ -248,7 +248,7 @@ void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *
    FILE *fp;
    int nv;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fread(hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
@@ -266,7 +266,7 @@ void read_nifti_image(const char *filename, unsigned char **im, nifti_1_header *
 
    *im = (unsigned char *)calloc(nv,sizeof(unsigned char));
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fseek(fp, (long)hdr->vox_offset, SEEK_SET);
    fread(*im, sizeof(unsigned char), nv, fp);
@@ -278,7 +278,7 @@ void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr)
    FILE *fp;
    int nv;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fread(hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
@@ -296,7 +296,7 @@ void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr)
 
    *im = (short *)calloc(nv,sizeof(short));
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fseek(fp, (long)hdr->vox_offset, SEEK_SET);
    fread(*im, sizeof(short), nv, fp);
@@ -424,7 +424,7 @@ nifti_1_header read_NIFTI_hdr(const char *filename, nifti1_extender *extender, c
    nifti_1_header hdr;
    int extension_size;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    fread(extender, sizeof(nifti1_extender), 1, fp);
@@ -455,7 +455,7 @@ void print_NIFTI_hdr(const char *filename)
    FILE *fp;
    nifti_1_header hdr;
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
    if(fp==NULL) file_open_error(filename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
    fclose(fp);
@@ -650,7 +650,7 @@ void readOrientationFromFile(const char *filename, char *orientation)
 
    orientation[0]='\0';
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -741,7 +741,7 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
       errorMessage("Error: The image filename must have a `.hdr' or `.nii' extension.");
    }
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -937,7 +937,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
       errorMessage("Error: The image filename must have a `.hdr' or `.nii' extension.");
    }
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -1097,7 +1097,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
       errorMessage("Error: The image filename must have a `.hdr' or `.nii' extension.");
    }
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -1170,7 +1170,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
       hdr->vox_offset = 0;
    }
 
-   fp = fopen(imgname,"r");
+   fp = fopen(imgname,"rb");
 
    if(fp==NULL)
    {
@@ -1230,7 +1230,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
    }
 */
 
-   fp = fopen(filename,"r");
+   fp = fopen(filename,"rb");
 
    if(fp==NULL)
    {
@@ -1283,7 +1283,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
       }
    }
 
-   fp = fopen(imgname,"r");
+   fp = fopen(imgname,"rb");
 
    if(fp==NULL)
    {
