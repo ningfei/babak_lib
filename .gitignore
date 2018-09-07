@@ -1,2 +1,7 @@
-src/*.o
-bin/*
+*.mk
+*.o
+/lib/nifticlib/znzlib/libznz.a
+/lib/nifticlib/niftilib/libniftiio.a
+/example1/
+/example2/
+
