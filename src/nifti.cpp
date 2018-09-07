@@ -68,7 +68,7 @@ int not_magical_nifti(const char *imagefilename)
    nifti_1_header hdr;
 
    fp = fopen(imagefilename,"r");
-   
+
    if(fp == NULL)
    {
       printf("not_magical_nifti(): could not open file %s\n", imagefilename);
@@ -87,7 +87,7 @@ int not_magical_nifti(const char *imagefilename)
    if( hdr.magic[0]!='n' || (hdr.magic[1]!='+' && hdr.magic[1]!='i') || hdr.magic[2]!='1' )
    {
       printf("hdr.magic = %s\n", hdr.magic);
-      printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n"); 
+      printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n");
       return(1);
    }
 
@@ -100,7 +100,7 @@ int not_magical_nifti(const char *imagefilename, int verbose)
    nifti_1_header hdr;
 
    fp = fopen(imagefilename,"r");
-   
+
    if(fp == NULL)
    {
       if(verbose) printf("not_magical_nifti(): could not open file %s\n", imagefilename);
@@ -119,7 +119,7 @@ int not_magical_nifti(const char *imagefilename, int verbose)
    if( hdr.magic[0]!='n' || (hdr.magic[1]!='+' && hdr.magic[1]!='i') || hdr.magic[2]!='1' )
    {
       if(verbose) printf("hdr.magic = %s\n", hdr.magic);
-      if(verbose) printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n"); 
+      if(verbose) printf("not_magical_nifti(): NIFTI file magic field is neither \"n+1\" nor \"ni1\"\n");
       return(1);
    }
 
@@ -374,7 +374,7 @@ void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr)
    {
       nv *= hdr->dim[i];
    }
-   
+
    hdr->sizeof_hdr=348;
    sprintf(hdr->magic,"n+1");
    hdr->datatype=DT_SIGNED_SHORT;
@@ -400,7 +400,7 @@ void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr)
    int nv;
 
    nv = hdr->dim[1] * hdr->dim[2] * hdr->dim[3];
-   
+
    hdr->dim[0]=3;
    hdr->sizeof_hdr=348;
    sprintf(hdr->magic,"n+1");
@@ -592,7 +592,7 @@ void print_NIFTI_hdr(nifti_1_header hdr)
 // Replaced by the functions in directionCode.cxx
 // Input: (x,y,z) a vector defined in RAS system
 // Output: One of six charaters {R,L,A,P,S,I}
-char directionCode(float x, float y, float z) 
+char directionCode(float x, float y, float z)
 {
    char code;
    float dum;
@@ -672,7 +672,7 @@ void readOrientationFromFile(const char *filename, char *orientation)
 
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
-   if(hdr.dim[0]<1 || hdr.dim[0]>7) 
+   if(hdr.dim[0]<1 || hdr.dim[0]>7)
    {
       swapflg=1;
    }
@@ -698,7 +698,7 @@ void readOrientationFromFile(const char *filename, char *orientation)
       }
    }
 
-   if(hdr.qform_code == 0 && hdr.sform_code == 0) 
+   if(hdr.qform_code == 0 && hdr.sform_code == 0)
    {
       printf("\nThe header of this so called \"NIFTI\" file does not contain orientation information.\n");
       return;
@@ -708,7 +708,7 @@ void readOrientationFromFile(const char *filename, char *orientation)
    {
       mat44 R;
 
-      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y, 
+      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y,
       hdr.qoffset_z, hdr.pixdim[1], hdr.pixdim[2], hdr.pixdim[3], hdr.pixdim[0]);
 
       orientation[0] = directionCode(R.m[0][0],R.m[1][0],R.m[2][0]);
@@ -763,7 +763,7 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
 
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
-   if(hdr.dim[0]<1 || hdr.dim[0]>7) 
+   if(hdr.dim[0]<1 || hdr.dim[0]>7)
    {
       swapflg=1;
    }
@@ -789,7 +789,7 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
       }
    }
 
-   if(hdr.qform_code == 0 && hdr.sform_code == 0) 
+   if(hdr.qform_code == 0 && hdr.sform_code == 0)
    {
       printf("\nThe header of this so called \"NIFTI\" file does not contain orientation information.\n");
       return;
@@ -799,7 +799,7 @@ void readOrientationVectorsFromFile(const char *filename, float *xvec, float *yv
    {
       mat44 R;
 
-      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y, 
+      R = nifti_quatern_to_mat44(hdr.quatern_b, hdr.quatern_c, hdr.quatern_d, hdr.qoffset_x, hdr.qoffset_y,
       hdr.qoffset_z, hdr.pixdim[1], hdr.pixdim[2], hdr.pixdim[3], hdr.pixdim[0]);
 
       xvec[0] = R.m[0][0];
@@ -953,7 +953,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
 
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
-   if(hdr.dim[0]<1 || hdr.dim[0]>7) 
+   if(hdr.dim[0]<1 || hdr.dim[0]>7)
    {
       swapflg=1;
    }
@@ -990,7 +990,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
    nv = hdr.dim[1]*hdr.dim[2]*hdr.dim[3];
 
    im = (short *)calloc(nv, sizeof(short));
-   
+
    if(im==NULL)
    {
       errorMessage("Error: Memory allocation problem in readNiftiImage() function.");
@@ -1027,7 +1027,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
       hdr.vox_offset = 0;
    }
 
-   fp = fopen(imgname,"r");
+   fp = fopen(imgname,"rb");
 
    if(fp==NULL)
    {
@@ -1039,7 +1039,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
       errorMessage("Error: I have trouble reading the specified image file.");
    }
 
-   if( hdr.datatype == DT_SIGNED_SHORT || hdr.datatype == DT_UINT16) 
+   if( hdr.datatype == DT_SIGNED_SHORT || hdr.datatype == DT_UINT16)
    {
       if( fread(im, sizeof(short), nv, fp) != nv )
       {
@@ -1052,7 +1052,7 @@ short *readNiftiImage(const char *filename, DIM *dim, int flg)
       }
 
    }
-   else if( hdr.datatype == DT_UNSIGNED_CHAR || hdr.datatype == DT_INT8 ) 
+   else if( hdr.datatype == DT_UNSIGNED_CHAR || hdr.datatype == DT_INT8 )
    {
       unsigned char *dum;
 
@@ -1113,7 +1113,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
 
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
-   if(hdr->dim[0]<1 || hdr->dim[0]>7) 
+   if(hdr->dim[0]<1 || hdr->dim[0]>7)
    {
       swapflg=1;
    }
@@ -1141,7 +1141,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
    nv = hdr->dim[1]*hdr->dim[2]*hdr->dim[3];
 
    im = (char *)calloc(nv*hdr->bitpix/8, sizeof(char));
-   
+
    if(im==NULL)
    {
       errorMessage("Error: Memory allocation problem in readNiftiImage() function.");
@@ -1182,7 +1182,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
       errorMessage("Error: I have trouble reading the specified image file.");
    }
 
-   if( hdr->datatype == DT_SIGNED_SHORT || hdr->datatype == DT_UINT16) 
+   if( hdr->datatype == DT_SIGNED_SHORT || hdr->datatype == DT_UINT16)
    {
       if( fread(im, sizeof(short), nv, fp) != nv )
       {
@@ -1194,7 +1194,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
          swapN( im, nv*2);
       }
    }
-   else if( hdr->datatype == DT_UNSIGNED_CHAR || hdr->datatype == DT_INT8 ) 
+   else if( hdr->datatype == DT_UNSIGNED_CHAR || hdr->datatype == DT_INT8 )
    {
       if (fread(im, sizeof(unsigned char), nv, fp) != nv )
       {
@@ -1254,7 +1254,7 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
 
    // if dim[0] is outside range 1..7, then the header information
    // needs to be byte swapped appropriately
-   if(hdr->dim[0]<1 || hdr->dim[0]>7) 
+   if(hdr->dim[0]<1 || hdr->dim[0]>7)
    {
       swapflg=1;
       swapniftiheader(hdr);
@@ -1329,23 +1329,23 @@ char *read_nifti_image(const char *filename, nifti_1_header *hdr)
 
    if(swapflg)
    {
-      if( hdr->datatype == DT_SIGNED_SHORT || hdr->datatype == DT_UINT16) 
-      { 
+      if( hdr->datatype == DT_SIGNED_SHORT || hdr->datatype == DT_UINT16)
+      {
          swapN(im, datasize);
       }
 
-      if( hdr->datatype == DT_FLOAT ) 
-      { 
+      if( hdr->datatype == DT_FLOAT )
+      {
          swap_float_array( (float *)im, datasize/sizeof(float));
       }
 
-      if( hdr->datatype == DT_DOUBLE) 
-      { 
+      if( hdr->datatype == DT_DOUBLE)
+      {
          swap_double_array( (float8 *)im, datasize/sizeof(float8));
       }
 
-      if( hdr->datatype == DT_SIGNED_INT ) 
-      { 
+      if( hdr->datatype == DT_SIGNED_INT )
+      {
          swap_int_array( (int *)im, datasize/sizeof(int));
       }
    }
