@@ -5,8 +5,8 @@ MPICC = /usr/local/bin/mpic++ -Wall
 CFLAGS = -O3
 CC = g++
 INC= -I../include
-LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc -llapack -lblas
-LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -lc
+LIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz -llapack -lblas
+LESSLIBS =  -L../lib -lbabak -lniftiio -lznz -lm -lz
 
 all: libbabak.a brainwash 3dwarper acpcdetect applywarp3d scaleImage avgImage one_sample_t ivf unwarp2d cphdr reslice kaiba oi PILtransform atra art2fsl fsl2art yuki analyze2nii multiplyTransformation niftiinfo break4D gambling_vancova_setup medianImage threshold ccstats
 
@@ -87,17 +87,17 @@ nkiIO.o: nkiIO.cpp
 matrixops.o: matrixops.cpp
 	$(CC) -O2 -c $(INC) matrixops.cpp
 
-subsets.o: subsets.cpp 
-	$(CC) -O2 -c $(INC) subsets.cpp 
+subsets.o: subsets.cpp
+	$(CC) -O2 -c $(INC) subsets.cpp
 
-analyzeio.o: analyzeio.cpp 
-	$(CC) -O2 -c $(INC) analyzeio.cpp 
+analyzeio.o: analyzeio.cpp
+	$(CC) -O2 -c $(INC) analyzeio.cpp
 
-getoption.o: getoption.cpp 
-	$(CC) -O2 -c $(INC) getoption.cpp 
+getoption.o: getoption.cpp
+	$(CC) -O2 -c $(INC) getoption.cpp
 
-swap.o: swap.cpp 
-	$(CC) -O2 -c $(INC) swap.cpp 
+swap.o: swap.cpp
+	$(CC) -O2 -c $(INC) swap.cpp
 
 fileinfo.o: fileinfo.cpp
 	$(CC) -O2 -c $(INC) fileinfo.cpp
@@ -177,7 +177,7 @@ update_qsform.o: update_qsform.cpp
 libbabak.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
 	ar -ru ../lib/libbabak.a leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular_value_decomposition.o DKI.o artlib.o volume.o binomial.o smooth.o niftiimage.o utils.o nifti.o errorMessage.o maskOps.o EMFIT.o max_cc.o statistics.o ginverse.o permutation.o hpsort.o random.o dicomIO.o nkiIO.o subsets.o analyzeio.o getoption.o swap.o fileinfo.o histogram.o resize.o gaussian_kernel.o convolution.o resliceImage.o matrixCom.o registration.o legendre.o cubicspline.o medianfilter.o directionCode.o checkNiftiFileExtension.o getNiftiImageOrientation.o isOrientationCodeValid.o PILtransform.o reorientVolume.o rotate.o setLowHigh.o compute_cm.o standardize.o sph.o matrixops.o landmarks.o getARTHOME.o update_qsform.o
 
-clean: 
+clean:
 	rm -f *.o
 
 # compilation of executables
