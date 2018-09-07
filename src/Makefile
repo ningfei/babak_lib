@@ -191,7 +191,6 @@ libbabak.a: leastSquaresAffineTrans.o hist1D_plot.o set_dim.o findMSP.o singular
 
 clean:
 	rm -f *.o
-	rm -f ../lib/$(MACH)/libbabak.a
 
 # compilation of executables
 PILtransform: PILtransform.cxx
