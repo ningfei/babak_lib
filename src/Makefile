@@ -2,10 +2,14 @@
 # for makhmal
 MPICC = /usr/local/bin/mpic++ -Wall
 
-CFLAGS = -static -O3 -Wno-unused-result -Wno-format-zero-length -Wno-stringop-overflow
+CFLAGS = -static -O3
 CC = g++
 
 MACH = $(shell $(CC) -dumpmachine | awk -F - '{ printf "%s", $$2; }')
+
+ifeq ($(MACH), linux)
+	CFLAGS +=  -Wno-unused-result -Wno-format-zero-length -Wno-stringop-overflow
+endif
 
 INC= -I../include
 LIBS =  -L../lib/$(MACH) -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
