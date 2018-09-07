@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <time.h>		// time()
 
+#ifdef __MINGW32__
+  #define srand48(x) srand((unsigned)(x))
+  #define drand48() (rand()/(RAND_MAX + 1.0))
+#endif
+
 // destructor
 PERMUTATION::~PERMUTATION()
 {
@@ -25,7 +30,7 @@ PERMUTATION::PERMUTATION(int s)
 
 void PERMUTATION::permute()
 {
-	for(int i=0; i<size; i++) 
+	for(int i=0; i<size; i++)
 	{
 		vec[i]=i;
 		ra[i]= drand48();        // Generates 'size' random numbers
@@ -70,7 +75,7 @@ void PERMUTATION::heapsort(int last)
 {
    	double temp1;
   	int temp2;
-  
+
 	last--;
 
    	while(last > 0 )

@@ -3,14 +3,19 @@
 #include <babak_lib.h>
 #include <interpolator.h>
 
+#ifdef __MINGW32__
+  #define srand48(x) srand((unsigned)(x))
+  #define drand48() (rand()/(RAND_MAX + 1.0))
+#endif
+
 char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {
-	float Oxc,Oyc; 
-	float Txc,Tyc; 
+	float Oxc,Oyc;
+	float Txc,Tyc;
 	float Ax;
 	float Ay;
   	float xx,yy; /* translation parameters */
-  	float x,y;   
+  	float x,y;
 
 	int i,j;     /* loop index */
 	int q;
@@ -26,19 +31,19 @@ char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, i
 	Oyc=Ody*(Ony-1)/2.0;
 
 	q=0;
-	for(j=0;j<Tny;j++) 
+	for(j=0;j<Tny;j++)
 	{
    		yy=j*Tdy-Tyc;
 		Ax=T[1]*yy+T[2];
 		Ay=T[4]*yy+T[5];
 
-  		for(i=0;i<Tnx;i++) 
+  		for(i=0;i<Tnx;i++)
 		{
        		xx=i*Tdx-Txc;
 
        		x=T[0]*xx+Ax;
     	   	y=T[3]*xx+Ay;
-		
+
 			x = (x+Oxc)/Odx;
 			y = (y+Oyc)/Ody;
 
@@ -52,12 +57,12 @@ char *resliceImage(char *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, i
 // warning: T will be altered.
 short *resliceImage(short *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {
-	float Oxc,Oyc; 
-	float Txc,Tyc; 
+	float Oxc,Oyc;
+	float Txc,Tyc;
 	float Ax;
 	float Ay;
   	float xx,yy; /* translation parameters */
-  	float x,y;   
+  	float x,y;
 
 	int i,j;     /* loop index */
 	int q;
@@ -73,19 +78,19 @@ short *resliceImage(short *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 	Oyc=Ody*(Ony-1)/2.0;
 
 	q=0;
-	for(j=0;j<Tny;j++) 
+	for(j=0;j<Tny;j++)
 	{
    		yy=j*Tdy-Tyc;
 		Ax=T[1]*yy+T[2];
 		Ay=T[4]*yy+T[5];
 
-  		for(i=0;i<Tnx;i++) 
+  		for(i=0;i<Tnx;i++)
 		{
        		xx=i*Tdx-Txc;
 
        		x=T[0]*xx+Ax;
     	   	y=T[3]*xx+Ay;
-		
+
 			x = (x+Oxc)/Odx;
 			y = (y+Oyc)/Ody;
 
@@ -98,12 +103,12 @@ short *resliceImage(short *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 
 short *resliceImage(float *obj, int Onx, int Ony, float Odx, float Ody, int Tnx, int Tny, float Tdx, float Tdy, float *T)
 {
-	float Oxc,Oyc; 
-	float Txc,Tyc; 
+	float Oxc,Oyc;
+	float Txc,Tyc;
 	float Ax;
 	float Ay;
   	float xx,yy; /* translation parameters */
-  	float x,y;   
+  	float x,y;
 
 	int i,j;     /* loop index */
 	int q;
@@ -119,13 +124,13 @@ short *resliceImage(float *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 	Oyc=Ody*(Ony-1)/2.0;
 
 	q=0;
-	for(j=0;j<Tny;j++) 
+	for(j=0;j<Tny;j++)
 	{
    		yy=j*Tdy-Tyc;
 		Ax=T[1]*yy+T[2];
 		Ay=T[4]*yy+T[5];
 
-  		for(i=0;i<Tnx;i++) 
+  		for(i=0;i<Tnx;i++)
 		{
        		xx=i*Tdx-Txc;
 
@@ -144,16 +149,16 @@ short *resliceImage(float *obj, int Onx, int Ony, float Odx, float Ody, int Tnx,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // warning: T will be altered.
-short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
+short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interpolation_method)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -207,20 +212,20 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interp
 	T[11] += zc1/dz1;
 
 	q=0;
-	for(k=0;k<nz2;k++) 
+	for(k=0;k<nz2;k++)
 	{
   		zz=k*dz2-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<ny2;j++) 
+		for(j=0;j<ny2;j++)
 		{
      		yy=j*dy2-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<nx2;i++) 
+  			for(i=0;i<nx2;i++)
 			{
         		xx=i*dx2-xc2;
 
@@ -256,16 +261,16 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, int interp
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // warning: T will be altered.
-unsigned char *resliceImage(unsigned char *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
+unsigned char *resliceImage(unsigned char *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -309,20 +314,20 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 	T[11] += zc1/dz1;
 
 	q=0;
-	for(k=0;k<nz2;k++) 
+	for(k=0;k<nz2;k++)
 	{
   		zz=k*dz2-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<ny2;j++) 
+		for(j=0;j<ny2;j++)
 		{
      		yy=j*dy2-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<nx2;i++) 
+  			for(i=0;i<nx2;i++)
 			{
         		xx=i*dx2-xc2;
 
@@ -342,13 +347,13 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 // warning: T will be altered.
 short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_method)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -392,20 +397,20 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	T[11] += zc1/dim1.dz;
 
 	q=0;
-	for(k=0;k<dim2.nz;k++) 
+	for(k=0;k<dim2.nz;k++)
 	{
   		zz=k*dim2.dz-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<dim2.ny;j++) 
+		for(j=0;j<dim2.ny;j++)
 		{
      		yy=j*dim2.dy-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<dim2.nx;i++) 
+  			for(i=0;i<dim2.nx;i++)
 			{
         		xx=i*dim2.dx-xc2;
 
@@ -427,13 +432,13 @@ short *resliceImage(short *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 // warning: T will be altered.
 float *resliceImage(float *im1, DIM dim1, DIM dim2, float *T, int interpolation_method)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -477,20 +482,20 @@ float *resliceImage(float *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 	T[11] += zc1/dim1.dz;
 
 	q=0;
-	for(k=0;k<dim2.nz;k++) 
+	for(k=0;k<dim2.nz;k++)
 	{
   		zz=k*dim2.dz-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<dim2.ny;j++) 
+		for(j=0;j<dim2.ny;j++)
 		{
      		yy=j*dim2.dy-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<dim2.nx;i++) 
+  			for(i=0;i<dim2.nx;i++)
 			{
         		xx=i*dim2.dx-xc2;
 
@@ -512,13 +517,13 @@ float *resliceImage(float *im1, DIM dim1, DIM dim2, float *T, int interpolation_
 // warning: T will be altered.
 void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -553,20 +558,20 @@ void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 	T[11] += zc1/im1.dz;
 
 	q=0;
-	for(k=0;k<im2.nz;k++) 
+	for(k=0;k<im2.nz;k++)
 	{
   		zz=k*im2.dz-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<im2.ny;j++) 
+		for(j=0;j<im2.ny;j++)
 		{
      		yy=j*im2.dy-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<im2.nx;i++) 
+  			for(i=0;i<im2.nx;i++)
 			{
         		xx=i*im2.dx-xc2;
 
@@ -585,16 +590,16 @@ void resliceImage(SHORTIM im1, SHORTIM &im2, float *T, int interpolation_method)
 }
 
 // warning: T will be altered.
-float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *w)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -638,20 +643,20 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *w)
 	T[11] += zc1/dz1;
 
 	q=0;
-	for(k=0;k<nz2;k++) 
+	for(k=0;k<nz2;k++)
 	{
   		zz=k*dz2-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<ny2;j++) 
+		for(j=0;j<ny2;j++)
 		{
      		yy=j*dy2-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<nx2;i++) 
+  			for(i=0;i<nx2;i++)
 			{
         		xx=i*dx2-xc2;
 
@@ -676,7 +681,7 @@ float linearInterpolator(float x, float y, float z, float *array, int nx, int ny
 	float   s,ss;
    float v1,v2,v3,v4;
    float w1,w2;
-	
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -739,7 +744,7 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 	float   s,ss;
    float v1,v2,v3,v4;
    float w1,w2;
-	
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -797,8 +802,8 @@ unsigned char linearInterpolator(float x, float y, float z, unsigned char *array
 short *resliceImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
 {
-  	float  x,y,z;   
-  	float  xx,yy,zz;   
+  	float  x,y,z;
+  	float  xx,yy,zz;
 	int q;
 	int np1;
 	short *im2;
@@ -820,11 +825,11 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 	zc2=dz2*(nz2-1)/2.0;
 
 	q=0;
-	for(int k=0;k<nz2;k++) 
+	for(int k=0;k<nz2;k++)
 	{
-		for(int j=0;j<ny2;j++) 
+		for(int j=0;j<ny2;j++)
 		{
-  			for(int i=0;i<nx2;i++) 
+  			for(int i=0;i<nx2;i++)
 			{
 				zz = k*dz2 - zc2 + Zwarp[q];
 				yy = j*dy2 - yc2 + Ywarp[q];
@@ -845,7 +850,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 short *computeReslicedImage(short *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
 {
-  	float  x,y,z;   
+  	float  x,y,z;
 	int q;
 	int np1;
 	short *im2;
@@ -865,9 +870,9 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 	zc2=dz2*(nz2-1)/2.0;
 
 	q=0;
-	for(int k=0;k<nz2;k++) 
-	for(int j=0;j<ny2;j++) 
-  	for(int i=0;i<nx2;i++) 
+	for(int k=0;k<nz2;k++)
+	for(int j=0;j<ny2;j++)
+  	for(int i=0;i<nx2;i++)
 	{
 		z = (k*dz2 - zc2 + Zwarp[q] + zc1) /dz1;
 		y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
@@ -882,7 +887,7 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 float *computeReslicedImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float *Ywarp, float *Zwarp)
 {
-  	float  x,y,z;   
+  	float  x,y,z;
 	int q;
 	int np1;
 	float *im2;
@@ -902,9 +907,9 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 	zc2=dz2*(nz2-1)/2.0;
 
 	q=0;
-	for(int k=0;k<nz2;k++) 
-	for(int j=0;j<ny2;j++) 
-  	for(int i=0;i<nx2;i++) 
+	for(int k=0;k<nz2;k++)
+	for(int j=0;j<ny2;j++)
+  	for(int i=0;i<nx2;i++)
 	{
 		z = (k*dz2 - zc2 + Zwarp[q] + zc1) /dz1;
 		y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
@@ -916,10 +921,10 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *Xwarp, float 
 	return( im2 );
 }
 
-short *computeReslicedImage(short *im1, int nx1, int ny1, float dx1, float dy1, 
+short *computeReslicedImage(short *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 {
-  	float  x,y;   
+  	float  x,y;
 	int q;
 	short *im2;
 	float xc1, yc1;
@@ -934,9 +939,9 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 	yc2=dy2*(ny2-1)/2.0;
 
 	q=0;
-	for(int j=0;j<ny2;j++) 
+	for(int j=0;j<ny2;j++)
 	{
-  		for(int i=0;i<nx2;i++) 
+  		for(int i=0;i<nx2;i++)
 		{
 				y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
         		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
@@ -948,10 +953,10 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 	return( im2 );
 }
 
-short *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1, 
+short *computeReslicedImage(float *im1, int nx1, int ny1, float dx1, float dy1,
 int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 {
-  	float  x,y;   
+  	float  x,y;
 	int q;
 	short *im2;
 	float xc1, yc1;
@@ -966,9 +971,9 @@ int nx2, int ny2, float dx2, float dy2, float *Xwarp, float *Ywarp)
 	yc2=dy2*(ny2-1)/2.0;
 
 	q=0;
-	for(int j=0;j<ny2;j++) 
+	for(int j=0;j<ny2;j++)
 	{
-  		for(int i=0;i<nx2;i++) 
+  		for(int i=0;i<nx2;i++)
 		{
 				y = (j*dy2 - yc2 + Ywarp[q] + yc1) /dy1;
         		x = (i*dx2 - xc2 + Xwarp[q] + xc1) /dx1;
@@ -993,7 +998,7 @@ unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int n
 
 	np = nx*ny;
 	nv = np*nz;
-	
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -1016,10 +1021,10 @@ unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int n
 		P0 = 0.0;
 		P1 = P0 + u*v*s;
 		P2 = P1 + u*v*ss;
-		P3 = P2 + u*vv*s; 
-		P4 = P3 + u*vv*ss; 
-		P5 = P4 + uu*v*s; 
-		P6 = P5 + uu*v*ss; 
+		P3 = P2 + u*vv*s;
+		P4 = P3 + u*vv*ss;
+		P5 = P4 + uu*v*s;
+		P6 = P5 + uu*v*ss;
 		P7 = P6 + uu*vv*s;
 		P8 = P7 + uu*vv*ss;
 
@@ -1051,7 +1056,7 @@ unsigned char PNN(float x, float y, float z, unsigned char *array, int nx, int n
 		P4 = P3 + uu*vv;
 
 		if(r<P1) 		n=k*np + (j+1)*nx + (i+1);
-		else if(r<P2)	n=k*np +     j*nx + (i+1); 	
+		else if(r<P2)	n=k*np +     j*nx + (i+1);
 		else if(r<P3)	n=k*np + (j+1)*nx + i;
 		else if(r<P4)	n=k*np +     j*nx + i;
 
@@ -1069,7 +1074,7 @@ float partial_var(float x, float y, float z, unsigned char *array, int nx, int n
 	float   u,uu;
 	float   v,vv;
 	float   s,ss;
-	
+
 	i=(int)(x);
 	j=(int)(y);
 	k=(int)(z);
@@ -1141,16 +1146,16 @@ float partial_var(float x, float y, float z, unsigned char *array, int nx, int n
 }
 
 // warning: T will be altered.
-float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *xjit, float *yjit)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -1194,20 +1199,20 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *xji
 	T[11] += zc1/dz1;
 
 	q=0;
-	for(k=0;k<nz2;k++) 
+	for(k=0;k<nz2;k++)
 	{
   		zz=k*dz2-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<ny2;j++) 
+		for(j=0;j<ny2;j++)
 		{
      		yy=(j + yjit[q]) *dy2-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<nx2;i++) 
+  			for(i=0;i<nx2;i++)
 			{
         		xx=(i + xjit[q]) *dx2-xc2;
 
@@ -1225,16 +1230,16 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T, float *xji
 }
 
 // warning: T will be altered.
-float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1, 
+float *resliceImage(float *im1, int nx1, int ny1, int nz1, float dx1, float dy1, float dz1,
 int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 {
-	float xc1,yc1,zc1; 
-	float xc2,yc2,zc2; 
+	float xc1,yc1,zc1;
+	float xc2,yc2,zc2;
 	float Ax,Bx;
 	float Ay,By;
 	float Az,Bz;
   	float xx,yy,zz; /* translation parameters */
-  	float x,y,z;   
+  	float x,y,z;
 
 	int i,j,k;     /* loop index */
 
@@ -1278,20 +1283,20 @@ int nx2, int ny2, int nz2, float dx2, float dy2, float dz2, float *T)
 	T[11] += zc1/dz1;
 
 	q=0;
-	for(k=0;k<nz2;k++) 
+	for(k=0;k<nz2;k++)
 	{
   		zz=k*dz2-zc2;
 	  	Bx=T[2]*zz+T[3];
 	  	By=T[6]*zz+T[7];
 		Bz=T[10]*zz+T[11];
-		for(j=0;j<ny2;j++) 
+		for(j=0;j<ny2;j++)
 		{
      		yy=j*dy2-yc2;
 			Ax=T[1]*yy+Bx;
 			Ay=T[5]*yy+By;
 			Az=T[9]*yy+Bz;
 
-  			for(i=0;i<nx2;i++) 
+  			for(i=0;i<nx2;i++)
 			{
         		xx=i*dx2-xc2;
 
