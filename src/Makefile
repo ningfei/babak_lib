@@ -8,7 +8,7 @@ MACH = $(shell $(CXX) -dumpmachine | awk -F - '{ printf "%s", $$2; }')
 
 ifeq ($(MACH), linux)
 	SYSTEM = linux
-	CXXFLAGS +=  -Wno-unused-result -Wno-format-zero-length -Wno-stringop-overflow
+	CXXFLAGS +=  -Wno-unused-result -Wno-format-zero-length
 	CXXSTATICFLAGS =  -static
 else ifeq ($(MACH), apple)
 	SYSTEM = mac
