@@ -28,7 +28,7 @@ void update_qsform(const char *imagefilename , float *matrix)
    char swapflg=0;
    mat44 R;
 
-   fp = fopen(imagefilename,"r");
+   fp = fopen(imagefilename,"rb");
    if(fp==NULL) file_open_error(imagefilename);
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
 
@@ -55,7 +55,7 @@ void update_qsform(const char *imagefilename , float *matrix)
       R.m[3][0]=matrix[12]; R.m[3][1]=matrix[13]; R.m[3][2]=matrix[14]; R.m[3][3]=matrix[15];
 
       nifti_mat44_to_quatern( R,  &(hdr.quatern_b), &(hdr.quatern_c), &(hdr.quatern_d),
-      &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z), 
+      &(hdr.qoffset_x), &(hdr.qoffset_y), &(hdr.qoffset_z),
       &(hdr.pixdim[1]), &(hdr.pixdim[2]), &(hdr.pixdim[3]), &(hdr.pixdim[0]));
    }
 
@@ -87,7 +87,7 @@ void update_qsform(const char *imagefilename , float *matrix)
 
    fclose(fp);
 
-   fp = fopen(imagefilename,"w");
+   fp = fopen(imagefilename,"wb");
 
    if(fp==NULL)
    {
@@ -121,7 +121,7 @@ void update_qsform(const char *imagefilename , float *matrix)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // imagefile1 = source
-// imagefile2 = target 
+// imagefile2 = target
 
 void update_qsform( const char *imagefile1, const char *imagefile2)
 {
@@ -138,7 +138,7 @@ void update_qsform( const char *imagefile1, const char *imagefile2)
    float *invq1;
 
    ///////////////////////////////////////////////////////////////////////////
-   fp = fopen(imagefile1,"r");
+   fp = fopen(imagefile1,"rb");
    if(fp==NULL) file_open_error(imagefile1);
 
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
@@ -164,7 +164,7 @@ void update_qsform( const char *imagefile1, const char *imagefile2)
 
    ///////////////////////////////////////////////////////////////////////////
 
-   fp = fopen(imagefile2,"r");
+   fp = fopen(imagefile2,"rb");
    if(fp==NULL) file_open_error(imagefile2);
 
    fread(&hdr, sizeof(nifti_1_header), 1, fp);
