@@ -62,11 +62,12 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
       imgTemp[i]=(unsigned char)temp;
    }
 
-   fp=fopen(ppmfile,"w");
+   fp=fopen(ppmfile,"wb");
    if(fp==NULL) file_open_error(ppmfile);
 
    /*Write the header part of the PPM file*/
    fprintf(fp,"P6\n");
+   fprintf(fp,"# Created by Automatic Registration Toolbox \n");
    fprintf(fp,"%d %d\n", im.nx, im.ny);
    fprintf(fp,"255\n");
 
@@ -112,7 +113,7 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
     int L;
 
     L = strlen(ppmfile);
-    pngfilename = (char *)calloc(L,sizeof(char));
+    pngfilename = (char *)calloc(L+1,sizeof(char));
     cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
     strcpy(pngfilename, ppmfile);
     pngfilename[L-1]='g';
@@ -482,7 +483,7 @@ void new_PIL_transform(const char *subfile,const char *lmfile,char *orient,float
       int r, r2;
       int cm[3];
 
-      fp=fopen(modelfile, "r");
+      fp=fopen(modelfile, "rb");
       if(fp==NULL) file_open_error(modelfile);
 
       fread(&n, sizeof(int), 1, fp);

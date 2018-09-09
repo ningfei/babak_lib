@@ -724,7 +724,7 @@ float detectPC(float *PC, char *modelfile, short *volumeMSP_HR, char *PCregion, 
    int n;
    FILE *fp;
 
-   fp = fopen(modelfile,"r"); // open setup file for reading
+   fp = fopen(modelfile,"rb"); // open setup file for reading
    if( fp == NULL )
    {
       printf("\nCould not open %s, aborting ...\n\n",modelfile);
@@ -868,7 +868,7 @@ float detectAC(float *AC, char *modelfile, short *volumeMSP_HR, char *ACregion, 
    float cc, ccmax;
    float *ccmap;
 
-   fp = fopen(modelfile,"r"); // open setup file for reading
+   fp = fopen(modelfile,"rb"); // open setup file for reading
    if( fp == NULL )
    {
       printf("\nCould not open %s, aborting ...\n\n",modelfile);
@@ -1084,7 +1084,7 @@ short *yRP, short *zRP, int opt_T2)
    float cc, ccmax;
    float I2X[16];
 
-   fp = fopen(modelfile,"r"); // open setup file for reading
+   fp = fopen(modelfile,"rb"); // open setup file for reading
    if( fp == NULL )
    {
       printf("\nCould not open %s, aborting ...\n\n",modelfile);
@@ -1391,7 +1391,7 @@ float *AC, float *PC, float *RP, float *Tmsp, int opt_v, int opt_T2)
       // file pointer for opening the model file
       FILE *fp;
 
-      fp = fopen(modelfilepath,"r"); // open setup file for reading
+      fp = fopen(modelfilepath,"rb"); // open setup file for reading
       if( fp == NULL )
       {
          printf("\nI cannot open the model file: %s.\n\n",modelfilepath);
@@ -2252,7 +2252,7 @@ int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned
 
   np = nx*ny;
 
-  fp = fopen(filename,"w");
+  fp = fopen(filename,"wb");
   if(fp == NULL) return(1);
 
   fprintf(fp,"P6\n");
@@ -2276,7 +2276,7 @@ int save_as_ppm(const char *filename, int nx, int ny, unsigned char *R, unsigned
     int L;
 
     L = strlen(filename);
-    pngfilename = (char *)calloc(L,sizeof(char));
+    pngfilename = (char *)calloc(L+1,sizeof(char));
     cmnd = (char *)calloc(2*L+128,sizeof(char));  // 128 is plenty :)
     strcpy(pngfilename, filename);
     pngfilename[L-1]='g';
