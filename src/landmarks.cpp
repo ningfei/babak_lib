@@ -9,7 +9,7 @@ extern void read_nifti_image(const char *filename, unsigned char **im, nifti_1_h
 extern void read_nifti_image(const char *filename, short **im, nifti_1_header *hdr);
 extern void standardize(float *x, int n);
 
-//im: the input image 
+//im: the input image
 //nx,ny,nz: size of the image
 //lm[3]: coordinate of the landmark (satrting from 0)
 //ppmfile: name of the ppmfile as the output
@@ -41,7 +41,7 @@ void makePPM(SHORTIM im, int *lm, const char *ppmfile)
       imgTemp[i]=(unsigned char)temp;
    }
 
-   fp=fopen(ppmfile,"w");
+   fp=fopen(ppmfile,"wb");
    if(fp==NULL) file_open_error(ppmfile);
 
    /*Write the header part of the PPM file*/
@@ -117,7 +117,7 @@ float *detect_landmarks(const char *subfile, const char *mdlfile, int &nl, char 
 {
    char prefix[1024];
    char filename[1024];
-   SHORTIM subim; 
+   SHORTIM subim;
    nifti_1_header hdr;
    FILE *fpi;
    int r; // patch radius
@@ -138,7 +138,7 @@ float *detect_landmarks(const char *subfile, const char *mdlfile, int &nl, char 
    subim.nv = subim.nx*subim.ny*subim.nz;
    subim.np = subim.nx*subim.ny;
 
-   fpi=fopen(mdlfile, "r");
+   fpi=fopen(mdlfile, "rb");
    if(fpi==NULL) file_open_error(mdlfile);
 
    fread(&nl, sizeof(int), 1, fpi);
@@ -172,7 +172,7 @@ float *detect_landmarks(const char *subfile, const char *mdlfile, int &nl, char 
    }
 
    fclose(fpi);
- 
+
    return(P);
 }
 
@@ -185,7 +185,7 @@ float *detect_landmarks(SHORTIM subim, const char *mdlfile, int &nl)
    float ccmax;
    float *P;
 
-   fpi=fopen(mdlfile, "r");
+   fpi=fopen(mdlfile, "rb");
 
    if(fpi==NULL)
    {
@@ -217,7 +217,7 @@ float *detect_landmarks(SHORTIM subim, const char *mdlfile, int &nl)
    }
 
    fclose(fpi);
- 
+
    return(P);
 }
 
@@ -229,7 +229,7 @@ float *read_landmark_centers(const char *mdlfile, int &nl)
    int lmcm[3];
    float *Q;
 
-   fpi=fopen(mdlfile, "r");
+   fpi=fopen(mdlfile, "rb");
    if(fpi==NULL) file_open_error(mdlfile);
 
    fread(&nl, sizeof(int), 1, fpi);
@@ -252,6 +252,6 @@ float *read_landmark_centers(const char *mdlfile, int &nl)
    }
 
    fclose(fpi);
- 
+
    return(Q);
 }
