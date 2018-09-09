@@ -332,7 +332,7 @@ void save_nifti_image(const char *filename, char *im, nifti_1_header *hdr)
       hdr->bitpix=8;
    }
 
-   fp=fopen(filename,"w");
+   fp=fopen(filename,"wb");
    if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
@@ -356,7 +356,7 @@ void save_nifti_image(const char *filename, unsigned char *im, nifti_1_header *h
    hdr->vox_offset=352.0;
    extender.extension[0]=0;
 
-   fp=fopen(filename,"w");
+   fp=fopen(filename,"wb");
    if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
@@ -385,7 +385,7 @@ void save_nifti_image(const char *filename, short *im, nifti_1_header *hdr)
    extender.extension[2]=0;
    extender.extension[3]=0;
 
-   fp=fopen(filename,"w");
+   fp=fopen(filename,"wb");
    if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
@@ -409,7 +409,7 @@ void save_nifti_image(const char *filename, float *im, nifti_1_header *hdr)
    hdr->vox_offset=352.0;
    extender.extension[0]=0;
 
-   fp=fopen(filename,"w");
+   fp=fopen(filename,"wb");
    if(fp==NULL) file_open_error(filename);
    fwrite(hdr, sizeof(nifti_1_header),1,fp);
    fwrite(&extender, sizeof(nifti1_extender),1,fp);
