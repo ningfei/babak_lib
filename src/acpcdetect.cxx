@@ -71,7 +71,7 @@ void print_help_and_exit()
   "-lm <landmarks-file>\n"
   "\tA text file containing manually determined (i, j, k) coordinates\n"
   "\tof the AC, PC and VSPS, respectively. When this file is supplied,\n"
-  "\tautomatic detection of these landmarks is suppressed. This is useful\n" 
+  "\tautomatic detection of these landmarks is suppressed. This is useful\n"
   "\tin cases when automatic landmark detection fails.\n\n"
 
   "-no-tilt-correction\n"
@@ -222,8 +222,8 @@ void computeSiemensVisionOffsets(float *Tmsp, float *AC, float *PC)
 	invT=inv4(Tmsp);
 
 	// assumes original is PIL, N[3]=0.0 is not a mistake, in fact very necessary
-	N[0]=0.0; N[1]=0.0; N[2]=1.0; N[3]=0.0; 
-	multi(invT,4,4,N,4,1,N); 
+	N[0]=0.0; N[1]=0.0; N[2]=1.0; N[3]=0.0;
+	multi(invT,4,4,N,4,1,N);
 	normalizeVector(N,3);
 
 	multi(invT, 4, 4,  AC, 4,  1, ac); // assumes original is PIL
@@ -315,11 +315,11 @@ int main(int argc, char **argv)
   // opt_CENTER_AC=NO means that by default the mid-point between AC and PC is set to the FOV
   // center.  If -centerAC is selected, then the AC is made the FOV center.
   // The opt_CENTER_AC variable is defined in PILtransform.cpp and made global in babak_lib.h
-  opt_CENTER_AC=NO; 
+  opt_CENTER_AC=NO;
 
   while ((opt = getoption(argc, argv, options)) != -1 )
   {
-      switch (opt) 
+      switch (opt)
       {
          case 'n':
             opt_nn=YES;
@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////////
   // This block of code sets: ipimagepath, ipimagename, ipimagedir
-  // iporient, ipimage, iphdr, ipdim, nPA, nIS, nLR, dPA, dIS, dLR 
+  // iporient, ipimage, iphdr, ipdim, nPA, nIS, nLR, dPA, dIS, dLR
   // IPORIENT2PIL, PIL2IPORIENT
 
   if( ipimagepath[0]=='\0' )
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  // If input orientation is not specified using -input-orient option, 
+  // If input orientation is not specified using -input-orient option,
   // read it from image header. This is almost always going to be the case.
   if(iporient[0]=='\0')
   {
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 
   set_dim(ipdim, iphdr);
 
-  if(opt_v) 
+  if(opt_v)
   {
     printf("Input image matrix size: %d x %d x %d\n",ipdim.nx,ipdim.ny,ipdim.nz);
     printf("Input image voxel size: %6.4f x %6.4f x %6.4f\n",ipdim.dx,ipdim.dy,ipdim.dz);
@@ -505,20 +505,20 @@ int main(int argc, char **argv)
   if(oporient[2]=='P' || oporient[2]=='A') { opdim.nz=nPA; opdim.dz=dPA; }
   if(oporient[2]=='I' || oporient[2]=='S') { opdim.nz=nIS; opdim.dz=dIS; }
   if(oporient[2]=='L' || oporient[2]=='R') { opdim.nz=nLR; opdim.dz=dLR; }
-  if(nx > 0) opdim.nx=nx; 
-  if(ny > 0) opdim.ny=ny; 
+  if(nx > 0) opdim.nx=nx;
+  if(ny > 0) opdim.ny=ny;
   if(nz > 0) opdim.nz=nz;
-  if(dx > 0.0) opdim.dx=dx; 
-  if(dy > 0.0) opdim.dy=dy; 
+  if(dx > 0.0) opdim.dx=dx;
+  if(dy > 0.0) opdim.dy=dy;
   if(dz > 0.0) opdim.dz=dz;
-  opdim.nt=1; 
-  opdim.dt=0.0; 
-  opdim.np=opdim.nx*opdim.ny; 
-  opdim.nv=opdim.np*opdim.nz; 
+  opdim.nt=1;
+  opdim.dt=0.0;
+  opdim.np=opdim.nx*opdim.ny;
+  opdim.nv=opdim.np*opdim.nz;
 
   sprintf(opimagepath,"%s/%s_%s.nii",ipimagedir,ipimagename,oporient);
 
-  if(opt_v) 
+  if(opt_v)
   {
     printf("Output image: %s\n",opimagepath);
     printf("Output image matrix size: %d x %d x %d\n",opdim.nx,opdim.ny,opdim.nz);
@@ -536,12 +536,12 @@ int main(int argc, char **argv)
   ijk2xyz(Tijk2xyz, opdim);
 
   ophdr = iphdr;
-  ophdr.pixdim[1]=opdim.dx; 
-  ophdr.pixdim[2]=opdim.dy; 
+  ophdr.pixdim[1]=opdim.dx;
+  ophdr.pixdim[2]=opdim.dy;
   ophdr.pixdim[3]=opdim.dz;
   ophdr.dim[0] = 4;
-  ophdr.dim[1]=opdim.nx; 
-  ophdr.dim[2]=opdim.ny; 
+  ophdr.dim[1]=opdim.nx;
+  ophdr.dim[2]=opdim.ny;
   ophdr.dim[3]=opdim.nz;
   ophdr.dim[4] = 1;
   sprintf(ophdr.descrip,"Created by ART acpcdetect");
@@ -549,12 +549,12 @@ int main(int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////////
   // set TPIL and Tout
-  
+
   if(searchradius[0]<=0.0 || searchradius[0]>200.0) searchradius[0]=50.0;
   if(searchradius[1]<=0.0 || searchradius[1]>100.0) searchradius[1]=15.0;
   if(searchradius[2]<=0.0 || searchradius[2]>100.0) searchradius[2]=15.0;
 
-  if(opt_v && landmarksfilepath[0]!='\0') 
+  if(opt_v && landmarksfilepath[0]!='\0')
   {
     printf("Manually specified landmarks: %s\n",landmarksfilepath);
   }
@@ -569,7 +569,7 @@ int main(int argc, char **argv)
     new_PIL_transform(ipimagepath, landmarksfilepath, iporient, TPIL, 0);
   }
 
-  //Tout transforms points from the input iporient to tilt-corrected oporient 
+  //Tout transforms points from the input iporient to tilt-corrected oporient
   multi(PIL2OPORIENT, 4, 4,  TPIL, 4,  4, Tout);
   //////////////////////////////////////////////////////////////////////////////
 
@@ -627,7 +627,7 @@ int main(int argc, char **argv)
     multi(PIL2IPORIENT, 4, 4,  OPORIENT2PIL, 4,  4, OPORIENT2IPORIENT);
     multi(OPORIENT2IPORIENT, 4, 4,  Tijk2xyz, 4,  4, Ttmp);
     multi(TPIL, 4, 4,  Ttmp, 4,  4, Ttmp);
-    multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp); 
+    multi(PIL2RAS, 4, 4,  Ttmp, 4,  4, Ttmp);
     update_qsform(ophdr, Ttmp);
     ////////////////////////////////////////////////////////////////////
 
