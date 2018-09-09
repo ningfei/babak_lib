@@ -78,15 +78,15 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
       {
          for(int m=0;m<nl;m++)
          {
-//uncomment to save in different colours
-//            if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; }
-//            else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; }
-//            else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; }
-//            else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; }
-//            else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; }
-//            else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; }
-//            else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; }
-//            else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; }
+            // uncomment to save in different colours
+            // if(m==3) { colour[0]=255; colour[1]=0; colour[2]=0; }
+            // else if(m==1) { colour[0]=0; colour[1]=255; colour[2]=0; }
+            // else if(m==2) { colour[0]=0; colour[1]=0; colour[2]=255; }
+            // else if(m==0) { colour[0]=0; colour[1]=255; colour[2]=191; }
+            // else if(m==4) { colour[0]=0; colour[1]=128; colour[2]=255; }
+            // else if(m==5) { colour[0]=255; colour[1]=0; colour[2]=255; }
+            // else if(m==6) { colour[0]=255; colour[1]=128; colour[2]=0; }
+            // else if(m==7) { colour[0]=255; colour[1]=255; colour[2]=0; }
 
             if( (i==ii[m] && jj[m]-d<j && j<jj[m]+d) || (j==jj[m] && ii[m]-d<i && i<ii[m]+d) )
             {
@@ -103,6 +103,11 @@ void mspPPM(SHORTIM im, int *ii, int *jj, int nl, const char *ppmfile)
          colourflag=0;
       }
    }
+
+   // padding file to fix strange behavior on Windows
+   unsigned char padding[3];
+   memset(padding, 0, sizeof(padding));
+   fwrite(padding, sizeof(padding), 1, fp);
 
    fclose(fp);
 
