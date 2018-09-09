@@ -1,5 +1,5 @@
 // BUG FIX (2011-07-29): The default interpolation method was nearest neighbor. The -nn option would use
-// trilinear interpolatin.  This was corrected.  Now the default interpolation method is trilinear and 
+// trilinear interpolatin.  This was corrected.  Now the default interpolation method is trilinear and
 // the -nn option forces the program to use nearest neighbor.
 
 #include <stdio.h>
@@ -32,9 +32,9 @@ static struct option options[] =
    {"-noppm",0,'p'},
    {"-notxt",0,'t'},
 
-   {"-AC",1,'A'}, 
-   {"-PC",1,'P'}, 
-   {"-VSPS",1,'S'}, 
+   {"-AC",1,'A'},
+   {"-PC",1,'P'},
+   {"-VSPS",1,'S'},
 
    {"-V",0,'V'},
    {"-version",0,'V'},
@@ -154,8 +154,8 @@ void computeSiemensVisionOffsets(float *Tmsp, float *AC, float *PC)
 	invT=inv4(Tmsp);
 
 	// assumes original is PIL, N[3]=0.0 is not a mistake, in fact very necessary
-	N[0]=0.0; N[1]=0.0; N[2]=1.0; N[3]=0.0; 
-	multi(invT,4,4,N,4,1,N); 
+	N[0]=0.0; N[1]=0.0; N[2]=1.0; N[3]=0.0;
+	multi(invT,4,4,N,4,1,N);
 	normalizeVector(N,3);
 
 	multi(invT, 4, 4,  AC, 4,  1, ac); // assumes original is PIL
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
    int opt_T2=NO;
 
    //////////////////////////////////////////////////
-   float n[4]; 
+   float n[4];
    float d;
    //////////////////////////////////////////////////
 
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 
    while ((opt = getoption(argc, argv, options)) != -1 )
    {
-      switch (opt) 
+      switch (opt)
       {
          case 'n':
             opt_nn=YES;
@@ -378,7 +378,7 @@ int main(int argc, char **argv)
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
-   if(opt_v) 
+   if(opt_v)
    {
       printf("\n-------------------------------------------------------\n");
    }
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
    if(searchradius[1]<=0 || searchradius[1]>100.0) searchradius[1]=15.0;
    if(searchradius[2]<=0 || searchradius[2]>100.0) searchradius[2]=15.0;
 
-   if(opt_D) 
+   if(opt_D)
    {
       printf("\nVSPS search radius = %5.1lf mm\n",searchradius[0]);
       printf("AC search radius = %5.1lf mm\n",searchradius[1]);
@@ -401,19 +401,19 @@ int main(int argc, char **argv)
       float T_ijk2xyz[16];
       float Tacpc[16];
       float PIL2RAS[16];
-      float ac[4], pc[4];  
+      float ac[4], pc[4];
       int N; // number of images at the end of the command line
       DIM input_dim;
 
       hdr = read_NIFTI_hdr(imagefilename);
-      input_dim.nx = hdr.dim[1]; 
-      input_dim.ny = hdr.dim[2]; 
+      input_dim.nx = hdr.dim[1];
+      input_dim.ny = hdr.dim[2];
       input_dim.nz = hdr.dim[3];
-      input_dim.dx = hdr.pixdim[1]; 
-      input_dim.dy = hdr.pixdim[2]; 
+      input_dim.dx = hdr.pixdim[1];
+      input_dim.dy = hdr.pixdim[2];
       input_dim.dz = hdr.pixdim[3];
 
-      // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space and store 
+      // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space and store
       // them in ac and pc variables.
       for(int i=0; i<4; i++) ac[i] = AC[i];
       for(int i=0; i<4; i++) pc[i] = PC[i];
@@ -460,7 +460,7 @@ int main(int argc, char **argv)
    if(transformation_filename[0]!='\0')
    {
       float Tacpc[16];
-      float ac[4], pc[4];  
+      float ac[4], pc[4];
       DIM input_dim;
       float PIL2OUT[16];
       float OUT2PIL[16];
@@ -469,11 +469,11 @@ int main(int argc, char **argv)
       FILE *fp;
 
       hdr = read_NIFTI_hdr(imagefilename);
-      input_dim.nx = hdr.dim[1]; 
-      input_dim.ny = hdr.dim[2]; 
+      input_dim.nx = hdr.dim[1];
+      input_dim.ny = hdr.dim[2];
       input_dim.nz = hdr.dim[3];
-      input_dim.dx = hdr.pixdim[1]; 
-      input_dim.dy = hdr.pixdim[2]; 
+      input_dim.dx = hdr.pixdim[1];
+      input_dim.dy = hdr.pixdim[2];
       input_dim.dz = hdr.pixdim[3];
 
       // convert the AC/PC from (i,j,k) in original space to (x,y,z) in PIL space
@@ -625,7 +625,7 @@ int main(int argc, char **argv)
       printf("\nEstimated mid-sagittal plane: (%8.7fx) + (%8.7fy) + (%8.7fz) = %8.5f (mm)\n", n[0],n[1],n[2],d);
    }
 
-   if(opt_v) 
+   if(opt_v)
    {
       printf("\nTest image: %s\n",imagefilename);
       printf("\nInput image orientation: %s\n",orientation);
