@@ -19,8 +19,8 @@ else ifeq ($(MACH), w64)
 endif
 
 INC= -I../include
-LIBS =  -L../lib/$(SYSTEM) -lbabak -lniftiio -lznz -lm -lz -llapack -lblas -lgfortran -lquadmath
-LESSLIBS =  -L../lib/$(SYSTEM) -lbabak -lniftiio -lznz -lm -lz
+LIBS =  -L../lib/$(SYSTEM) -lbabak -lniftiio -lznz -lz -lm -llapack -lblas -lgfortran -lquadmath
+LESSLIBS =  -L../lib/$(SYSTEM) -lbabak -lniftiio -lznz -lz -lm
 
 ifeq ($(MACH), apple)
 	LIBS += -lgcc
